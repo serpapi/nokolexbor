@@ -1,0 +1,10 @@
+*.bundle
+*.swp
+Gemfile.lock
+tmp/
+.vscode/
+.yardoc
+vendor/gems
+bin/
+pkg/
+rdoc/
