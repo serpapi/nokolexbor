@@ -298,7 +298,7 @@ typedef xmlXPathFunction (*xmlXPathFuncLookupFunc) (void *ctxt,
  */
 
 struct _xmlXPathContext {
-    xmlDocPtr doc;			/* The current document */
+    lxb_dom_document_t *doc;			/* The current document */
     lxb_dom_node_t_ptr node;			/* The current node */
 
     int nb_variables_unused;		/* unused (hash table) */

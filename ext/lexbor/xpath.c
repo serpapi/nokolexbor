@@ -7878,7 +7878,7 @@ xmlXPathNextDescendant(xmlXPathParserContextPtr ctxt, lxb_dom_node_t_ptr cur) {
 	    return(NULL);
 
         if (ctxt->context->node == (lxb_dom_node_t_ptr) ctxt->context->doc)
-	    return(ctxt->context->doc->children);
+	    return(ctxt->context->doc->node.first_child);
         return(ctxt->context->node->first_child);
     }
 
@@ -8082,7 +8082,7 @@ xmlXPathNextAncestor(xmlXPathParserContextPtr ctxt, lxb_dom_node_t_ptr cur) {
 	}
 	return(NULL);
     }
-    if (cur == ctxt->context->doc->children)
+    if (cur == ctxt->context->doc->node.first_child)
 	return((lxb_dom_node_t_ptr) ctxt->context->doc);
     if (cur == (lxb_dom_node_t_ptr) ctxt->context->doc)
 	return(NULL);
@@ -8323,7 +8323,7 @@ xmlXPathNextPreceding(xmlXPathParserContextPtr ctxt, lxb_dom_node_t_ptr cur)
         cur = cur->parent;
         if (cur == NULL)
             return (NULL);
-        if (cur == ctxt->context->doc->children)
+        if (cur == ctxt->context->doc->node.first_child)
             return (NULL);
     } while (xmlXPathIsAncestor(cur, ctxt->context->node));
     return (cur);
@@ -8373,7 +8373,7 @@ xmlXPathNextPrecedingInternal(xmlXPathParserContextPtr ctxt,
         cur = cur->parent;
         if (cur == NULL)
             return (NULL);
-        if (cur == ctxt->context->doc->children)
+        if (cur == ctxt->context->doc->node.first_child)
             return (NULL);
         if (cur != ctxt->ancestor)
             return (cur);
@@ -11680,8 +11680,8 @@ xmlXPathNodeSetFilter(xmlXPathParserContextPtr ctxt,
         * TODO: Get real doc for namespace nodes.
         */
         if ((node->type != XML_NAMESPACE_DECL) &&
-            (node->doc != NULL))
-            xpctxt->doc = node->doc;
+            (node->owner_document != NULL))
+            xpctxt->doc = node->owner_document;
 
         res = xmlXPathCompOpEvalToBoolean(ctxt, filterOp, 1);
 
@@ -14513,7 +14513,7 @@ xmlXPathSetContextNode(lxb_dom_node_t_ptr node, xmlXPathContextPtr ctx) {
     if ((node == NULL) || (ctx == NULL))
         return(-1);
 
-    if (node->doc == ctx->doc) {
+    if (node->owner_document == ctx->doc) {
         ctx->node = node;
 	return(0);
     }
