@@ -56,9 +56,9 @@ XMLPUBFUN xmlLocationSetPtr XMLCALL
 						 xmlLocationSetPtr val2);
 XML_DEPRECATED
 XMLPUBFUN xmlXPathObjectPtr XMLCALL
-		    xmlXPtrNewRange		(xmlNodePtr start,
+		    xmlXPtrNewRange		(lxb_dom_node_t_ptr start,
 						 int startindex,
-						 xmlNodePtr end,
+						 lxb_dom_node_t_ptr end,
 						 int endindex);
 XML_DEPRECATED
 XMLPUBFUN xmlXPathObjectPtr XMLCALL
@@ -66,30 +66,30 @@ XMLPUBFUN xmlXPathObjectPtr XMLCALL
 						 xmlXPathObjectPtr end);
 XML_DEPRECATED
 XMLPUBFUN xmlXPathObjectPtr XMLCALL
-		    xmlXPtrNewRangeNodePoint	(xmlNodePtr start,
+		    xmlXPtrNewRangeNodePoint	(lxb_dom_node_t_ptr start,
 						 xmlXPathObjectPtr end);
 XML_DEPRECATED
 XMLPUBFUN xmlXPathObjectPtr XMLCALL
 		    xmlXPtrNewRangePointNode	(xmlXPathObjectPtr start,
-						 xmlNodePtr end);
+						 lxb_dom_node_t_ptr end);
 XML_DEPRECATED
 XMLPUBFUN xmlXPathObjectPtr XMLCALL
-		    xmlXPtrNewRangeNodes	(xmlNodePtr start,
-						 xmlNodePtr end);
+		    xmlXPtrNewRangeNodes	(lxb_dom_node_t_ptr start,
+						 lxb_dom_node_t_ptr end);
 XML_DEPRECATED
 XMLPUBFUN xmlXPathObjectPtr XMLCALL
-		    xmlXPtrNewLocationSetNodes	(xmlNodePtr start,
-						 xmlNodePtr end);
+		    xmlXPtrNewLocationSetNodes	(lxb_dom_node_t_ptr start,
+						 lxb_dom_node_t_ptr end);
 XML_DEPRECATED
 XMLPUBFUN xmlXPathObjectPtr XMLCALL
 		    xmlXPtrNewLocationSetNodeSet(xmlNodeSetPtr set);
 XML_DEPRECATED
 XMLPUBFUN xmlXPathObjectPtr XMLCALL
-		    xmlXPtrNewRangeNodeObject	(xmlNodePtr start,
+		    xmlXPtrNewRangeNodeObject	(lxb_dom_node_t_ptr start,
 						 xmlXPathObjectPtr end);
 XML_DEPRECATED
 XMLPUBFUN xmlXPathObjectPtr XMLCALL
-		    xmlXPtrNewCollapsedRange	(xmlNodePtr start);
+		    xmlXPtrNewCollapsedRange	(lxb_dom_node_t_ptr start);
 XML_DEPRECATED
 XMLPUBFUN void XMLCALL
 		    xmlXPtrLocationSetAdd	(xmlLocationSetPtr cur,
@@ -112,8 +112,8 @@ XMLPUBFUN void XMLCALL
  */
 XMLPUBFUN xmlXPathContextPtr XMLCALL
 		    xmlXPtrNewContext		(xmlDocPtr doc,
-						 xmlNodePtr here,
-						 xmlNodePtr origin);
+						 lxb_dom_node_t_ptr here,
+						 lxb_dom_node_t_ptr origin);
 XMLPUBFUN xmlXPathObjectPtr XMLCALL
 		    xmlXPtrEval			(const xmlChar *str,
 						 xmlXPathContextPtr ctx);
@@ -123,7 +123,7 @@ XMLPUBFUN void XMLCALL
 		    xmlXPtrRangeToFunction	(xmlXPathParserContextPtr ctxt,
 						 int nargs);
 XML_DEPRECATED
-XMLPUBFUN xmlNodePtr XMLCALL
+XMLPUBFUN lxb_dom_node_t_ptr XMLCALL
 		    xmlXPtrBuildNodeList	(xmlXPathObjectPtr obj);
 XML_DEPRECATED
 XMLPUBFUN void XMLCALL

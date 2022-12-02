@@ -83,7 +83,7 @@ typedef xmlNodeSet *xmlNodeSetPtr;
 struct _xmlNodeSet {
     int nodeNr;			/* number of nodes in the set */
     int nodeMax;		/* size of the array as allocated */
-    xmlNodePtr *nodeTab;	/* array of nodes in no particular order */
+    lxb_dom_node_t_ptr *nodeTab;	/* array of nodes in no particular order */
     /* @@ with_ns to check whether namespace nodes should be looked at @@ */
 };
 
@@ -299,7 +299,7 @@ typedef xmlXPathFunction (*xmlXPathFuncLookupFunc) (void *ctxt,
 
 struct _xmlXPathContext {
     xmlDocPtr doc;			/* The current document */
-    xmlNodePtr node;			/* The current node */
+    lxb_dom_node_t_ptr node;			/* The current node */
 
     int nb_variables_unused;		/* unused (hash table) */
     int max_variables_unused;		/* unused (hash table) */
@@ -328,8 +328,8 @@ struct _xmlXPathContext {
 
     /* extra stuff for XPointer */
     int xptr;				/* is this an XPointer context? */
-    xmlNodePtr here;			/* for here() */
-    xmlNodePtr origin;			/* for origin() */
+    lxb_dom_node_t_ptr here;			/* for here() */
+    lxb_dom_node_t_ptr origin;			/* for origin() */
 
     /* the set of namespace declarations in scope for the expression */
     xmlHashTablePtr nsHash;		/* The namespaces hash table */
@@ -355,7 +355,7 @@ struct _xmlXPathContext {
     void *userData;                     /* user specific data block */
     xmlStructuredErrorFunc error;       /* the callback in case of errors */
     xmlError lastError;			/* the last error */
-    xmlNodePtr debugNode;		/* the source node XSLT */
+    lxb_dom_node_t_ptr debugNode;		/* the source node XSLT */
 
     /* dictionary */
     xmlDictPtr dict;			/* dictionary if any */
@@ -398,7 +398,7 @@ struct _xmlXPathParserContext {
 
     xmlXPathCompExprPtr comp;		/* the precompiled expression */
     int xptr;				/* it this an XPointer expression */
-    xmlNodePtr         ancestor;	/* used for walking preceding axis */
+    lxb_dom_node_t_ptr         ancestor;	/* used for walking preceding axis */
 
     int              valueFrame;        /* used to limit Pop on the stack */
 };
@@ -434,7 +434,7 @@ XMLPUBVAR double xmlXPathNINF;
  *
  * Implements a functionality similar to the DOM NodeList.item().
  *
- * Returns the xmlNodePtr at the given @index in @ns or NULL if
+ * Returns the lxb_dom_node_t_ptr at the given @index in @ns or NULL if
  *         @index is out of range (0 to length-1)
  */
 #define xmlXPathNodeSetItem(ns, index)				\
@@ -457,7 +457,7 @@ XMLPUBVAR double xmlXPathNINF;
 XMLPUBFUN void XMLCALL
 		    xmlXPathFreeObject		(xmlXPathObjectPtr obj);
 XMLPUBFUN xmlNodeSetPtr XMLCALL
-		    xmlXPathNodeSetCreate	(xmlNodePtr val);
+		    xmlXPathNodeSetCreate	(lxb_dom_node_t_ptr val);
 XMLPUBFUN void XMLCALL
 		    xmlXPathFreeNodeSetList	(xmlXPathObjectPtr obj);
 XMLPUBFUN void XMLCALL
@@ -465,8 +465,8 @@ XMLPUBFUN void XMLCALL
 XMLPUBFUN xmlXPathObjectPtr XMLCALL
 		    xmlXPathObjectCopy		(xmlXPathObjectPtr val);
 XMLPUBFUN int XMLCALL
-		    xmlXPathCmpNodes		(xmlNodePtr node1,
-						 xmlNodePtr node2);
+		    xmlXPathCmpNodes		(lxb_dom_node_t_ptr node1,
+						 lxb_dom_node_t_ptr node2);
 /**
  * Conversion functions to basic types.
  */
@@ -484,7 +484,7 @@ XMLPUBFUN double XMLCALL
 XMLPUBFUN double XMLCALL
 		    xmlXPathCastStringToNumber	(const xmlChar * val);
 XMLPUBFUN double XMLCALL
-		    xmlXPathCastNodeToNumber	(xmlNodePtr node);
+		    xmlXPathCastNodeToNumber	(lxb_dom_node_t_ptr node);
 XMLPUBFUN double XMLCALL
 		    xmlXPathCastNodeSetToNumber	(xmlNodeSetPtr ns);
 XMLPUBFUN double XMLCALL
@@ -495,7 +495,7 @@ XMLPUBFUN xmlChar * XMLCALL
 XMLPUBFUN xmlChar * XMLCALL
 		    xmlXPathCastNumberToString	(double val);
 XMLPUBFUN xmlChar * XMLCALL
-		    xmlXPathCastNodeToString	(xmlNodePtr node);
+		    xmlXPathCastNodeToString	(lxb_dom_node_t_ptr node);
 XMLPUBFUN xmlChar * XMLCALL
 		    xmlXPathCastNodeSetToString	(xmlNodeSetPtr ns);
 XMLPUBFUN xmlChar * XMLCALL
@@ -526,10 +526,10 @@ XMLPUBFUN int XMLCALL
 XMLPUBFUN long XMLCALL
 		    xmlXPathOrderDocElems	(xmlDocPtr doc);
 XMLPUBFUN int XMLCALL
-		    xmlXPathSetContextNode	(xmlNodePtr node,
+		    xmlXPathSetContextNode	(lxb_dom_node_t_ptr node,
 						 xmlXPathContextPtr ctx);
 XMLPUBFUN xmlXPathObjectPtr XMLCALL
-		    xmlXPathNodeEval		(xmlNodePtr node,
+		    xmlXPathNodeEval		(lxb_dom_node_t_ptr node,
 						 const xmlChar *str,
 						 xmlXPathContextPtr ctx);
 XMLPUBFUN xmlXPathObjectPtr XMLCALL

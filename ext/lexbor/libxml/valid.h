@@ -70,10 +70,10 @@ struct _xmlValidCtxt {
     xmlValidityWarningFunc warning;	/* the callback in case of warning */
 
     /* Node analysis stack used when validating within entities */
-    xmlNodePtr         node;          /* Current parsed Node */
+    lxb_dom_node_t_ptr         node;          /* Current parsed Node */
     int                nodeNr;        /* Depth of the parsing stack */
     int                nodeMax;       /* Max depth of the parsing stack */
-    xmlNodePtr        *nodeTab;       /* array of nodes */
+    lxb_dom_node_t_ptr        *nodeTab;       /* array of nodes */
 
     unsigned int         flags;       /* internal flags */
     xmlDocPtr              doc;       /* the document */
@@ -261,7 +261,7 @@ XMLPUBFUN xmlAttrPtr XMLCALL
 					const xmlChar *ID);
 XMLPUBFUN int XMLCALL
 		xmlIsID		       (xmlDocPtr doc,
-					xmlNodePtr elem,
+					lxb_dom_node_t_ptr elem,
 					xmlAttrPtr attr);
 XMLPUBFUN int XMLCALL
 		xmlRemoveID	       (xmlDocPtr doc,
@@ -280,7 +280,7 @@ XMLPUBFUN void XMLCALL
 XML_DEPRECATED
 XMLPUBFUN int XMLCALL
 		xmlIsRef	       (xmlDocPtr doc,
-					xmlNodePtr elem,
+					lxb_dom_node_t_ptr elem,
 					xmlAttrPtr attr);
 XML_DEPRECATED
 XMLPUBFUN int XMLCALL
@@ -310,13 +310,13 @@ XMLPUBFUN int XMLCALL
 		                         xmlElementPtr elem);
 XMLPUBFUN xmlChar * XMLCALL
 		xmlValidNormalizeAttributeValue(xmlDocPtr doc,
-					 xmlNodePtr elem,
+					 lxb_dom_node_t_ptr elem,
 					 const xmlChar *name,
 					 const xmlChar *value);
 XMLPUBFUN xmlChar * XMLCALL
 		xmlValidCtxtNormalizeAttributeValue(xmlValidCtxtPtr ctxt,
 					 xmlDocPtr doc,
-					 xmlNodePtr elem,
+					 lxb_dom_node_t_ptr elem,
 					 const xmlChar *name,
 					 const xmlChar *value);
 XMLPUBFUN int XMLCALL
@@ -343,21 +343,21 @@ XMLPUBFUN int XMLCALL
 XMLPUBFUN int XMLCALL
 		xmlValidateElement	(xmlValidCtxtPtr ctxt,
 					 xmlDocPtr doc,
-					 xmlNodePtr elem);
+					 lxb_dom_node_t_ptr elem);
 XMLPUBFUN int XMLCALL
 		xmlValidateOneElement	(xmlValidCtxtPtr ctxt,
 					 xmlDocPtr doc,
-		                         xmlNodePtr elem);
+		                         lxb_dom_node_t_ptr elem);
 XMLPUBFUN int XMLCALL
 		xmlValidateOneAttribute	(xmlValidCtxtPtr ctxt,
 					 xmlDocPtr doc,
-					 xmlNodePtr	elem,
+					 lxb_dom_node_t_ptr	elem,
 					 xmlAttrPtr attr,
 					 const xmlChar *value);
 XMLPUBFUN int XMLCALL
 		xmlValidateOneNamespace	(xmlValidCtxtPtr ctxt,
 					 xmlDocPtr doc,
-					 xmlNodePtr elem,
+					 lxb_dom_node_t_ptr elem,
 					 const xmlChar *prefix,
 					 xmlNsPtr ns,
 					 const xmlChar *value);
@@ -429,7 +429,7 @@ XMLPUBFUN int XMLCALL
 XMLPUBFUN int XMLCALL
 		xmlValidatePushElement	(xmlValidCtxtPtr ctxt,
 					 xmlDocPtr doc,
-					 xmlNodePtr elem,
+					 lxb_dom_node_t_ptr elem,
 					 const xmlChar *qname);
 XMLPUBFUN int XMLCALL
 		xmlValidatePushCData	(xmlValidCtxtPtr ctxt,
@@ -438,7 +438,7 @@ XMLPUBFUN int XMLCALL
 XMLPUBFUN int XMLCALL
 		xmlValidatePopElement	(xmlValidCtxtPtr ctxt,
 					 xmlDocPtr doc,
-					 xmlNodePtr elem,
+					 lxb_dom_node_t_ptr elem,
 					 const xmlChar *qname);
 #endif /* LIBXML_REGEXP_ENABLED */
 #endif /* LIBXML_VALID_ENABLED */

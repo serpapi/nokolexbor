@@ -32,7 +32,7 @@ typedef xmlSAXHandlerPtr htmlSAXHandlerPtr;
 typedef xmlParserInput htmlParserInput;
 typedef xmlParserInputPtr htmlParserInputPtr;
 typedef xmlDocPtr htmlDocPtr;
-typedef xmlNodePtr htmlNodePtr;
+typedef lxb_dom_node_t_ptr htmlNodePtr;
 
 /*
  * Internal description of an HTML element, representing HTML 4.01

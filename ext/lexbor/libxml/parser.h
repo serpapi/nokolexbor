@@ -202,10 +202,10 @@ struct _xmlParserCtxt {
     xmlParserInputPtr *inputTab;      /* stack of inputs */
 
     /* Node analysis stack only used for DOM building */
-    xmlNodePtr         node;          /* Current parsed Node */
+    lxb_dom_node_t_ptr         node;          /* Current parsed Node */
     int                nodeNr;        /* Depth of the parsing stack */
     int                nodeMax;       /* Max depth of the parsing stack */
-    xmlNodePtr        *nodeTab;       /* array of nodes */
+    lxb_dom_node_t_ptr        *nodeTab;       /* array of nodes */
 
     int record_info;                  /* Whether node info should be kept */
     xmlParserNodeInfoSeq node_seq;    /* info about each node parsed */
@@ -291,7 +291,7 @@ struct _xmlParserCtxt {
      */
     int               dictNames;    /* Use dictionary names for the tree */
     int               freeElemsNr;  /* number of freed element nodes */
-    xmlNodePtr        freeElems;    /* List of freed element nodes */
+    lxb_dom_node_t_ptr        freeElems;    /* List of freed element nodes */
     int               freeAttrsNr;  /* number of freed attributes nodes */
     xmlAttrPtr        freeAttrs;    /* List of freed attributes nodes */
 
@@ -953,14 +953,14 @@ XMLPUBFUN int XMLCALL
 					 void *user_data,
 					 int depth,
 					 const xmlChar *string,
-					 xmlNodePtr *lst);
+					 lxb_dom_node_t_ptr *lst);
 #endif /* LIBXML_SAX1_ENABLED */
 XMLPUBFUN xmlParserErrors XMLCALL
-		xmlParseInNodeContext	(xmlNodePtr node,
+		xmlParseInNodeContext	(lxb_dom_node_t_ptr node,
 					 const char *data,
 					 int datalen,
 					 int options,
-					 xmlNodePtr *lst);
+					 lxb_dom_node_t_ptr *lst);
 #ifdef LIBXML_SAX1_ENABLED
 XMLPUBFUN int XMLCALL
 		xmlParseBalancedChunkMemoryRecover(xmlDocPtr doc,
@@ -968,7 +968,7 @@ XMLPUBFUN int XMLCALL
                      void *user_data,
                      int depth,
                      const xmlChar *string,
-                     xmlNodePtr *lst,
+                     lxb_dom_node_t_ptr *lst,
                      int recover);
 XML_DEPRECATED
 XMLPUBFUN int XMLCALL
@@ -978,13 +978,13 @@ XMLPUBFUN int XMLCALL
 					 int depth,
 					 const xmlChar *URL,
 					 const xmlChar *ID,
-					 xmlNodePtr *lst);
+					 lxb_dom_node_t_ptr *lst);
 #endif /* LIBXML_SAX1_ENABLED */
 XMLPUBFUN int XMLCALL
 		xmlParseCtxtExternalEntity(xmlParserCtxtPtr ctx,
 					 const xmlChar *URL,
 					 const xmlChar *ID,
-					 xmlNodePtr *lst);
+					 lxb_dom_node_t_ptr *lst);
 
 /*
  * Parser contexts handling.
@@ -1069,14 +1069,14 @@ XMLPUBFUN xmlParserInputPtr XMLCALL
  */
 XMLPUBFUN const xmlParserNodeInfo* XMLCALL
 		xmlParserFindNodeInfo	(const xmlParserCtxtPtr ctxt,
-				         const xmlNodePtr node);
+				         const lxb_dom_node_t_ptr node);
 XMLPUBFUN void XMLCALL
 		xmlInitNodeInfoSeq	(xmlParserNodeInfoSeqPtr seq);
 XMLPUBFUN void XMLCALL
 		xmlClearNodeInfoSeq	(xmlParserNodeInfoSeqPtr seq);
 XMLPUBFUN unsigned long XMLCALL
 		xmlParserFindNodeInfoIndex(const xmlParserNodeInfoSeqPtr seq,
-                                         const xmlNodePtr node);
+                                         const lxb_dom_node_t_ptr node);
 XMLPUBFUN void XMLCALL
 		xmlParserAddNodeInfo	(xmlParserCtxtPtr ctxt,
 					 const xmlParserNodeInfoPtr info);

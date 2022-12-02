@@ -56,7 +56,7 @@ XMLPUBFUN xmlPatternPtr XMLCALL
 						 const xmlChar **namespaces);
 XMLPUBFUN int XMLCALL
 			xmlPatternMatch		(xmlPatternPtr comp,
-						 xmlNodePtr node);
+						 lxb_dom_node_t_ptr node);
 
 /* streaming interfaces */
 typedef struct _xmlStreamCtxt xmlStreamCtxt;
