@@ -139,6 +139,12 @@
 #define XPATH_MAX_RECURSION_DEPTH 5000
 #endif
 
+static size_t tmp_len;
+
+#define NODE_NAME(node) lxb_dom_node_name(node, &tmp_len)
+#define NODE_NS_HREF(node) lxb_ns_by_id(node->owner_document->ns, node->ns, &tmp_len)
+#define NODE_NS_PREFIX(node) lxb_ns_by_id(node->owner_document->prefix, node->prefix, &tmp_len)
+
 /*
  * TODO:
  * There are a few spots where some tests are done which depend upon ascii
@@ -7979,8 +7985,8 @@ xmlXPathNextParent(xmlXPathParserContextPtr ctxt, lxb_dom_node_t_ptr cur) {
 		if (ctxt->context->node->parent == NULL)
 		    return((lxb_dom_node_t_ptr) ctxt->context->doc);
 		if ((ctxt->context->node->parent->type == LXB_DOM_NODE_TYPE_ELEMENT) &&
-		    ((ctxt->context->node->parent->name[0] == ' ') ||
-		     (xmlStrEqual(ctxt->context->node->parent->name,
+		    ((NODE_NAME(ctxt->context->node->parent)[0] == ' ') ||
+		     (xmlStrEqual(NODE_NAME(ctxt->context->node->parent),
 				 BAD_CAST "fake node libxslt"))))
 		    return(NULL);
 		return(ctxt->context->node->parent);
@@ -8049,8 +8055,8 @@ xmlXPathNextAncestor(xmlXPathParserContextPtr ctxt, lxb_dom_node_t_ptr cur) {
 		if (ctxt->context->node->parent == NULL)
 		    return((lxb_dom_node_t_ptr) ctxt->context->doc);
 		if ((ctxt->context->node->parent->type == LXB_DOM_NODE_TYPE_ELEMENT) &&
-		    ((ctxt->context->node->parent->name[0] == ' ') ||
-		     (xmlStrEqual(ctxt->context->node->parent->name,
+		    ((NODE_NAME(ctxt->context->node->parent) == ' ') ||
+		     (xmlStrEqual(NODE_NAME(ctxt->context->node->parent),
 				 BAD_CAST "fake node libxslt"))))
 		    return(NULL);
 		return(ctxt->context->node->parent);
@@ -8098,8 +8104,8 @@ xmlXPathNextAncestor(xmlXPathParserContextPtr ctxt, lxb_dom_node_t_ptr cur) {
 	    if (cur->parent == NULL)
 		return(NULL);
 	    if ((cur->parent->type == LXB_DOM_NODE_TYPE_ELEMENT) &&
-		((cur->parent->name[0] == ' ') ||
-		 (xmlStrEqual(cur->parent->name,
+		((NODE_NAME(cur->parent)[0] == ' ') ||
+		 (xmlStrEqual(NODE_NAME(cur->parent),
 			      BAD_CAST "fake node libxslt"))))
 		return(NULL);
 	    return(cur->parent);
@@ -8717,12 +8723,12 @@ xmlXPathLocalNameFunction(xmlXPathParserContextPtr ctxt, int nargs) {
 	case LXB_DOM_NODE_TYPE_ELEMENT:
 	case LXB_DOM_NODE_TYPE_ATTRIBUTE:
 	case LXB_DOM_NODE_TYPE_PROCESSING_INSTRUCTION:
-	    if (cur->nodesetval->nodeTab[i]->name[0] == ' ')
+	    if (NODE_NAME(cur->nodesetval->nodeTab[i])[0] == ' ')
 		valuePush(ctxt, xmlXPathCacheNewCString(ctxt->context, ""));
 	    else
 		valuePush(ctxt,
 		      xmlXPathCacheNewString(ctxt->context,
-			cur->nodesetval->nodeTab[i]->name));
+			NODE_NAME(cur->nodesetval->nodeTab[i])));
 	    break;
 	case XML_NAMESPACE_DECL:
 	    valuePush(ctxt, xmlXPathCacheNewString(ctxt->context,
@@ -8778,7 +8784,7 @@ xmlXPathNamespaceURIFunction(xmlXPathParserContextPtr ctxt, int nargs) {
 		valuePush(ctxt, xmlXPathCacheNewCString(ctxt->context, ""));
 	    else
 		valuePush(ctxt, xmlXPathCacheNewString(ctxt->context,
-			  cur->nodesetval->nodeTab[i]->ns->href));
+			  NODE_NS_HREF(cur->nodesetval->nodeTab[i])));
 	    break;
 	default:
 	    valuePush(ctxt, xmlXPathCacheNewCString(ctxt->context, ""));
@@ -8835,22 +8841,21 @@ xmlXPathNameFunction(xmlXPathParserContextPtr ctxt, int nargs)
         switch (cur->nodesetval->nodeTab[i]->type) {
             case LXB_DOM_NODE_TYPE_ELEMENT:
             case LXB_DOM_NODE_TYPE_ATTRIBUTE:
-		if (cur->nodesetval->nodeTab[i]->name[0] == ' ')
+		if (NODE_NAME(cur->nodesetval->nodeTab[i])[0] == ' ')
 		    valuePush(ctxt,
 			xmlXPathCacheNewCString(ctxt->context, ""));
-		else if ((cur->nodesetval->nodeTab[i]->ns == NULL) ||
-                         (cur->nodesetval->nodeTab[i]->ns->prefix == NULL)) {
+		else if (cur->nodesetval->nodeTab[i]->prefix == NULL) {
 		    valuePush(ctxt,
 		        xmlXPathCacheNewString(ctxt->context,
-			    cur->nodesetval->nodeTab[i]->name));
+			    NODE_NAME(cur->nodesetval->nodeTab[i])));
 		} else {
 		    xmlChar *fullname;
 
-		    fullname = xmlBuildQName(cur->nodesetval->nodeTab[i]->name,
-				     cur->nodesetval->nodeTab[i]->ns->prefix,
+		    fullname = xmlBuildQName(NODE_NAME(cur->nodesetval->nodeTab[i]),
+				     NODE_NS_PREFIX(cur->nodesetval->nodeTab[i]),
 				     NULL, 0);
-		    if (fullname == cur->nodesetval->nodeTab[i]->name)
-			fullname = xmlStrdup(cur->nodesetval->nodeTab[i]->name);
+		    if (fullname == NODE_NAME(cur->nodesetval->nodeTab[i]))
+			fullname = xmlStrdup(NODE_NAME(cur->nodesetval->nodeTab[i]));
 		    if (fullname == NULL) {
 			XP_ERROR(XPATH_MEMORY_ERROR);
 		    }
@@ -12315,7 +12320,7 @@ xmlXPathNodeCollectAndTest(xmlXPathParserContextPtr ctxt,
 		    break;
                 case NODE_TEST_PI:
                     if ((cur->type == LXB_DOM_NODE_TYPE_PROCESSING_INSTRUCTION) &&
-                        ((name == NULL) || xmlStrEqual(name, cur->name)))
+                        ((name == NULL) || xmlStrEqual(name, NODE_NAME(cur))))
 		    {
 			XP_TEST_HIT
                     }
@@ -12328,7 +12333,7 @@ xmlXPathNodeCollectAndTest(xmlXPathParserContextPtr ctxt,
 			    {
 				XP_TEST_HIT
                             } else if ((cur->ns != NULL) &&
-				(xmlStrEqual(URI, cur->ns->href)))
+				(xmlStrEqual(URI, NODE_NS_HREF(cur))))
 			    {
 				XP_TEST_HIT
                             }
@@ -12345,7 +12350,7 @@ xmlXPathNodeCollectAndTest(xmlXPathParserContextPtr ctxt,
 				XP_TEST_HIT
 
                             } else if ((cur->ns != NULL) &&
-				(xmlStrEqual(URI, cur->ns->href)))
+				(xmlStrEqual(URI, NODE_NS_HREF(cur))))
 			    {
 				XP_TEST_HIT
                             }
@@ -12369,7 +12374,7 @@ xmlXPathNodeCollectAndTest(xmlXPathParserContextPtr ctxt,
 		    }
                     switch (cur->type) {
                         case LXB_DOM_NODE_TYPE_ELEMENT:
-                            if (xmlStrEqual(name, cur->name)) {
+                            if (xmlStrEqual(name, NODE_NAME(cur))) {
                                 if (prefix == NULL) {
                                     if (cur->ns == NULL)
 				    {
@@ -12377,7 +12382,7 @@ xmlXPathNodeCollectAndTest(xmlXPathParserContextPtr ctxt,
                                     }
                                 } else {
                                     if ((cur->ns != NULL) &&
-                                        (xmlStrEqual(URI, cur->ns->href)))
+                                        (xmlStrEqual(URI, NODE_NS_HREF(cur))))
 				    {
 					XP_TEST_HIT
                                     }
@@ -13776,8 +13781,8 @@ next_node:
 	    case LXB_DOM_NODE_TYPE_COMMENT:
 	    case LXB_DOM_NODE_TYPE_PROCESSING_INSTRUCTION:
 		if (cur->type == LXB_DOM_NODE_TYPE_ELEMENT) {
-		    ret = xmlStreamPush(patstream, cur->name,
-				(cur->ns ? cur->ns->href : NULL));
+		    ret = xmlStreamPush(patstream, NODE_NAME(cur),
+				(cur->ns ? NODE_NS_HREF(cur) : NULL));
 		} else if (eval_all_nodes)
 		    ret = xmlStreamPushNode(patstream, NULL, NULL, cur->type);
 		else
