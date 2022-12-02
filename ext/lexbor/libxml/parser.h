@@ -184,7 +184,7 @@ typedef struct _xmlStartTag xmlStartTag;
 struct _xmlParserCtxt {
     struct _xmlSAXHandler *sax;       /* The SAX handler */
     void            *userData;        /* For SAX interface only, used by DOM build */
-    xmlDocPtr           myDoc;        /* the document being built */
+    lxb_dom_document_t_ptr           myDoc;        /* the document being built */
     int            wellFormed;        /* is the document well formed */
     int       replaceEntities;        /* shall we replace entities ? */
     const xmlChar    *version;        /* the XML version string */
@@ -840,11 +840,11 @@ XMLPUBFUN int XMLCALL
  * Basic parsing Interfaces
  */
 #ifdef LIBXML_SAX1_ENABLED
-XMLPUBFUN xmlDocPtr XMLCALL
+XMLPUBFUN lxb_dom_document_t_ptr XMLCALL
 		xmlParseDoc		(const xmlChar *cur);
-XMLPUBFUN xmlDocPtr XMLCALL
+XMLPUBFUN lxb_dom_document_t_ptr XMLCALL
 		xmlParseFile		(const char *filename);
-XMLPUBFUN xmlDocPtr XMLCALL
+XMLPUBFUN lxb_dom_document_t_ptr XMLCALL
 		xmlParseMemory		(const char *buffer,
 					 int size);
 #endif /* LIBXML_SAX1_ENABLED */
@@ -864,14 +864,14 @@ XMLPUBFUN int XMLCALL
  * Recovery mode
  */
 XML_DEPRECATED
-XMLPUBFUN xmlDocPtr XMLCALL
+XMLPUBFUN lxb_dom_document_t_ptr XMLCALL
 		xmlRecoverDoc		(const xmlChar *cur);
 XML_DEPRECATED
-XMLPUBFUN xmlDocPtr XMLCALL
+XMLPUBFUN lxb_dom_document_t_ptr XMLCALL
 		xmlRecoverMemory	(const char *buffer,
 					 int size);
 XML_DEPRECATED
-XMLPUBFUN xmlDocPtr XMLCALL
+XMLPUBFUN lxb_dom_document_t_ptr XMLCALL
 		xmlRecoverFile		(const char *filename);
 #endif /* LIBXML_SAX1_ENABLED */
 
@@ -895,40 +895,40 @@ XMLPUBFUN int XMLCALL
 					 const char *buffer,
 					 int size);
 XML_DEPRECATED
-XMLPUBFUN xmlDocPtr XMLCALL
+XMLPUBFUN lxb_dom_document_t_ptr XMLCALL
 		xmlSAXParseDoc		(xmlSAXHandlerPtr sax,
 					 const xmlChar *cur,
 					 int recovery);
 XML_DEPRECATED
-XMLPUBFUN xmlDocPtr XMLCALL
+XMLPUBFUN lxb_dom_document_t_ptr XMLCALL
 		xmlSAXParseMemory	(xmlSAXHandlerPtr sax,
 					 const char *buffer,
 					 int size,
 					 int recovery);
 XML_DEPRECATED
-XMLPUBFUN xmlDocPtr XMLCALL
+XMLPUBFUN lxb_dom_document_t_ptr XMLCALL
 		xmlSAXParseMemoryWithData (xmlSAXHandlerPtr sax,
 					 const char *buffer,
 					 int size,
 					 int recovery,
 					 void *data);
 XML_DEPRECATED
-XMLPUBFUN xmlDocPtr XMLCALL
+XMLPUBFUN lxb_dom_document_t_ptr XMLCALL
 		xmlSAXParseFile		(xmlSAXHandlerPtr sax,
 					 const char *filename,
 					 int recovery);
 XML_DEPRECATED
-XMLPUBFUN xmlDocPtr XMLCALL
+XMLPUBFUN lxb_dom_document_t_ptr XMLCALL
 		xmlSAXParseFileWithData	(xmlSAXHandlerPtr sax,
 					 const char *filename,
 					 int recovery,
 					 void *data);
 XML_DEPRECATED
-XMLPUBFUN xmlDocPtr XMLCALL
+XMLPUBFUN lxb_dom_document_t_ptr XMLCALL
 		xmlSAXParseEntity	(xmlSAXHandlerPtr sax,
 					 const char *filename);
 XML_DEPRECATED
-XMLPUBFUN xmlDocPtr XMLCALL
+XMLPUBFUN lxb_dom_document_t_ptr XMLCALL
 		xmlParseEntity		(const char *filename);
 #endif /* LIBXML_SAX1_ENABLED */
 
@@ -948,7 +948,7 @@ XMLPUBFUN xmlDtdPtr XMLCALL
 #endif /* LIBXML_VALID_ENABLE */
 #ifdef LIBXML_SAX1_ENABLED
 XMLPUBFUN int XMLCALL
-		xmlParseBalancedChunkMemory(xmlDocPtr doc,
+		xmlParseBalancedChunkMemory(lxb_dom_document_t_ptr doc,
 					 xmlSAXHandlerPtr sax,
 					 void *user_data,
 					 int depth,
@@ -963,7 +963,7 @@ XMLPUBFUN xmlParserErrors XMLCALL
 					 lxb_dom_node_t_ptr *lst);
 #ifdef LIBXML_SAX1_ENABLED
 XMLPUBFUN int XMLCALL
-		xmlParseBalancedChunkMemoryRecover(xmlDocPtr doc,
+		xmlParseBalancedChunkMemoryRecover(lxb_dom_document_t_ptr doc,
                      xmlSAXHandlerPtr sax,
                      void *user_data,
                      int depth,
@@ -972,7 +972,7 @@ XMLPUBFUN int XMLCALL
                      int recover);
 XML_DEPRECATED
 XMLPUBFUN int XMLCALL
-		xmlParseExternalEntity	(xmlDocPtr doc,
+		xmlParseExternalEntity	(lxb_dom_document_t_ptr doc,
 					 xmlSAXHandlerPtr sax,
 					 void *user_data,
 					 int depth,
@@ -1148,58 +1148,58 @@ XMLPUBFUN int XMLCALL
 XMLPUBFUN int XMLCALL
 		xmlCtxtUseOptions	(xmlParserCtxtPtr ctxt,
 					 int options);
-XMLPUBFUN xmlDocPtr XMLCALL
+XMLPUBFUN lxb_dom_document_t_ptr XMLCALL
 		xmlReadDoc		(const xmlChar *cur,
 					 const char *URL,
 					 const char *encoding,
 					 int options);
-XMLPUBFUN xmlDocPtr XMLCALL
+XMLPUBFUN lxb_dom_document_t_ptr XMLCALL
 		xmlReadFile		(const char *URL,
 					 const char *encoding,
 					 int options);
-XMLPUBFUN xmlDocPtr XMLCALL
+XMLPUBFUN lxb_dom_document_t_ptr XMLCALL
 		xmlReadMemory		(const char *buffer,
 					 int size,
 					 const char *URL,
 					 const char *encoding,
 					 int options);
-XMLPUBFUN xmlDocPtr XMLCALL
+XMLPUBFUN lxb_dom_document_t_ptr XMLCALL
 		xmlReadFd		(int fd,
 					 const char *URL,
 					 const char *encoding,
 					 int options);
-XMLPUBFUN xmlDocPtr XMLCALL
+XMLPUBFUN lxb_dom_document_t_ptr XMLCALL
 		xmlReadIO		(xmlInputReadCallback ioread,
 					 xmlInputCloseCallback ioclose,
 					 void *ioctx,
 					 const char *URL,
 					 const char *encoding,
 					 int options);
-XMLPUBFUN xmlDocPtr XMLCALL
+XMLPUBFUN lxb_dom_document_t_ptr XMLCALL
 		xmlCtxtReadDoc		(xmlParserCtxtPtr ctxt,
 					 const xmlChar *cur,
 					 const char *URL,
 					 const char *encoding,
 					 int options);
-XMLPUBFUN xmlDocPtr XMLCALL
+XMLPUBFUN lxb_dom_document_t_ptr XMLCALL
 		xmlCtxtReadFile		(xmlParserCtxtPtr ctxt,
 					 const char *filename,
 					 const char *encoding,
 					 int options);
-XMLPUBFUN xmlDocPtr XMLCALL
+XMLPUBFUN lxb_dom_document_t_ptr XMLCALL
 		xmlCtxtReadMemory		(xmlParserCtxtPtr ctxt,
 					 const char *buffer,
 					 int size,
 					 const char *URL,
 					 const char *encoding,
 					 int options);
-XMLPUBFUN xmlDocPtr XMLCALL
+XMLPUBFUN lxb_dom_document_t_ptr XMLCALL
 		xmlCtxtReadFd		(xmlParserCtxtPtr ctxt,
 					 int fd,
 					 const char *URL,
 					 const char *encoding,
 					 int options);
-XMLPUBFUN xmlDocPtr XMLCALL
+XMLPUBFUN lxb_dom_document_t_ptr XMLCALL
 		xmlCtxtReadIO		(xmlParserCtxtPtr ctxt,
 					 xmlInputReadCallback ioread,
 					 xmlInputCloseCallback ioclose,

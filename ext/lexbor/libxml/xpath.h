@@ -512,7 +512,7 @@ XMLPUBFUN xmlXPathObjectPtr XMLCALL
  * Context handling.
  */
 XMLPUBFUN xmlXPathContextPtr XMLCALL
-		    xmlXPathNewContext		(xmlDocPtr doc);
+		    xmlXPathNewContext		(lxb_dom_document_t_ptr doc);
 XMLPUBFUN void XMLCALL
 		    xmlXPathFreeContext		(xmlXPathContextPtr ctxt);
 XMLPUBFUN int XMLCALL
@@ -524,7 +524,7 @@ XMLPUBFUN int XMLCALL
  * Evaluation functions.
  */
 XMLPUBFUN long XMLCALL
-		    xmlXPathOrderDocElems	(xmlDocPtr doc);
+		    xmlXPathOrderDocElems	(lxb_dom_document_t_ptr doc);
 XMLPUBFUN int XMLCALL
 		    xmlXPathSetContextNode	(lxb_dom_node_t_ptr node,
 						 xmlXPathContextPtr ctx);

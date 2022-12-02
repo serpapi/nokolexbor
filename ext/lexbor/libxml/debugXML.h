@@ -50,16 +50,16 @@ XMLPUBFUN void XMLCALL
 				 int depth);
 XMLPUBFUN void XMLCALL
 	xmlDebugDumpDocumentHead(FILE *output,
-				 xmlDocPtr doc);
+				 lxb_dom_document_t_ptr doc);
 XMLPUBFUN void XMLCALL
 	xmlDebugDumpDocument	(FILE *output,
-				 xmlDocPtr doc);
+				 lxb_dom_document_t_ptr doc);
 XMLPUBFUN void XMLCALL
 	xmlDebugDumpDTD		(FILE *output,
 				 xmlDtdPtr dtd);
 XMLPUBFUN void XMLCALL
 	xmlDebugDumpEntities	(FILE *output,
-				 xmlDocPtr doc);
+				 lxb_dom_document_t_ptr doc);
 
 /****************************************************************
  *								*
@@ -69,7 +69,7 @@ XMLPUBFUN void XMLCALL
 
 XMLPUBFUN int XMLCALL
 	xmlDebugCheckDocument	(FILE * output,
-				 xmlDocPtr doc);
+				 lxb_dom_document_t_ptr doc);
 
 /****************************************************************
  *								*
@@ -112,7 +112,7 @@ typedef struct _xmlShellCtxt xmlShellCtxt;
 typedef xmlShellCtxt *xmlShellCtxtPtr;
 struct _xmlShellCtxt {
     char *filename;
-    xmlDocPtr doc;
+    lxb_dom_document_t_ptr doc;
     lxb_dom_node_t_ptr node;
     xmlXPathContextPtr pctxt;
     int loaded;
@@ -202,7 +202,7 @@ XMLPUBFUN int XMLCALL
  * The Shell interface.
  */
 XMLPUBFUN void XMLCALL
-	xmlShell		(xmlDocPtr doc,
+	xmlShell		(lxb_dom_document_t_ptr doc,
 				 char *filename,
 				 xmlShellReadlineFunc input,
 				 FILE *output);

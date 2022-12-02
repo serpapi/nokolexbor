@@ -3290,13 +3290,13 @@ xmlXPathFormatNumber(double number, char buffer[], int buffersize)
  *    of error.
  */
 long
-xmlXPathOrderDocElems(xmlDocPtr doc) {
+xmlXPathOrderDocElems(lxb_dom_document_t_ptr doc) {
     ptrdiff_t count = 0;
     lxb_dom_node_t_ptr cur;
 
     if (doc == NULL)
 	return(-1);
-    cur = doc->children;
+    cur = doc->node.first_child;
     while (cur != NULL) {
 	if (cur->type == LXB_DOM_NODE_TYPE_ELEMENT) {
 	    cur->user = (void *) (-(++count));
@@ -5430,7 +5430,7 @@ xmlXPathObjectCopy(xmlXPathObjectPtr val) {
 	    if ((val->nodesetval != NULL) &&
 		(val->nodesetval->nodeTab != NULL)) {
 		lxb_dom_node_t_ptr cur, tmp;
-		xmlDocPtr top;
+		lxb_dom_document_t_ptr top;
 
 		ret->boolval = 1;
 		top =  xmlNewDoc(NULL);
@@ -6129,7 +6129,7 @@ xmlXPathConvertBoolean(xmlXPathObjectPtr val) {
  * Returns the xmlXPathContext just allocated. The caller will need to free it.
  */
 xmlXPathContextPtr
-xmlXPathNewContext(xmlDocPtr doc) {
+xmlXPathNewContext(lxb_dom_document_t_ptr doc) {
     xmlXPathContextPtr ret;
 
     ret = (xmlXPathContextPtr) xmlMalloc(sizeof(xmlXPathContext));
@@ -6359,7 +6359,7 @@ xmlXPathNodeValHash(lxb_dom_node_t_ptr node) {
 	return(0);
 
     if (node->type == LXB_DOM_NODE_TYPE_DOCUMENT) {
-	tmp = xmlDocGetRootElement((xmlDocPtr) node);
+	tmp = xmlDocGetRootElement((lxb_dom_document_t_ptr) node);
 	if (tmp == NULL)
 	    node = node->first_child;
 	else
@@ -7694,7 +7694,7 @@ xmlXPathNextChild(xmlXPathParserContextPtr ctxt, lxb_dom_node_t_ptr cur) {
             case LXB_DOM_NODE_TYPE_DOCUMENT_TYPE:
             case LXB_DOM_NODE_TYPE_DOCUMENT_FRAGMENT:
             case XML_HTML_DOCUMENT_NODE:
-		return(((xmlDocPtr) ctxt->context->node)->children);
+		return(((lxb_dom_document_t_ptr) ctxt->context->node)->node.first_child);
 	    case XML_ELEMENT_DECL:
 	    case XML_ATTRIBUTE_DECL:
 	    case XML_ENTITY_DECL:
@@ -7749,7 +7749,7 @@ xmlXPathNextChildElement(xmlXPathParserContextPtr ctxt, lxb_dom_node_t_ptr cur) 
 		return(NULL);
             case LXB_DOM_NODE_TYPE_DOCUMENT:
             case XML_HTML_DOCUMENT_NODE:
-		return(xmlDocGetRootElement((xmlDocPtr) cur));
+		return(xmlDocGetRootElement((lxb_dom_document_t_ptr) cur));
 	    default:
 		return(NULL);
 	}
@@ -7836,7 +7836,7 @@ xmlXPathNextDescendantOrSelfElemParent(lxb_dom_node_t_ptr cur,
 		case XML_HTML_DOCUMENT_NODE:
 		    if (cur != start)
 			return(cur);
-		    return(xmlDocGetRootElement((xmlDocPtr) cur));
+		    return(xmlDocGetRootElement((lxb_dom_document_t_ptr) cur));
 		default:
 		    break;
 	    }
@@ -8577,7 +8577,7 @@ xmlXPathCountFunction(xmlXPathParserContextPtr ctxt, int nargs) {
  * Returns a node-set of selected elements.
  */
 static xmlNodeSetPtr
-xmlXPathGetElementsByIds (xmlDocPtr doc, const xmlChar *ids) {
+xmlXPathGetElementsByIds (lxb_dom_document_t_ptr doc, const xmlChar *ids) {
     xmlNodeSetPtr ret;
     const xmlChar *cur = ids;
     xmlChar *ID;
@@ -11640,7 +11640,7 @@ xmlXPathNodeSetFilter(xmlXPathParserContextPtr ctxt,
 {
     xmlXPathContextPtr xpctxt;
     lxb_dom_node_t_ptr oldnode;
-    xmlDocPtr olddoc;
+    lxb_dom_document_t_ptr olddoc;
     xmlXPathStepOpPtr filterOp;
     int oldcs, oldpp;
     int i, j, pos;
@@ -11773,7 +11773,7 @@ xmlXPathLocationSetFilter(xmlXPathParserContextPtr ctxt,
 {
     xmlXPathContextPtr xpctxt;
     lxb_dom_node_t_ptr oldnode;
-    xmlDocPtr olddoc;
+    lxb_dom_document_t_ptr olddoc;
     xmlXPathStepOpPtr filterOp;
     int oldcs, oldpp;
     int i, j, pos;

@@ -81,21 +81,21 @@ XMLPUBFUN void XMLCALL
 #endif /* LIBXML_LEGACY_ENABLED */
 
 XMLPUBFUN xmlEntityPtr XMLCALL
-			xmlNewEntity		(xmlDocPtr doc,
+			xmlNewEntity		(lxb_dom_document_t_ptr doc,
 						 const xmlChar *name,
 						 int type,
 						 const xmlChar *ExternalID,
 						 const xmlChar *SystemID,
 						 const xmlChar *content);
 XMLPUBFUN xmlEntityPtr XMLCALL
-			xmlAddDocEntity		(xmlDocPtr doc,
+			xmlAddDocEntity		(lxb_dom_document_t_ptr doc,
 						 const xmlChar *name,
 						 int type,
 						 const xmlChar *ExternalID,
 						 const xmlChar *SystemID,
 						 const xmlChar *content);
 XMLPUBFUN xmlEntityPtr XMLCALL
-			xmlAddDtdEntity		(xmlDocPtr doc,
+			xmlAddDtdEntity		(lxb_dom_document_t_ptr doc,
 						 const xmlChar *name,
 						 int type,
 						 const xmlChar *ExternalID,
@@ -107,19 +107,19 @@ XMLPUBFUN xmlEntityPtr XMLCALL
 			xmlGetDocEntity		(const xmlDoc *doc,
 						 const xmlChar *name);
 XMLPUBFUN xmlEntityPtr XMLCALL
-			xmlGetDtdEntity		(xmlDocPtr doc,
+			xmlGetDtdEntity		(lxb_dom_document_t_ptr doc,
 						 const xmlChar *name);
 XMLPUBFUN xmlEntityPtr XMLCALL
-			xmlGetParameterEntity	(xmlDocPtr doc,
+			xmlGetParameterEntity	(lxb_dom_document_t_ptr doc,
 						 const xmlChar *name);
 #ifdef LIBXML_LEGACY_ENABLED
 XML_DEPRECATED
 XMLPUBFUN const xmlChar * XMLCALL
-			xmlEncodeEntities	(xmlDocPtr doc,
+			xmlEncodeEntities	(lxb_dom_document_t_ptr doc,
 						 const xmlChar *input);
 #endif /* LIBXML_LEGACY_ENABLED */
 XMLPUBFUN xmlChar * XMLCALL
-			xmlEncodeEntitiesReentrant(xmlDocPtr doc,
+			xmlEncodeEntitiesReentrant(lxb_dom_document_t_ptr doc,
 						 const xmlChar *input);
 XMLPUBFUN xmlChar * XMLCALL
 			xmlEncodeSpecialChars	(const xmlDoc *doc,

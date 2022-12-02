@@ -31,7 +31,7 @@ typedef xmlSAXHandler htmlSAXHandler;
 typedef xmlSAXHandlerPtr htmlSAXHandlerPtr;
 typedef xmlParserInput htmlParserInput;
 typedef xmlParserInputPtr htmlParserInputPtr;
-typedef xmlDocPtr htmlDocPtr;
+typedef lxb_dom_document_t_ptr htmlDocPtr;
 typedef lxb_dom_node_t_ptr htmlNodePtr;
 
 /*

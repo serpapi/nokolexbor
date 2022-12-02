@@ -111,7 +111,7 @@ XMLPUBFUN void XMLCALL
  * Functions.
  */
 XMLPUBFUN xmlXPathContextPtr XMLCALL
-		    xmlXPtrNewContext		(xmlDocPtr doc,
+		    xmlXPtrNewContext		(lxb_dom_document_t_ptr doc,
 						 lxb_dom_node_t_ptr here,
 						 lxb_dom_node_t_ptr origin);
 XMLPUBFUN xmlXPathObjectPtr XMLCALL
