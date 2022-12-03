@@ -8401,29 +8401,30 @@ xmlXPathNextPrecedingInternal(xmlXPathParserContextPtr ctxt,
  */
 lxb_dom_node_t_ptr
 xmlXPathNextNamespace(xmlXPathParserContextPtr ctxt, lxb_dom_node_t_ptr cur) {
-    if ((ctxt == NULL) || (ctxt->context == NULL)) return(NULL);
-    if (ctxt->context->node->type != LXB_DOM_NODE_TYPE_ELEMENT) return(NULL);
-    if (cur == NULL) {
-        if (ctxt->context->tmpNsList != NULL)
-	    xmlFree(ctxt->context->tmpNsList);
-	ctxt->context->tmpNsList =
-	    xmlGetNsList(ctxt->context->doc, ctxt->context->node);
-	ctxt->context->tmpNsNr = 0;
-	if (ctxt->context->tmpNsList != NULL) {
-	    while (ctxt->context->tmpNsList[ctxt->context->tmpNsNr] != NULL) {
-		ctxt->context->tmpNsNr++;
-	    }
-	}
-	return((lxb_dom_node_t_ptr) xmlXPathXMLNamespace);
-    }
-    if (ctxt->context->tmpNsNr > 0) {
-	return (lxb_dom_node_t_ptr)ctxt->context->tmpNsList[--ctxt->context->tmpNsNr];
-    } else {
-	if (ctxt->context->tmpNsList != NULL)
-	    xmlFree(ctxt->context->tmpNsList);
-	ctxt->context->tmpNsList = NULL;
-	return(NULL);
-    }
+    return NULL;
+    // if ((ctxt == NULL) || (ctxt->context == NULL)) return(NULL);
+    // if (ctxt->context->node->type != LXB_DOM_NODE_TYPE_ELEMENT) return(NULL);
+    // if (cur == NULL) {
+    //     if (ctxt->context->tmpNsList != NULL)
+	//     xmlFree(ctxt->context->tmpNsList);
+	// ctxt->context->tmpNsList =
+	//     xmlGetNsList(ctxt->context->doc, ctxt->context->node);
+	// ctxt->context->tmpNsNr = 0;
+	// if (ctxt->context->tmpNsList != NULL) {
+	//     while (ctxt->context->tmpNsList[ctxt->context->tmpNsNr] != NULL) {
+	// 	ctxt->context->tmpNsNr++;
+	//     }
+	// }
+	// return((lxb_dom_node_t_ptr) xmlXPathXMLNamespace);
+    // }
+    // if (ctxt->context->tmpNsNr > 0) {
+	// return (lxb_dom_node_t_ptr)ctxt->context->tmpNsList[--ctxt->context->tmpNsNr];
+    // } else {
+	// if (ctxt->context->tmpNsList != NULL)
+	//     xmlFree(ctxt->context->tmpNsList);
+	// ctxt->context->tmpNsList = NULL;
+	// return(NULL);
+    // }
 }
 
 /**
