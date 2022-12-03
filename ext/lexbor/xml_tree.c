@@ -100,3 +100,44 @@ xmlBuildQName(const xmlChar *ncname, const xmlChar *prefix,
     ret[lenn + lenp + 1] = 0;
     return(ret);
 }
+
+/**
+ * xmlNodeGetContent:
+ * @cur:  the node being read
+ *
+ * Read the value of a node, this can be either the text carried
+ * directly by this node if it's a TEXT node or the aggregate string
+ * of the values carried by this node child's (TEXT and ENTITY_REF).
+ * Entity references are substituted.
+ * Returns a new #xmlChar * or NULL if no content is available.
+ *     It's up to the caller to free the memory with xmlFree().
+ */
+xmlChar *
+xmlNodeGetContent(const lxb_dom_node_t *cur)
+{
+    size_t tmp_len;
+    return lxb_dom_node_text_content(cur, &tmp_len);
+}
+
+/**
+ * xmlDocGetRootElement:
+ * @doc:  the document
+ *
+ * Get the root element of the document (doc->children is a list
+ * containing possibly comments, PIs, etc ...).
+ *
+ * Returns the #xmlNodePtr for the root or NULL
+ */
+lxb_dom_node_t_ptr
+xmlDocGetRootElement(const lxb_dom_document_t *doc) {
+    lxb_dom_node_t_ptr ret;
+
+    if (doc == NULL) return(NULL);
+    ret = doc->node.first_child;
+    while (ret != NULL) {
+	if (ret->type == LXB_DOM_NODE_TYPE_ELEMENT)
+	    return(ret);
+        ret = ret->next;
+    }
+    return(ret);
+}

@@ -921,7 +921,7 @@ XMLPUBFUN xmlChar * XMLCALL
 		xmlGetNodePath		(const xmlNode *node);
 #endif /* defined(LIBXML_TREE_ENABLED) || defined(LIBXML_DEBUG_ENABLED) */
 XMLPUBFUN lxb_dom_node_t_ptr XMLCALL
-		xmlDocGetRootElement	(const xmlDoc *doc);
+		xmlDocGetRootElement	(const lxb_dom_document_t *doc);
 XMLPUBFUN lxb_dom_node_t_ptr XMLCALL
 		xmlGetLastChild		(const xmlNode *parent);
 XMLPUBFUN int XMLCALL
@@ -1077,19 +1077,19 @@ XMLPUBFUN void XMLCALL
 					 const xmlChar *content,
 					 int len);
 XMLPUBFUN xmlChar * XMLCALL
-		xmlNodeGetContent	(const xmlNode *cur);
+		xmlNodeGetContent	(const lxb_dom_node_t *cur);
 
 XMLPUBFUN int XMLCALL
 		xmlNodeBufGetContent	(xmlBufferPtr buffer,
-					 const xmlNode *cur);
+					 const lxb_dom_node_t *cur);
 XMLPUBFUN int XMLCALL
 		xmlBufGetNodeContent	(xmlBufPtr buf,
-					 const xmlNode *cur);
+					 const lxb_dom_node_t *cur);
 
 XMLPUBFUN xmlChar * XMLCALL
-		xmlNodeGetLang		(const xmlNode *cur);
+		xmlNodeGetLang		(const lxb_dom_node_t *cur);
 XMLPUBFUN int XMLCALL
-		xmlNodeGetSpacePreserve	(const xmlNode *cur);
+		xmlNodeGetSpacePreserve	(const lxb_dom_node_t *cur);
 #ifdef LIBXML_TREE_ENABLED
 XMLPUBFUN void XMLCALL
 		xmlNodeSetLang		(lxb_dom_node_t_ptr cur,
@@ -1100,7 +1100,7 @@ XMLPUBFUN void XMLCALL
 #endif /* LIBXML_TREE_ENABLED */
 XMLPUBFUN xmlChar * XMLCALL
 		xmlNodeGetBase		(const xmlDoc *doc,
-					 const xmlNode *cur);
+					 const lxb_dom_node_t *cur);
 #if defined(LIBXML_TREE_ENABLED) || defined(LIBXML_XINCLUDE_ENABLED)
 XMLPUBFUN void XMLCALL
 		xmlNodeSetBase		(lxb_dom_node_t_ptr cur,
