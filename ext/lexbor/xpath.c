@@ -8576,54 +8576,54 @@ xmlXPathCountFunction(xmlXPathParserContextPtr ctxt, int nargs) {
  *
  * Returns a node-set of selected elements.
  */
-static xmlNodeSetPtr
-xmlXPathGetElementsByIds (lxb_dom_document_t_ptr doc, const xmlChar *ids) {
-    xmlNodeSetPtr ret;
-    const xmlChar *cur = ids;
-    xmlChar *ID;
-    xmlAttrPtr attr;
-    lxb_dom_node_t_ptr elem = NULL;
+// static xmlNodeSetPtr
+// xmlXPathGetElementsByIds (lxb_dom_document_t_ptr doc, const xmlChar *ids) {
+//     xmlNodeSetPtr ret;
+//     const xmlChar *cur = ids;
+//     xmlChar *ID;
+//     xmlAttrPtr attr;
+//     lxb_dom_node_t_ptr elem = NULL;
 
-    if (ids == NULL) return(NULL);
+//     if (ids == NULL) return(NULL);
 
-    ret = xmlXPathNodeSetCreate(NULL);
-    if (ret == NULL)
-        return(ret);
+//     ret = xmlXPathNodeSetCreate(NULL);
+//     if (ret == NULL)
+//         return(ret);
 
-    while (IS_BLANK_CH(*cur)) cur++;
-    while (*cur != 0) {
-	while ((!IS_BLANK_CH(*cur)) && (*cur != 0))
-	    cur++;
+//     while (IS_BLANK_CH(*cur)) cur++;
+//     while (*cur != 0) {
+// 	while ((!IS_BLANK_CH(*cur)) && (*cur != 0))
+// 	    cur++;
 
-        ID = xmlStrndup(ids, cur - ids);
-	if (ID != NULL) {
-	    /*
-	     * We used to check the fact that the value passed
-	     * was an NCName, but this generated much troubles for
-	     * me and Aleksey Sanin, people blatantly violated that
-	     * constraint, like Visa3D spec.
-	     * if (xmlValidateNCName(ID, 1) == 0)
-	     */
-	    attr = xmlGetID(doc, ID);
-	    if (attr != NULL) {
-		if (attr->type == LXB_DOM_NODE_TYPE_ATTRIBUTE)
-		    elem = attr->parent;
-		else if (attr->type == LXB_DOM_NODE_TYPE_ELEMENT)
-		    elem = (lxb_dom_node_t_ptr) attr;
-		else
-		    elem = NULL;
-                /* TODO: Check memory error. */
-		if (elem != NULL)
-		    xmlXPathNodeSetAdd(ret, elem);
-	    }
-	    xmlFree(ID);
-	}
+//         ID = xmlStrndup(ids, cur - ids);
+// 	if (ID != NULL) {
+// 	    /*
+// 	     * We used to check the fact that the value passed
+// 	     * was an NCName, but this generated much troubles for
+// 	     * me and Aleksey Sanin, people blatantly violated that
+// 	     * constraint, like Visa3D spec.
+// 	     * if (xmlValidateNCName(ID, 1) == 0)
+// 	     */
+// 	    attr = xmlGetID(doc, ID);
+// 	    if (attr != NULL) {
+// 		if (attr->type == LXB_DOM_NODE_TYPE_ATTRIBUTE)
+// 		    elem = attr->parent;
+// 		else if (attr->type == LXB_DOM_NODE_TYPE_ELEMENT)
+// 		    elem = (lxb_dom_node_t_ptr) attr;
+// 		else
+// 		    elem = NULL;
+//                 /* TODO: Check memory error. */
+// 		if (elem != NULL)
+// 		    xmlXPathNodeSetAdd(ret, elem);
+// 	    }
+// 	    xmlFree(ID);
+// 	}
 
-	while (IS_BLANK_CH(*cur)) cur++;
-	ids = cur;
-    }
-    return(ret);
-}
+// 	while (IS_BLANK_CH(*cur)) cur++;
+// 	ids = cur;
+//     }
+//     return(ret);
+// }
 
 /**
  * xmlXPathIdFunction:
@@ -8643,45 +8643,45 @@ xmlXPathGetElementsByIds (lxb_dom_document_t_ptr doc, const xmlChar *ids) {
  * containing the elements in the same document as the context node that
  * have a unique ID equal to any of the tokens in the list.
  */
-void
-xmlXPathIdFunction(xmlXPathParserContextPtr ctxt, int nargs) {
-    xmlChar *tokens;
-    xmlNodeSetPtr ret;
-    xmlXPathObjectPtr obj;
+// void
+// xmlXPathIdFunction(xmlXPathParserContextPtr ctxt, int nargs) {
+//     xmlChar *tokens;
+//     xmlNodeSetPtr ret;
+//     xmlXPathObjectPtr obj;
 
-    CHECK_ARITY(1);
-    obj = valuePop(ctxt);
-    if (obj == NULL) XP_ERROR(XPATH_INVALID_OPERAND);
-    if ((obj->type == XPATH_NODESET) || (obj->type == XPATH_XSLT_TREE)) {
-	xmlNodeSetPtr ns;
-	int i;
+//     CHECK_ARITY(1);
+//     obj = valuePop(ctxt);
+//     if (obj == NULL) XP_ERROR(XPATH_INVALID_OPERAND);
+//     if ((obj->type == XPATH_NODESET) || (obj->type == XPATH_XSLT_TREE)) {
+// 	xmlNodeSetPtr ns;
+// 	int i;
 
-        /* TODO: Check memory error. */
-	ret = xmlXPathNodeSetCreate(NULL);
+//         /* TODO: Check memory error. */
+// 	ret = xmlXPathNodeSetCreate(NULL);
 
-	if (obj->nodesetval != NULL) {
-	    for (i = 0; i < obj->nodesetval->nodeNr; i++) {
-		tokens =
-		    xmlXPathCastNodeToString(obj->nodesetval->nodeTab[i]);
-		ns = xmlXPathGetElementsByIds(ctxt->context->doc, tokens);
-                /* TODO: Check memory error. */
-		ret = xmlXPathNodeSetMerge(ret, ns);
-		xmlXPathFreeNodeSet(ns);
-		if (tokens != NULL)
-		    xmlFree(tokens);
-	    }
-	}
-	xmlXPathReleaseObject(ctxt->context, obj);
-	valuePush(ctxt, xmlXPathCacheWrapNodeSet(ctxt->context, ret));
-	return;
-    }
-    obj = xmlXPathCacheConvertString(ctxt->context, obj);
-    if (obj == NULL) return;
-    ret = xmlXPathGetElementsByIds(ctxt->context->doc, obj->stringval);
-    valuePush(ctxt, xmlXPathCacheWrapNodeSet(ctxt->context, ret));
-    xmlXPathReleaseObject(ctxt->context, obj);
-    return;
-}
+// 	if (obj->nodesetval != NULL) {
+// 	    for (i = 0; i < obj->nodesetval->nodeNr; i++) {
+// 		tokens =
+// 		    xmlXPathCastNodeToString(obj->nodesetval->nodeTab[i]);
+// 		ns = xmlXPathGetElementsByIds(ctxt->context->doc, tokens);
+//                 /* TODO: Check memory error. */
+// 		ret = xmlXPathNodeSetMerge(ret, ns);
+// 		xmlXPathFreeNodeSet(ns);
+// 		if (tokens != NULL)
+// 		    xmlFree(tokens);
+// 	    }
+// 	}
+// 	xmlXPathReleaseObject(ctxt->context, obj);
+// 	valuePush(ctxt, xmlXPathCacheWrapNodeSet(ctxt->context, ret));
+// 	return;
+//     }
+//     obj = xmlXPathCacheConvertString(ctxt->context, obj);
+//     if (obj == NULL) return;
+//     ret = xmlXPathGetElementsByIds(ctxt->context->doc, obj->stringval);
+//     valuePush(ctxt, xmlXPathCacheWrapNodeSet(ctxt->context, ret));
+//     xmlXPathReleaseObject(ctxt->context, obj);
+//     return;
+// }
 
 /**
  * xmlXPathLocalNameFunction:
@@ -14689,8 +14689,8 @@ xmlXPathRegisterAllFunctions(xmlXPathContextPtr ctxt)
                          xmlXPathConcatFunction);
     xmlXPathRegisterFunc(ctxt, (const xmlChar *)"contains",
                          xmlXPathContainsFunction);
-    xmlXPathRegisterFunc(ctxt, (const xmlChar *)"id",
-                         xmlXPathIdFunction);
+//     xmlXPathRegisterFunc(ctxt, (const xmlChar *)"id",
+//                          xmlXPathIdFunction);
     xmlXPathRegisterFunc(ctxt, (const xmlChar *)"false",
                          xmlXPathFalseFunction);
     xmlXPathRegisterFunc(ctxt, (const xmlChar *)"floor",
