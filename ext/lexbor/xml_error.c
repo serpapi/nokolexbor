@@ -74,3 +74,61 @@ __xmlRaiseError(xmlStructuredErrorFunc schannel,
     vfprintf(stderr, msg, args);
     va_end(args);
 }
+
+/**
+ * xmlResetError:
+ * @err: pointer to the error.
+ *
+ * Cleanup the error.
+ */
+void
+xmlResetError(xmlErrorPtr err)
+{
+    if (err == NULL)
+        return;
+    if (err->code == XML_ERR_OK)
+        return;
+    if (err->message != NULL)
+        xmlFree(err->message);
+    if (err->file != NULL)
+        xmlFree(err->file);
+    if (err->str1 != NULL)
+        xmlFree(err->str1);
+    if (err->str2 != NULL)
+        xmlFree(err->str2);
+    if (err->str3 != NULL)
+        xmlFree(err->str3);
+    memset(err, 0, sizeof(xmlError));
+    err->code = XML_ERR_OK;
+}
+
+/**
+ * __xmlSimpleError:
+ * @domain: where the error comes from
+ * @code: the error code
+ * @node: the context node
+ * @extra:  extra information
+ *
+ * Handle an out of memory condition
+ */
+void
+__xmlSimpleError(int domain, int code, lxb_dom_node_t_ptr node,
+                 const char *msg, const char *extra)
+{
+
+    if (code == XML_ERR_NO_MEMORY) {
+	if (extra)
+	    __xmlRaiseError(NULL, NULL, NULL, NULL, node, domain,
+			    XML_ERR_NO_MEMORY, XML_ERR_FATAL, NULL, 0, extra,
+			    NULL, NULL, 0, 0,
+			    "Memory allocation failed : %s\n", extra);
+	else
+	    __xmlRaiseError(NULL, NULL, NULL, NULL, node, domain,
+			    XML_ERR_NO_MEMORY, XML_ERR_FATAL, NULL, 0, NULL,
+			    NULL, NULL, 0, 0, "Memory allocation failed\n");
+    } else {
+	__xmlRaiseError(NULL, NULL, NULL, NULL, node, domain,
+			code, XML_ERR_ERROR, NULL, 0, extra,
+			NULL, NULL, 0, 0, msg, extra);
+    }
+}

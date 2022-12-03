@@ -674,41 +674,6 @@ xmlThrDefDeregisterNodeDefault(xmlDeregisterNodeFunc func)
     return(old);
 }
 
-xmlParserInputBufferCreateFilenameFunc
-xmlThrDefParserInputBufferCreateFilenameDefault(xmlParserInputBufferCreateFilenameFunc func)
-{
-    xmlParserInputBufferCreateFilenameFunc old;
-
-    xmlMutexLock(&xmlThrDefMutex);
-    old = xmlParserInputBufferCreateFilenameValueThrDef;
-    if (old == NULL) {
-		old = __xmlParserInputBufferCreateFilename;
-	}
-
-    xmlParserInputBufferCreateFilenameValueThrDef = func;
-    xmlMutexUnlock(&xmlThrDefMutex);
-
-    return(old);
-}
-
-xmlOutputBufferCreateFilenameFunc
-xmlThrDefOutputBufferCreateFilenameDefault(xmlOutputBufferCreateFilenameFunc func)
-{
-    xmlOutputBufferCreateFilenameFunc old;
-
-    xmlMutexLock(&xmlThrDefMutex);
-    old = xmlOutputBufferCreateFilenameValueThrDef;
-#ifdef LIBXML_OUTPUT_ENABLED
-    if (old == NULL) {
-		old = __xmlOutputBufferCreateFilename;
-	}
-#endif
-    xmlOutputBufferCreateFilenameValueThrDef = func;
-    xmlMutexUnlock(&xmlThrDefMutex);
-
-    return(old);
-}
-
 #if defined(LIBXML_HTML_ENABLED) && defined(LIBXML_SAX1_ENABLED)
 #undef	htmlDefaultSAXHandler
 xmlSAXHandlerV1 *
