@@ -16,8 +16,9 @@ typedef struct
 void Init_lexbor_document(void);
 void Init_lexbor_node(void);
 void Init_lexbor_node_set(void);
+void Init_lexbor_xpath_context(void);
 
-inline lexbor_node_t *lexbor_rb_node_unwrap(VALUE rb_node);
+lexbor_node_t *lexbor_rb_node_unwrap(VALUE rb_node);
 VALUE lexbor_rb_node_create(lxb_dom_node_t *node, VALUE rb_document);
 
 #endif

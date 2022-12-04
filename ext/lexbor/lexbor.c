@@ -8,4 +8,5 @@ void Init_lexbor(void)
   Init_lexbor_document();
   Init_lexbor_node();
   Init_lexbor_node_set();
+  Init_lexbor_xpath_context();
 }

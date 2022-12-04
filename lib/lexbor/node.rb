@@ -34,5 +34,63 @@ module Lexbor
       add_sibling(:previous, node)
       remove
     end
+
+    def xpath(*args)
+      paths, handler, ns, binds = extract_params(args)
+
+      xpath_internal(self, paths, handler, ns, binds)
+    end
+
+    def at_xpath(*args)
+      xpath(*args).first
+    end
+
+    private
+
+    def xpath_internal(node, paths, handler, ns, binds)
+      # document = node.document
+      # return NodeSet.new(document) unless document
+
+      if paths.length == 1
+        return xpath_impl(node, paths.first, handler, ns, binds)
+      end
+
+      NodeSet.new do |combined|
+        paths.each do |path|
+          xpath_impl(node, path, handler, ns, binds).each { |set| combined << set }
+        end
+      end
+    end
+
+    def xpath_impl(node, path, handler, ns, binds)
+      ctx = XPathContext.new(node)
+      ctx.register_namespaces(ns)
+      # path = path.gsub(/xmlns:/, " :") unless Nokogiri.uses_libxml?
+
+      binds&.each do |key, value|
+        ctx.register_variable(key.to_s, value)
+      end
+
+      ctx.evaluate(path, handler)
+    end
+
+    def extract_params(params)
+      handler = params.find do |param|
+        ![Hash, String, Symbol].include?(param.class)
+      end
+      params -= [handler] if handler
+
+      hashes = []
+      while Hash === params.last || params.last.nil?
+        hashes << params.pop
+        break if params.empty?
+      end
+      ns, binds = hashes.reverse
+
+      # ns ||= (document.root&.namespaces || {})
+      ns ||= {}
+
+      [params, handler, ns, binds]
+    end
   end
 end
