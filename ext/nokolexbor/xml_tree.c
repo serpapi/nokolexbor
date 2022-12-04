@@ -115,8 +115,13 @@ xmlBuildQName(const xmlChar *ncname, const xmlChar *prefix,
 xmlChar *
 xmlNodeGetContent(const lxb_dom_node_t *cur)
 {
-    size_t tmp_len;
-    return lxb_dom_node_text_content(cur, &tmp_len);
+    size_t len;
+    lxb_char_t *content = lxb_dom_node_text_content(cur, &len);
+    if (content == NULL)
+        return NULL;
+    xmlChar *content_dup = xmlStrndup(content, len);
+    lxb_dom_document_destroy_text(cur->owner_document, content);
+    return content_dup;
 }
 
 /**
