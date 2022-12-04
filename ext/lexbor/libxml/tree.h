@@ -433,7 +433,7 @@ struct _xmlDtd {
  * An attribute on an XML node.
  */
 typedef struct _xmlAttr xmlAttr;
-typedef xmlAttr *xmlAttrPtr;
+typedef lxb_dom_attr_t *lxb_dom_attr_t_ptr;
 struct _xmlAttr {
     void           *_private;	/* application data */
     xmlElementType   type;      /* XML_ATTRIBUTE_NODE, must be second ! */
@@ -460,7 +460,7 @@ typedef xmlID *xmlIDPtr;
 struct _xmlID {
     struct _xmlID    *next;	/* next ID */
     const xmlChar    *value;	/* The ID name */
-    xmlAttrPtr        attr;	/* The attribute holding it */
+    lxb_dom_attr_t_ptr        attr;	/* The attribute holding it */
     const xmlChar    *name;	/* The attribute if attr is not available */
     int               lineno;	/* The line number if attr is not available */
     struct _xmlDoc   *doc;	/* The document holding the ID */
@@ -477,7 +477,7 @@ typedef xmlRef *xmlRefPtr;
 struct _xmlRef {
     struct _xmlRef    *next;	/* next Ref */
     const xmlChar     *value;	/* The Ref name */
-    xmlAttrPtr        attr;	/* The attribute holding it */
+    lxb_dom_attr_t_ptr        attr;	/* The attribute holding it */
     const xmlChar    *name;	/* The attribute if attr is not available */
     int               lineno;	/* The line number if attr is not available */
 };
@@ -784,37 +784,37 @@ XMLPUBFUN lxb_dom_document_t_ptr XMLCALL
 		xmlNewDoc		(const xmlChar *version);
 XMLPUBFUN void XMLCALL
 		xmlFreeDoc		(lxb_dom_document_t_ptr cur);
-XMLPUBFUN xmlAttrPtr XMLCALL
+XMLPUBFUN lxb_dom_attr_t_ptr XMLCALL
 		xmlNewDocProp		(lxb_dom_document_t_ptr doc,
 					 const xmlChar *name,
 					 const xmlChar *value);
 #if defined(LIBXML_TREE_ENABLED) || defined(LIBXML_HTML_ENABLED) || \
     defined(LIBXML_SCHEMAS_ENABLED)
-XMLPUBFUN xmlAttrPtr XMLCALL
+XMLPUBFUN lxb_dom_attr_t_ptr XMLCALL
 		xmlNewProp		(lxb_dom_node_t_ptr node,
 					 const xmlChar *name,
 					 const xmlChar *value);
 #endif
-XMLPUBFUN xmlAttrPtr XMLCALL
+XMLPUBFUN lxb_dom_attr_t_ptr XMLCALL
 		xmlNewNsProp		(lxb_dom_node_t_ptr node,
 					 xmlNsPtr ns,
 					 const xmlChar *name,
 					 const xmlChar *value);
-XMLPUBFUN xmlAttrPtr XMLCALL
+XMLPUBFUN lxb_dom_attr_t_ptr XMLCALL
 		xmlNewNsPropEatName	(lxb_dom_node_t_ptr node,
 					 xmlNsPtr ns,
 					 xmlChar *name,
 					 const xmlChar *value);
 XMLPUBFUN void XMLCALL
-		xmlFreePropList		(xmlAttrPtr cur);
+		xmlFreePropList		(lxb_dom_attr_t_ptr cur);
 XMLPUBFUN void XMLCALL
-		xmlFreeProp		(xmlAttrPtr cur);
-XMLPUBFUN xmlAttrPtr XMLCALL
+		xmlFreeProp		(lxb_dom_attr_t_ptr cur);
+XMLPUBFUN lxb_dom_attr_t_ptr XMLCALL
 		xmlCopyProp		(lxb_dom_node_t_ptr target,
-					 xmlAttrPtr cur);
-XMLPUBFUN xmlAttrPtr XMLCALL
+					 lxb_dom_attr_t_ptr cur);
+XMLPUBFUN lxb_dom_attr_t_ptr XMLCALL
 		xmlCopyPropList		(lxb_dom_node_t_ptr target,
-					 xmlAttrPtr cur);
+					 lxb_dom_attr_t_ptr cur);
 #ifdef LIBXML_TREE_ENABLED
 XMLPUBFUN xmlDtdPtr XMLCALL
 		xmlCopyDtd		(xmlDtdPtr dtd);
@@ -1015,11 +1015,11 @@ XMLPUBFUN xmlNsPtr XMLCALL
  */
 #if defined(LIBXML_TREE_ENABLED) || defined(LIBXML_XINCLUDE_ENABLED) || \
     defined(LIBXML_SCHEMAS_ENABLED) || defined(LIBXML_HTML_ENABLED)
-XMLPUBFUN xmlAttrPtr XMLCALL
+XMLPUBFUN lxb_dom_attr_t_ptr XMLCALL
 		xmlSetProp		(lxb_dom_node_t_ptr node,
 					 const xmlChar *name,
 					 const xmlChar *value);
-XMLPUBFUN xmlAttrPtr XMLCALL
+XMLPUBFUN lxb_dom_attr_t_ptr XMLCALL
 		xmlSetNsProp		(lxb_dom_node_t_ptr node,
 					 xmlNsPtr ns,
 					 const xmlChar *name,
@@ -1032,10 +1032,10 @@ XMLPUBFUN xmlChar * XMLCALL
 XMLPUBFUN xmlChar * XMLCALL
 		xmlGetProp		(const xmlNode *node,
 					 const xmlChar *name);
-XMLPUBFUN xmlAttrPtr XMLCALL
+XMLPUBFUN lxb_dom_attr_t_ptr XMLCALL
 		xmlHasProp		(const xmlNode *node,
 					 const xmlChar *name);
-XMLPUBFUN xmlAttrPtr XMLCALL
+XMLPUBFUN lxb_dom_attr_t_ptr XMLCALL
 		xmlHasNsProp		(const xmlNode *node,
 					 const xmlChar *name,
 					 const xmlChar *nameSpace);
@@ -1111,7 +1111,7 @@ XMLPUBFUN void XMLCALL
  * Removing content.
  */
 XMLPUBFUN int XMLCALL
-		xmlRemoveProp		(xmlAttrPtr cur);
+		xmlRemoveProp		(lxb_dom_attr_t_ptr cur);
 #if defined(LIBXML_TREE_ENABLED) || defined(LIBXML_SCHEMAS_ENABLED)
 XMLPUBFUN int XMLCALL
 		xmlUnsetNsProp		(lxb_dom_node_t_ptr node,
@@ -1138,7 +1138,7 @@ XMLPUBFUN void XMLCALL
 #ifdef LIBXML_OUTPUT_ENABLED
 XMLPUBFUN void xmlAttrSerializeTxtContent(xmlBufferPtr buf,
 					 lxb_dom_document_t_ptr doc,
-					 xmlAttrPtr attr,
+					 lxb_dom_attr_t_ptr attr,
 					 const xmlChar *string);
 #endif /* LIBXML_OUTPUT_ENABLED */
 

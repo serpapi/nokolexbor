@@ -293,7 +293,7 @@ struct _xmlParserCtxt {
     int               freeElemsNr;  /* number of freed element nodes */
     lxb_dom_node_t_ptr        freeElems;    /* List of freed element nodes */
     int               freeAttrsNr;  /* number of freed attributes nodes */
-    xmlAttrPtr        freeAttrs;    /* List of freed attributes nodes */
+    lxb_dom_attr_t_ptr        freeAttrs;    /* List of freed attributes nodes */
 
     /*
      * the complete error information for the last error.

@@ -30,11 +30,11 @@ XMLPUBFUN void XMLCALL
 				 const xmlChar *str);
 XMLPUBFUN void XMLCALL
 	xmlDebugDumpAttr	(FILE *output,
-				 xmlAttrPtr attr,
+				 lxb_dom_attr_t_ptr attr,
 				 int depth);
 XMLPUBFUN void XMLCALL
 	xmlDebugDumpAttrList	(FILE *output,
-				 xmlAttrPtr attr,
+				 lxb_dom_attr_t_ptr attr,
 				 int depth);
 XMLPUBFUN void XMLCALL
 	xmlDebugDumpOneNode	(FILE *output,

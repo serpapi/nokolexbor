@@ -253,19 +253,19 @@ XMLPUBFUN xmlIDPtr XMLCALL
 		xmlAddID	       (xmlValidCtxtPtr ctxt,
 					lxb_dom_document_t_ptr doc,
 					const xmlChar *value,
-					xmlAttrPtr attr);
+					lxb_dom_attr_t_ptr attr);
 XMLPUBFUN void XMLCALL
 		xmlFreeIDTable	       (xmlIDTablePtr table);
-XMLPUBFUN xmlAttrPtr XMLCALL
+XMLPUBFUN lxb_dom_attr_t_ptr XMLCALL
 		xmlGetID	       (lxb_dom_document_t_ptr doc,
 					const xmlChar *ID);
 XMLPUBFUN int XMLCALL
 		xmlIsID		       (lxb_dom_document_t_ptr doc,
 					lxb_dom_node_t_ptr elem,
-					xmlAttrPtr attr);
+					lxb_dom_attr_t_ptr attr);
 XMLPUBFUN int XMLCALL
 		xmlRemoveID	       (lxb_dom_document_t_ptr doc,
-					xmlAttrPtr attr);
+					lxb_dom_attr_t_ptr attr);
 
 /* IDREFs */
 XML_DEPRECATED
@@ -273,7 +273,7 @@ XMLPUBFUN xmlRefPtr XMLCALL
 		xmlAddRef	       (xmlValidCtxtPtr ctxt,
 					lxb_dom_document_t_ptr doc,
 					const xmlChar *value,
-					xmlAttrPtr attr);
+					lxb_dom_attr_t_ptr attr);
 XML_DEPRECATED
 XMLPUBFUN void XMLCALL
 		xmlFreeRefTable	       (xmlRefTablePtr table);
@@ -281,11 +281,11 @@ XML_DEPRECATED
 XMLPUBFUN int XMLCALL
 		xmlIsRef	       (lxb_dom_document_t_ptr doc,
 					lxb_dom_node_t_ptr elem,
-					xmlAttrPtr attr);
+					lxb_dom_attr_t_ptr attr);
 XML_DEPRECATED
 XMLPUBFUN int XMLCALL
 		xmlRemoveRef	       (lxb_dom_document_t_ptr doc,
-					xmlAttrPtr attr);
+					lxb_dom_attr_t_ptr attr);
 XML_DEPRECATED
 XMLPUBFUN xmlListPtr XMLCALL
 		xmlGetRefs	       (lxb_dom_document_t_ptr doc,
@@ -352,7 +352,7 @@ XMLPUBFUN int XMLCALL
 		xmlValidateOneAttribute	(xmlValidCtxtPtr ctxt,
 					 lxb_dom_document_t_ptr doc,
 					 lxb_dom_node_t_ptr	elem,
-					 xmlAttrPtr attr,
+					 lxb_dom_attr_t_ptr attr,
 					 const xmlChar *value);
 XMLPUBFUN int XMLCALL
 		xmlValidateOneNamespace	(xmlValidCtxtPtr ctxt,

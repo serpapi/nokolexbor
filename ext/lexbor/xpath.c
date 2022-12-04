@@ -141,9 +141,9 @@
 
 static size_t tmp_len;
 
-#define NODE_NAME(node) lxb_dom_node_name(node, &tmp_len)
-#define NODE_NS_HREF(node) node->prefix ? lxb_ns_by_id(node->owner_document->ns, node->ns, &tmp_len) : NULL
-#define NODE_NS_PREFIX(node) lxb_ns_by_id(node->owner_document->prefix, node->prefix, &tmp_len)
+#define NODE_NAME(node) lxb_dom_node_name((node), &tmp_len)
+#define NODE_NS_HREF(node) ((node)->prefix ? lxb_ns_by_id((node)->owner_document->ns, (node)->ns, &tmp_len) : NULL)
+#define NODE_NS_PREFIX(node) lxb_ns_by_id((node)->owner_document->prefix, (node)->prefix, &tmp_len)
 
 /*
  * TODO:
@@ -1304,7 +1304,7 @@ xmlXPathDebugDumpNode(FILE *output, lxb_dom_node_t_ptr cur, int depth) {
 	fprintf(output, "%s", shift);
 	fprintf(output, " /\n");
     } else if (cur->type == LXB_DOM_NODE_TYPE_ATTRIBUTE)
-	xmlDebugDumpAttr(output, (xmlAttrPtr)cur, depth);
+	xmlDebugDumpAttr(output, (lxb_dom_attr_t_ptr)cur, depth);
     else
 	xmlDebugDumpOneNode(output, cur, depth);
 }
@@ -6388,7 +6388,7 @@ xmlXPathNodeValHash(lxb_dom_node_t_ptr node) {
 		return(0);
 	    return(string[0] + (string[1] << 8));
 	case LXB_DOM_NODE_TYPE_ATTRIBUTE:
-	    tmp = ((xmlAttrPtr) node)->children;
+	    tmp = ((lxb_dom_attr_t_ptr) node)->node.first_child;
 	    break;
 	case LXB_DOM_NODE_TYPE_ELEMENT:
 	    tmp = node->first_child;
@@ -7991,9 +7991,9 @@ xmlXPathNextParent(xmlXPathParserContextPtr ctxt, lxb_dom_node_t_ptr cur) {
 		    return(NULL);
 		return(ctxt->context->node->parent);
             case LXB_DOM_NODE_TYPE_ATTRIBUTE: {
-		xmlAttrPtr att = (xmlAttrPtr) ctxt->context->node;
+		lxb_dom_attr_t_ptr att = (lxb_dom_attr_t_ptr) ctxt->context->node;
 
-		return(att->parent);
+		return(att->node.parent);
 	    }
             case LXB_DOM_NODE_TYPE_DOCUMENT:
             case LXB_DOM_NODE_TYPE_DOCUMENT_TYPE:
@@ -8061,9 +8061,9 @@ xmlXPathNextAncestor(xmlXPathParserContextPtr ctxt, lxb_dom_node_t_ptr cur) {
 		    return(NULL);
 		return(ctxt->context->node->parent);
             case LXB_DOM_NODE_TYPE_ATTRIBUTE: {
-		xmlAttrPtr tmp = (xmlAttrPtr) ctxt->context->node;
+		lxb_dom_attr_t_ptr tmp = (lxb_dom_attr_t_ptr) ctxt->context->node;
 
-		return(tmp->parent);
+		return(tmp->node.parent);
 	    }
             case LXB_DOM_NODE_TYPE_DOCUMENT:
             case LXB_DOM_NODE_TYPE_DOCUMENT_TYPE:
@@ -8110,9 +8110,9 @@ xmlXPathNextAncestor(xmlXPathParserContextPtr ctxt, lxb_dom_node_t_ptr cur) {
 		return(NULL);
 	    return(cur->parent);
 	case LXB_DOM_NODE_TYPE_ATTRIBUTE: {
-	    xmlAttrPtr att = (xmlAttrPtr) cur;
+	    lxb_dom_attr_t_ptr att = (lxb_dom_attr_t_ptr) cur;
 
-	    return(att->parent);
+	    return(att->node.parent);
 	}
 	case XML_NAMESPACE_DECL: {
 	    xmlNsPtr ns = (xmlNsPtr) cur;
@@ -8582,7 +8582,7 @@ xmlXPathCountFunction(xmlXPathParserContextPtr ctxt, int nargs) {
 //     xmlNodeSetPtr ret;
 //     const xmlChar *cur = ids;
 //     xmlChar *ID;
-//     xmlAttrPtr attr;
+//     lxb_dom_attr_t_ptr attr;
 //     lxb_dom_node_t_ptr elem = NULL;
 
 //     if (ids == NULL) return(NULL);
@@ -12388,19 +12388,18 @@ xmlXPathNodeCollectAndTest(xmlXPathParserContextPtr ctxt,
                             }
                             break;
                         case LXB_DOM_NODE_TYPE_ATTRIBUTE:{
-                                xmlAttrPtr attr = (xmlAttrPtr) cur;
+                                lxb_dom_attr_t_ptr attr = (lxb_dom_attr_t_ptr) cur;
 
-                                if (xmlStrEqual(name, attr->name)) {
+                                if (xmlStrEqual(name, NODE_NAME(attr))) {
                                     if (prefix == NULL) {
-                                        if ((attr->ns == NULL) ||
-                                            (attr->ns->prefix == NULL))
+                                        if (attr->node.prefix == NULL)
 					{
 					    XP_TEST_HIT
                                         }
                                     } else {
-                                        if ((attr->ns != NULL) &&
+                                        if ((attr->node.ns != NULL) &&
                                             (xmlStrEqual(URI,
-					      attr->ns->href)))
+					      NODE_NS_HREF(lxb_dom_interface_node(attr)))))
 					{
 					    XP_TEST_HIT
                                         }
