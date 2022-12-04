@@ -13,7 +13,6 @@
 
 #define IN_LIBXML
 #include "libxml.h"
-#include "lexbor.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -89,7 +88,7 @@ xmlStrdupFunc xmlMemStrdup = (xmlStrdupFunc) xmlMemoryStrdup;
  *
  * The variable holding the libxml free() implementation
  */
-xmlFreeFunc xmlFree = lexbor_free;
+xmlFreeFunc xmlFree = free;
 /**
  * xmlMalloc:
  * @size:  the size requested in bytes
@@ -98,7 +97,7 @@ xmlFreeFunc xmlFree = lexbor_free;
  *
  * Returns a pointer to the newly allocated block or NULL in case of error
  */
-xmlMallocFunc xmlMalloc = lexbor_malloc;
+xmlMallocFunc xmlMalloc = malloc;
 /**
  * xmlMallocAtomic:
  * @size:  the size requested in bytes
@@ -109,7 +108,7 @@ xmlMallocFunc xmlMalloc = lexbor_malloc;
  *
  * Returns a pointer to the newly allocated block or NULL in case of error
  */
-xmlMallocFunc xmlMallocAtomic = lexbor_malloc;
+xmlMallocFunc xmlMallocAtomic = malloc;
 /**
  * xmlRealloc:
  * @mem: an already allocated block of memory
@@ -119,7 +118,7 @@ xmlMallocFunc xmlMallocAtomic = lexbor_malloc;
  *
  * Returns a pointer to the newly reallocated block or NULL in case of error
  */
-xmlReallocFunc xmlRealloc = lexbor_realloc;
+xmlReallocFunc xmlRealloc = realloc;
 /**
  * xmlPosixStrdup
  * @cur:  the input char *

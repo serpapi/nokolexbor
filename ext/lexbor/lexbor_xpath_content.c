@@ -1,4 +1,5 @@
 #include <ruby.h>
+#include <ruby/util.h>
 #include "lexbor.h"
 #include "libxml.h"
 #include "libxml/globals.h"
@@ -169,6 +170,8 @@ rb_xml_xpath_context_new(VALUE klass, VALUE nodeobj)
 
 void Init_lexbor_xpath_context(void)
 {
+  xmlMemSetup((xmlFreeFunc)ruby_xfree, (xmlMallocFunc)ruby_xmalloc, (xmlReallocFunc)ruby_xrealloc, ruby_strdup);
+
   cXpathContext = rb_define_class_under(mLexbor, "XPathContext", rb_cObject);
 
   rb_undef_alloc_func(cXpathContext);

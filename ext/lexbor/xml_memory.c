@@ -159,3 +159,45 @@ xmlInitMemoryInternal(void) {
 	     "xmlInitMemory() Ok\n");
 #endif
 }
+
+/**
+ * xmlMemSetup:
+ * @freeFunc: the free() function to use
+ * @mallocFunc: the malloc() function to use
+ * @reallocFunc: the realloc() function to use
+ * @strdupFunc: the strdup() function to use
+ *
+ * Override the default memory access functions with a new set
+ * This has to be called before any other libxml routines !
+ *
+ * Should this be blocked if there was already some allocations
+ * done ?
+ *
+ * Returns 0 on success
+ */
+int
+xmlMemSetup(xmlFreeFunc freeFunc, xmlMallocFunc mallocFunc,
+            xmlReallocFunc reallocFunc, xmlStrdupFunc strdupFunc) {
+#ifdef DEBUG_MEMORY
+     xmlGenericError(xmlGenericErrorContext,
+	     "xmlMemSetup()\n");
+#endif
+    if (freeFunc == NULL)
+	return(-1);
+    if (mallocFunc == NULL)
+	return(-1);
+    if (reallocFunc == NULL)
+	return(-1);
+    if (strdupFunc == NULL)
+	return(-1);
+    xmlFree = freeFunc;
+    xmlMalloc = mallocFunc;
+    xmlMallocAtomic = mallocFunc;
+    xmlRealloc = reallocFunc;
+    xmlMemStrdup = strdupFunc;
+#ifdef DEBUG_MEMORY
+     xmlGenericError(xmlGenericErrorContext,
+	     "xmlMemSetup() Ok\n");
+#endif
+    return(0);
+}
