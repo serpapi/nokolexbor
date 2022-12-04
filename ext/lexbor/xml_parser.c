@@ -112,10 +112,10 @@ xmlInitParser(void) {
 	xmlInitMemoryInternal();
         __xmlInitializeDict();
 	xmlInitEncodingInternal();
-	xmlRegisterDefaultInputCallbacks();
-#ifdef LIBXML_OUTPUT_ENABLED
-	xmlRegisterDefaultOutputCallbacks();
-#endif /* LIBXML_OUTPUT_ENABLED */
+// 	xmlRegisterDefaultInputCallbacks();
+// #ifdef LIBXML_OUTPUT_ENABLED
+// 	xmlRegisterDefaultOutputCallbacks();
+// #endif /* LIBXML_OUTPUT_ENABLED */
 #if defined(LIBXML_XPATH_ENABLED) || defined(LIBXML_SCHEMAS_ENABLED)
 	xmlInitXPathInternal();
 #endif
