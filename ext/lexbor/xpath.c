@@ -142,7 +142,7 @@
 static size_t tmp_len;
 
 #define NODE_NAME(node) lxb_dom_node_name(node, &tmp_len)
-#define NODE_NS_HREF(node) lxb_ns_by_id(node->owner_document->ns, node->ns, &tmp_len)
+#define NODE_NS_HREF(node) node->prefix ? lxb_ns_by_id(node->owner_document->ns, node->ns, &tmp_len) : NULL
 #define NODE_NS_PREFIX(node) lxb_ns_by_id(node->owner_document->prefix, node->prefix, &tmp_len)
 
 /*
@@ -8781,9 +8781,9 @@ xmlXPathNamespaceURIFunction(xmlXPathParserContextPtr ctxt, int nargs) {
 	switch (cur->nodesetval->nodeTab[i]->type) {
 	case LXB_DOM_NODE_TYPE_ELEMENT:
 	case LXB_DOM_NODE_TYPE_ATTRIBUTE:
-	    if (cur->nodesetval->nodeTab[i]->ns == NULL)
+	    if (cur->nodesetval->nodeTab[i]->prefix == NULL)
 		valuePush(ctxt, xmlXPathCacheNewCString(ctxt->context, ""));
-	    else
+	    else if (cur->nodesetval->nodeTab[i]->ns != NULL)
 		valuePush(ctxt, xmlXPathCacheNewString(ctxt->context,
 			  NODE_NS_HREF(cur->nodesetval->nodeTab[i])));
 	    break;
@@ -12377,10 +12377,7 @@ xmlXPathNodeCollectAndTest(xmlXPathParserContextPtr ctxt,
                         case LXB_DOM_NODE_TYPE_ELEMENT:
                             if (xmlStrEqual(name, NODE_NAME(cur))) {
                                 if (prefix == NULL) {
-                                    if (cur->ns == NULL)
-				    {
-					XP_TEST_HIT
-                                    }
+				    XP_TEST_HIT
                                 } else {
                                     if ((cur->ns != NULL) &&
                                         (xmlStrEqual(URI, NODE_NS_HREF(cur))))
