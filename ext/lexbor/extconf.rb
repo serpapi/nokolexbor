@@ -1,6 +1,10 @@
 require 'mkmf'
 require 'timeout'
 
+# For debugging
+# CONFIG["optflags"] = "-O0"
+# CONFIG["debugflags"] = "-ggdb3"
+
 cmake_flags = [ ENV["CMAKE_FLAGS"] ]
 cmake_flags << "-DLEXBOR_BUILD_TESTS_CPP=OFF"
 cmake_flags << "-DLEXBOR_BUILD_SHARED=OFF"
