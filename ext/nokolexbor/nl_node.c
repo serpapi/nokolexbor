@@ -391,12 +391,22 @@ nl_node_equals(VALUE self, VALUE other)
   return nl_node1->node == nl_node2->node ? Qtrue : Qfalse;
 }
 
+const lxb_char_t *
+lxb_dom_node_name_qualified(lxb_dom_node_t *node, size_t *len)
+{
+  if (node->type == LXB_DOM_NODE_TYPE_ELEMENT) {
+    return lxb_dom_element_qualified_name(lxb_dom_interface_element(node),
+                                            len);
+  }
+  return lxb_dom_node_name(node, len);
+}
+
 static VALUE
 nl_node_name(VALUE self)
 {
   nl_node_t *nl_node = nl_rb_node_unwrap(self);
   size_t len;
-  lxb_char_t *name = lxb_dom_node_name(nl_node->node, &len);
+  lxb_char_t *name = lxb_dom_node_name_qualified(nl_node->node, &len);
   return rb_utf8_str_new(name, len);
 }
 

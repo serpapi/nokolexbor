@@ -21,4 +21,7 @@ void Init_nl_xpath_context(void);
 nl_node_t *nl_rb_node_unwrap(VALUE rb_node);
 VALUE nl_rb_node_create(lxb_dom_node_t *node, VALUE rb_document);
 
+const lxb_char_t *
+lxb_dom_node_name_qualified(lxb_dom_node_t *node, size_t *len);
+
 #endif
