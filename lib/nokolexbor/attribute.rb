@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Lexbor
+module Nokolexbor
   class Attribute
     attr_accessor :name
     attr_accessor :value

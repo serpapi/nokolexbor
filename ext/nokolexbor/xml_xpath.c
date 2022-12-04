@@ -21,7 +21,7 @@
 
 #define IN_LIBXML
 #include "libxml.h"
-#include "lexbor.h"
+#include "nokolexbor.h"
 
 #include <limits.h>
 #include <string.h>

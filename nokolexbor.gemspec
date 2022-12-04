@@ -1,13 +1,13 @@
 # frozen_string_literal: true
 
-require_relative 'lib/lexbor/version'
+require_relative 'lib/nokolexbor/version'
 
 Gem::Specification.new do |spec|
-  spec.name          = 'lexbor'
-  spec.version       = Lexbor::VERSION
-  spec.summary       = "lexbor-ruby is a Ruby binding to the Lexbor library"
+  spec.name          = 'nokolexbor'
+  spec.version       = Nokolexbor::VERSION
+  spec.summary       = "Nokolexbor is a Ruby binding to the Lexbor library and is API-compatible with Nokogiri"
   spec.authors       = ['Yicheng Zhou']
-  spec.extensions    = ['ext/lexbor/extconf.rb']
+  spec.extensions    = ['ext/nokolexbor/extconf.rb']
   spec.require_paths = ['lib']
   spec.files         += Dir.glob("lib/**/*.rb")
   spec.files         += Dir.glob("vendor/lexbor/source/**/*")

@@ -1,15 +1,15 @@
 #include <ruby.h>
 #include <ruby/util.h>
-#include "lexbor.h"
+#include "nokolexbor.h"
 #include "libxml.h"
 #include "libxml/globals.h"
 #include "libxml/xpath.h"
 #include "libxml/xpathInternals.h"
 #include "libxml/parserInternals.h"
 
-extern VALUE mLexbor;
-extern VALUE cLexborNodeSet;
-VALUE cXpathContext;
+extern VALUE mNokolexbor;
+extern VALUE cNokolexborNodeSet;
+VALUE cNokoLexborXpathContext;
 
 static void
 free_xml_xpath_context(xmlXPathContextPtr ctx)
@@ -77,7 +77,7 @@ xpath2ruby(xmlXPathObjectPtr c_xpath_object, xmlXPathContextPtr ctx, VALUE rb_do
     rb_retval = rb_ary_new();
     for (int i = 0; i < c_xpath_object->nodesetval->nodeNr; i++)
     {
-      rb_ary_push(rb_retval, lexbor_rb_node_create(c_xpath_object->nodesetval->nodeTab[i], rb_document));
+      rb_ary_push(rb_retval, nl_rb_node_create(c_xpath_object->nodesetval->nodeTab[i], rb_document));
     }
     return rb_retval;
 
@@ -138,7 +138,7 @@ rb_xml_xpath_context_evaluate(int argc, VALUE *argv, VALUE self)
 
   retval = xpath2ruby(xpath, ctx, rb_iv_get(self, "@document"));
   if (retval == Qundef) {
-    retval = rb_funcall(cLexborNodeSet, rb_intern("new"), 1, rb_ary_new());
+    retval = rb_funcall(cNokolexborNodeSet, rb_intern("new"), 1, rb_ary_new());
   }
 
   // xmlXPathFreeNodeSetList(xpath);
@@ -158,27 +158,27 @@ rb_xml_xpath_context_new(VALUE klass, VALUE nodeobj)
   xmlXPathContextPtr ctx;
   VALUE self;
 
-  lexbor_node_t *node = lexbor_rb_node_unwrap(nodeobj);
+  nl_node_t *nl_node = nl_rb_node_unwrap(nodeobj);
 
-  ctx = xmlXPathNewContext(node->node->owner_document);
-  ctx->node = node->node;
+  ctx = xmlXPathNewContext(nl_node->node->owner_document);
+  ctx->node = nl_node->node;
 
   self = Data_Wrap_Struct(klass, 0, free_xml_xpath_context, ctx);
-  rb_iv_set(self, "@document", node->rb_document);
+  rb_iv_set(self, "@document", nl_node->rb_document);
   return self;
 }
 
-void Init_lexbor_xpath_context(void)
+void Init_nl_xpath_context(void)
 {
   xmlMemSetup((xmlFreeFunc)ruby_xfree, (xmlMallocFunc)ruby_xmalloc, (xmlReallocFunc)ruby_xrealloc, ruby_strdup);
 
-  cXpathContext = rb_define_class_under(mLexbor, "XPathContext", rb_cObject);
+  cNokoLexborXpathContext = rb_define_class_under(mNokolexbor, "XPathContext", rb_cObject);
 
-  rb_undef_alloc_func(cXpathContext);
+  rb_undef_alloc_func(cNokoLexborXpathContext);
 
-  rb_define_singleton_method(cXpathContext, "new", rb_xml_xpath_context_new, 1);
+  rb_define_singleton_method(cNokoLexborXpathContext, "new", rb_xml_xpath_context_new, 1);
 
-  rb_define_method(cXpathContext, "evaluate", rb_xml_xpath_context_evaluate, -1);
-  rb_define_method(cXpathContext, "register_variable", rb_xml_xpath_context_register_variable, 2);
-  rb_define_method(cXpathContext, "register_ns", rb_xml_xpath_context_register_ns, 2);
+  rb_define_method(cNokoLexborXpathContext, "evaluate", rb_xml_xpath_context_evaluate, -1);
+  rb_define_method(cNokoLexborXpathContext, "register_variable", rb_xml_xpath_context_register_variable, 2);
+  rb_define_method(cNokoLexborXpathContext, "register_ns", rb_xml_xpath_context_register_ns, 2);
 }

@@ -91,4 +91,4 @@ unless have_library 'lexbor_static' and have_header 'lexbor/html/html.h'
   abort "ERROR: Failed to build lexbor"
 end
 
-create_makefile('lexbor/lexbor')
+create_makefile('nokolexbor/nokolexbor')

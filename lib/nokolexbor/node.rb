@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Lexbor
+module Nokolexbor
   class Node
     def ancestors
       return NodeSet.new unless respond_to?(:parent)

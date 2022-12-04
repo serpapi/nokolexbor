@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Lexbor
+module Nokolexbor
   class NodeSet < Array
     def content
       self.map(&:content).join

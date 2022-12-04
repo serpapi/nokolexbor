@@ -16,7 +16,7 @@
 #include <limits.h>
 #include "xmlversion.h"
 #include "xmlstring.h"
-#include "../lexbor.h"
+#include "../nokolexbor.h"
 
 #ifdef __cplusplus
 extern "C" {

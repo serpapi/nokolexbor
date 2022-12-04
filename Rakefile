@@ -1,6 +1,6 @@
 require 'rake/extensiontask'
 
-Rake::ExtensionTask.new('lexbor') do |ext|
-  ext.lib_dir = "lib/lexbor"
+Rake::ExtensionTask.new('nokolexbor') do |ext|
+  ext.lib_dir = "lib/nokolexbor"
 end
 
