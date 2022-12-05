@@ -1,0 +1,146 @@
+diff --git i/source/lexbor/css/selectors/pseudo_const.h w/source/lexbor/css/selectors/pseudo_const.h
+index 2b19f18..5e56181 100644
+--- i/source/lexbor/css/selectors/pseudo_const.h
++++ w/source/lexbor/css/selectors/pseudo_const.h
+@@ -95,7 +95,8 @@ typedef enum {
+     LXB_CSS_SELECTOR_PSEUDO_ELEMENT_SELECTION          = 0x000a,
+     LXB_CSS_SELECTOR_PSEUDO_ELEMENT_SPELLING_ERROR     = 0x000b,
+     LXB_CSS_SELECTOR_PSEUDO_ELEMENT_TARGET_TEXT        = 0x000c,
+-    LXB_CSS_SELECTOR_PSEUDO_ELEMENT__LAST_ENTRY        = 0x000d
++    LXB_CSS_SELECTOR_PSEUDO_ELEMENT_TEXT               = 0x000d,
++    LXB_CSS_SELECTOR_PSEUDO_ELEMENT__LAST_ENTRY        = 0x000e
+ }
+ lxb_css_selector_pseudo_element_id_t;
+ 
+diff --git i/source/lexbor/css/selectors/pseudo_res.h w/source/lexbor/css/selectors/pseudo_res.h
+index 398d1bb..b35bfab 100644
+--- i/source/lexbor/css/selectors/pseudo_res.h
++++ w/source/lexbor/css/selectors/pseudo_res.h
+@@ -124,7 +124,8 @@ static const lxb_css_selectors_pseudo_data_t lxb_css_selectors_pseudo_data_pseud
+     {(lxb_char_t *) "placeholder", 11, LXB_CSS_SELECTOR_PSEUDO_ELEMENT_PLACEHOLDER},
+     {(lxb_char_t *) "selection", 9, LXB_CSS_SELECTOR_PSEUDO_ELEMENT_SELECTION},
+     {(lxb_char_t *) "spelling-error", 14, LXB_CSS_SELECTOR_PSEUDO_ELEMENT_SPELLING_ERROR},
+-    {(lxb_char_t *) "target-text", 11, LXB_CSS_SELECTOR_PSEUDO_ELEMENT_TARGET_TEXT}
++    {(lxb_char_t *) "target-text", 11, LXB_CSS_SELECTOR_PSEUDO_ELEMENT_TARGET_TEXT},
++    {(lxb_char_t *) "text", 4, LXB_CSS_SELECTOR_PSEUDO_ELEMENT_TEXT}
+ };
+ 
+ static const lxb_css_selectors_pseudo_data_func_t lxb_css_selectors_pseudo_data_pseudo_element_function[LXB_CSS_SELECTOR_PSEUDO_ELEMENT_FUNCTION__LAST_ENTRY] = 
+@@ -268,7 +269,7 @@ static const lexbor_shs_entry_t lxb_css_selectors_pseudo_element_shs[24] =
+     {"placeholder", (void *) &lxb_css_selectors_pseudo_data_pseudo_element[LXB_CSS_SELECTOR_PSEUDO_ELEMENT_PLACEHOLDER], 11, 0}, 
+     {"after", (void *) &lxb_css_selectors_pseudo_data_pseudo_element[LXB_CSS_SELECTOR_PSEUDO_ELEMENT_AFTER], 5, 0}, 
+     {"first-letter", (void *) &lxb_css_selectors_pseudo_data_pseudo_element[LXB_CSS_SELECTOR_PSEUDO_ELEMENT_FIRST_LETTER], 12, 0}, 
+-    {NULL, NULL, 0, 0}, 
++    {"text", (void *) &lxb_css_selectors_pseudo_data_pseudo_element[LXB_CSS_SELECTOR_PSEUDO_ELEMENT_TEXT], 4, 0}, 
+     {NULL, NULL, 0, 0}, 
+     {"grammar-error", (void *) &lxb_css_selectors_pseudo_data_pseudo_element[LXB_CSS_SELECTOR_PSEUDO_ELEMENT_GRAMMAR_ERROR], 13, 0}, 
+     {"before", (void *) &lxb_css_selectors_pseudo_data_pseudo_element[LXB_CSS_SELECTOR_PSEUDO_ELEMENT_BEFORE], 6, 0}, 
+diff --git i/source/lexbor/selectors/selectors.c w/source/lexbor/selectors/selectors.c
+index c2d18ea..0ef38b2 100644
+--- i/source/lexbor/selectors/selectors.c
++++ w/source/lexbor/selectors/selectors.c
+@@ -156,6 +156,12 @@ lxb_selectors_descendant(lxb_selectors_t *selectors, lxb_selectors_entry_t *entr
+         {
+             return node;
+         }
++        else if (selector->type == LXB_CSS_SELECTOR_TYPE_PSEUDO_ELEMENT &&
++            node->type == LXB_DOM_NODE_TYPE_TEXT &&
++            lxb_selectors_pseudo_element(selectors, selector, node))
++        {
++            return node;
++        }
+ 
+         if (node->first_child != NULL) {
+             node = node->first_child;
+@@ -201,6 +207,12 @@ lxb_selectors_descendant_next(lxb_selectors_t *selectors, lxb_selectors_entry_t
+         {
+             return node;
+         }
++        else if (selector->type == LXB_CSS_SELECTOR_TYPE_PSEUDO_ELEMENT &&
++            node->type == LXB_DOM_NODE_TYPE_TEXT &&
++            lxb_selectors_pseudo_element(selectors, selector, node))
++        {
++            return node;
++        }
+     }
+     while (true);
+ }
+@@ -229,6 +241,12 @@ lxb_selectors_child(lxb_selectors_t *selectors, lxb_selectors_entry_t *entry,
+         {
+             return node;
+         }
++        else if (selector->type == LXB_CSS_SELECTOR_TYPE_PSEUDO_ELEMENT &&
++            node->type == LXB_DOM_NODE_TYPE_TEXT &&
++            lxb_selectors_pseudo_element(selectors, selector, node))
++        {
++            return node;
++        }
+ 
+         node = node->next;
+     }
+@@ -249,6 +267,12 @@ lxb_selectors_child_next(lxb_selectors_t *selectors, lxb_selectors_entry_t *entr
+         {
+             return node;
+         }
++        else if (selector->type == LXB_CSS_SELECTOR_TYPE_PSEUDO_ELEMENT &&
++            node->type == LXB_DOM_NODE_TYPE_TEXT &&
++            lxb_selectors_pseudo_element(selectors, selector, node))
++        {
++            return node;
++        }
+ 
+         node = node->next;
+     }
+@@ -263,8 +287,15 @@ lxb_selectors_sibling(lxb_selectors_t *selectors, lxb_selectors_entry_t *entry,
+     node = node->next;
+ 
+     do {
+-        if (node->type == LXB_DOM_NODE_TYPE_ELEMENT) {
+-            if (lxb_selectors_match(selectors, entry, selector, node)) {
++        if (node->type == LXB_DOM_NODE_TYPE_ELEMENT || node->type == LXB_DOM_NODE_TYPE_TEXT) {
++            if (node->type == LXB_DOM_NODE_TYPE_ELEMENT &&
++                lxb_selectors_match(selectors, entry, selector, node)) {
++                return node;
++            }
++            else if (selector->type == LXB_CSS_SELECTOR_TYPE_PSEUDO_ELEMENT &&
++                node->type == LXB_DOM_NODE_TYPE_TEXT &&
++                lxb_selectors_pseudo_element(selectors, selector, node))
++            {
+                 return node;
+             }
+ 
+@@ -290,6 +321,12 @@ lxb_selectors_following(lxb_selectors_t *selectors, lxb_selectors_entry_t *entry
+         {
+             return node;
+         }
++        else if (selector->type == LXB_CSS_SELECTOR_TYPE_PSEUDO_ELEMENT &&
++            node->type == LXB_DOM_NODE_TYPE_TEXT &&
++            lxb_selectors_pseudo_element(selectors, selector, node))
++        {
++            return node;
++        }
+ 
+         node = node->next;
+     }
+@@ -1429,6 +1466,8 @@ lxb_selectors_pseudo_element(lxb_selectors_t *selectors,
+     lxb_css_selector_pseudo_t *pseudo = &selector->u.pseudo;
+ 
+     switch (pseudo->type) {
++        case LXB_CSS_SELECTOR_PSEUDO_ELEMENT_TEXT:
++            return node->local_name == LXB_TAG__TEXT;
+         case LXB_CSS_SELECTOR_PSEUDO_ELEMENT_AFTER:
+         case LXB_CSS_SELECTOR_PSEUDO_ELEMENT_BACKDROP:
+         case LXB_CSS_SELECTOR_PSEUDO_ELEMENT_BEFORE:
+diff --git i/utils/lexbor/css/selectors/pseudo.py w/utils/lexbor/css/selectors/pseudo.py
+index 57e2b7b..bf3bc01 100755
+--- i/utils/lexbor/css/selectors/pseudo.py
++++ w/utils/lexbor/css/selectors/pseudo.py
+@@ -49,7 +49,7 @@ pseudo_elements = [
+     # https://drafts.csswg.org/css-pseudo-4/#index
+     "after", "before", "first-letter", "first-line", "grammar-error",
+     "inactive-selection", "marker", "placeholder", "selection",
+-    "spelling-error", "target-text",
++    "spelling-error", "target-text", "text",
+ 
+     # https://fullscreen.spec.whatwg.org/#index
+     "backdrop"

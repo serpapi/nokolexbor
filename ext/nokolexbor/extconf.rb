@@ -39,6 +39,36 @@ rescue Timeout::Error
   raise CMakeTimeout.new("cmake has exceeded its timeout of #{timeout}s")
 end
 
+# From: https://stackoverflow.com/questions/2108727
+# Cross-platform way of finding an executable in the $PATH.
+#
+#   which('ruby') #=> /usr/bin/ruby
+def which(cmd)
+  exts = ENV['PATHEXT'] ? ENV['PATHEXT'].split(';') : ['']
+  ENV['PATH'].split(File::PATH_SEPARATOR).each do |path|
+    exts.each { |ext|
+      exe = File.join(path, "#{cmd}#{ext}")
+      return exe if File.executable? exe
+    }
+  end
+  return nil
+end
+
+# From: https://github.com/flavorjones/mini_portile/blob/main/lib/mini_portile2/mini_portile.rb#L94
+def apply_patch(patch_file, chdir)
+  case
+  when which('git')
+    # By --work-tree=. git-apply uses the current directory as
+    # the project root and will not search upwards for .git.
+    Process.waitpid(Process.spawn("git --git-dir=. --work-tree=. apply #{patch_file}", chdir: chdir))
+  when which('patch')
+    Process.waitpid(Process.spawn("patch -p1 -i #{patch_file}", chdir: chdir))
+  else
+    raise "Failed to complete patch task; patch(1) or git(1) is required."
+  end
+end
+
+
 MAKE = if Gem.win_platform?
   # On Windows, Ruby-DevKit only has 'make'.
   find_executable('make')
@@ -63,6 +93,11 @@ if !Gem.win_platform? && !find_executable('pkg-config')
 end
 
 Dir.chdir(LEXBOR_DIR) do
+  # Patch lexbor
+  Dir['../../patches/*-lexbor-*.patch'].each do |patch_file|
+    apply_patch(patch_file, '.')
+  end
+
   Dir.mkdir("build") if !Dir.exist?("build")
 
   Dir.chdir("build") do
