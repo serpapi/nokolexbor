@@ -432,9 +432,7 @@ nl_node_add_sibling(VALUE self, VALUE next_or_previous, VALUE new)
     return Qnil;
   }
   nl_node_t *nl_node_self = nl_rb_node_unwrap(self);
-  lxb_dom_node_t *node_new = lxb_dom_node_interface_create(nl_node_self->node->owner_document);
-  node_new->type = LXB_DOM_NODE_TYPE_TEXT;
-  lxb_dom_node_text_content_set(node_new, RSTRING_PTR(new), RSTRING_LEN(new));
+  lxb_dom_node_t *node_new = lxb_dom_document_create_text_node(nl_node_self->node->owner_document, RSTRING_PTR(new), RSTRING_LEN(new));
 
   if (rb_eql(rb_String(next_or_previous), rb_str_new_literal("next"))) {
     lxb_dom_node_insert_after(nl_node_self->node, node_new);
