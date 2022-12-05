@@ -9,6 +9,8 @@ cmake_flags = [ ENV["CMAKE_FLAGS"] ]
 cmake_flags << "-DLEXBOR_BUILD_TESTS_CPP=OFF"
 cmake_flags << "-DLEXBOR_BUILD_SHARED=OFF"
 cmake_flags << "-DLEXBOR_BUILD_STATIC=ON"
+# For debugging
+# cmake_flags << "-DLEXBOR_OPTIMIZATION_LEVEL='-O0 -g'"
 
 def sys(cmd)
   puts " -- #{cmd}"
