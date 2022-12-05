@@ -3,18 +3,15 @@
 extern VALUE mNokolexbor;
 extern VALUE cNokolexborNode;
 VALUE cNokolexborDocument;
-extern rb_data_type_t nl_node_type;
-
-extern VALUE nl_node_css(VALUE self, VALUE selector);
-extern VALUE nl_node_at_css(VALUE self, VALUE selector);
 
 static void
-free_nl_document(lxb_html_document_t *document)
+free_nl_document(nl_document_t *nl_document)
 {
-  lxb_html_document_destroy(document);
+  lxb_html_document_destroy(nl_document->document);
+  lexbor_free(nl_document);
 }
 
-static const rb_data_type_t nl_document_type = {
+const rb_data_type_t nl_document_type = {
     "Document",
     {
         0,
@@ -45,37 +42,18 @@ nl_document_parse(VALUE self, VALUE rb_html)
     return Qnil;
   }
 
-  return TypedData_Wrap_Struct(cNokolexborDocument, &nl_document_type, document);
-}
+  nl_document_t *nl_document = lexbor_malloc(sizeof(nl_document_t));
+  VALUE rb_document = TypedData_Wrap_Struct(cNokolexborDocument, &nl_document_type, nl_document);
 
-static VALUE
-nl_document_at_css(VALUE self, VALUE selector)
-{
-  lxb_html_document_t *document;
-  TypedData_Get_Struct(self, struct lxb_html_document_t, &nl_document_type, document);
+  nl_document->nl_node.node = &document->dom_document.node;
+  nl_document->nl_node.rb_document = rb_document;
+  nl_document->document = document;
 
-  lxb_dom_node_t *body = lxb_dom_interface_node(lxb_html_document_body_element(document));
-
-  VALUE rb_node = nl_rb_node_create(body, self);
-  return nl_node_at_css(rb_node, selector);
-}
-
-static VALUE
-nl_document_css(VALUE self, VALUE selector)
-{
-  lxb_html_document_t *document;
-  TypedData_Get_Struct(self, struct lxb_html_document_t, &nl_document_type, document);
-
-  lxb_dom_node_t *body = lxb_dom_interface_node(lxb_html_document_body_element(document));
-
-  VALUE rb_node = nl_rb_node_create(body, self);
-  return nl_node_css(rb_node, selector);
+  return rb_document;
 }
 
 void Init_nl_document(void)
 {
-  cNokolexborDocument = rb_define_class_under(mNokolexbor, "Document", rb_cObject);
+  cNokolexborDocument = rb_define_class_under(mNokolexbor, "Document", cNokolexborNode);
   rb_define_singleton_method(cNokolexborDocument, "parse", nl_document_parse, 1);
-  rb_define_method(cNokolexborDocument, "at_css", nl_document_at_css, 1);
-  rb_define_method(cNokolexborDocument, "css", nl_document_css, 1);
 }

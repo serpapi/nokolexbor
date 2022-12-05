@@ -1,8 +1,11 @@
 #include "nokolexbor.h"
 
 extern VALUE mNokolexbor;
+extern VALUE cNokolexborDocument;
 extern VALUE cNokolexborNodeSet;
 VALUE cNokolexborNode;
+
+extern rb_data_type_t nl_document_type;
 
 typedef struct
 {
@@ -22,7 +25,7 @@ free_nl_node(nl_node_t *nl_node)
   lexbor_free(nl_node);
 }
 
-const rb_data_type_t nl_node_type = {
+static const rb_data_type_t nl_node_type = {
     "Node",
     {
         mark_nl_node,
@@ -46,7 +49,11 @@ inline nl_node_t *
 nl_rb_node_unwrap(VALUE rb_node)
 {
   nl_node_t *nl_node;
-  TypedData_Get_Struct(rb_node, lxb_dom_node_t, &nl_node_type, nl_node);
+  if (rb_obj_class(rb_node) == cNokolexborDocument) {
+    TypedData_Get_Struct(rb_node, nl_document_t, &nl_document_type, nl_node);
+  } else {
+    TypedData_Get_Struct(rb_node, nl_node_t, &nl_node_type, nl_node);
+  }
   return nl_node;
 }
 
@@ -169,7 +176,7 @@ nl_node_find(VALUE self, VALUE selector, lxb_selectors_cb_f cb, void *ctx)
   lxb_css_selector_list_destroy_memory(list);
 }
 
-VALUE
+static VALUE
 nl_node_at_css(VALUE self, VALUE selector)
 {
   lxb_dom_node_t *result_node = NULL;
@@ -183,7 +190,7 @@ nl_node_at_css(VALUE self, VALUE selector)
   return nl_rb_node_create(result_node, self);
 }
 
-VALUE
+static VALUE
 nl_node_css(VALUE self, VALUE selector)
 {
   VALUE rb_node_ary = rb_ary_new();
@@ -193,7 +200,7 @@ nl_node_css(VALUE self, VALUE selector)
   return rb_funcall(cNokolexborNodeSet, rb_intern("new"), 1, rb_node_ary);
 }
 
-VALUE
+static VALUE
 nl_node_inner_html(VALUE self)
 {
   nl_node_t *nl_node = nl_rb_node_unwrap(self);
@@ -208,7 +215,7 @@ nl_node_inner_html(VALUE self)
   return Qnil;
 }
 
-VALUE
+static VALUE
 nl_node_outer_html(VALUE self)
 {
   nl_node_t *nl_node = nl_rb_node_unwrap(self);

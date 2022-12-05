@@ -13,6 +13,12 @@ typedef struct
     VALUE rb_document;
 } nl_node_t;
 
+typedef struct
+{
+    nl_node_t nl_node;
+    lxb_html_document_t *document;
+} nl_document_t;
+
 void Init_nl_document(void);
 void Init_nl_node(void);
 void Init_nl_node_set(void);
