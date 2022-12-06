@@ -49,9 +49,12 @@ inline nl_node_t *
 nl_rb_node_unwrap(VALUE rb_node)
 {
   nl_node_t *nl_node;
-  if (rb_obj_class(rb_node) == cNokolexborDocument) {
+  if (rb_obj_class(rb_node) == cNokolexborDocument)
+  {
     TypedData_Get_Struct(rb_node, nl_document_t, &nl_document_type, nl_node);
-  } else {
+  }
+  else
+  {
     TypedData_Get_Struct(rb_node, nl_node_t, &nl_node_type, nl_node);
   }
   return nl_node;
@@ -401,9 +404,10 @@ nl_node_equals(VALUE self, VALUE other)
 const lxb_char_t *
 lxb_dom_node_name_qualified(lxb_dom_node_t *node, size_t *len)
 {
-  if (node->type == LXB_DOM_NODE_TYPE_ELEMENT) {
+  if (node->type == LXB_DOM_NODE_TYPE_ELEMENT)
+  {
     return lxb_dom_element_qualified_name(lxb_dom_interface_element(node),
-                                            len);
+                                          len);
   }
   return lxb_dom_node_name(node, len);
 }
@@ -427,19 +431,46 @@ nl_node_is_comment(VALUE self)
 static VALUE
 nl_node_add_sibling(VALUE self, VALUE next_or_previous, VALUE new)
 {
-  if (TYPE(new) != T_STRING) {
-    rb_raise(rb_eArgError, "Only support inserting with String for now");
-    return Qnil;
-  }
   nl_node_t *nl_node_self = nl_rb_node_unwrap(self);
-  lxb_dom_node_t *node_new = lxb_dom_document_create_text_node(nl_node_self->node->owner_document, RSTRING_PTR(new), RSTRING_LEN(new));
+  lxb_dom_document_t *doc = nl_node_self->node->owner_document;
 
-  if (rb_eql(rb_String(next_or_previous), rb_str_new_literal("next"))) {
-    lxb_dom_node_insert_after(nl_node_self->node, node_new);
-  } else if (rb_eql(rb_String(next_or_previous), rb_str_new_literal("previous"))) {
-    lxb_dom_node_insert_before(nl_node_self->node, node_new);
-  } else {
+  int insert_after;
+  if (rb_eql(rb_String(next_or_previous), rb_str_new_literal("next")))
+  {
+    insert_after = 1;
+  }
+  else if (rb_eql(rb_String(next_or_previous), rb_str_new_literal("previous")))
+  {
+    insert_after = 0;
+  }
+  else
+  {
     rb_raise(rb_eArgError, "Unsupported inserting position");
+  }
+
+  if (TYPE(new) == T_STRING)
+  {
+    size_t tag_name_len;
+    lxb_char_t *tag_name = lxb_tag_name_by_id(lxb_html_document_tags(doc), LXB_TAG__UNDEF, &tag_name_len);
+    lxb_dom_element_t *element = lxb_dom_document_create_element(doc, tag_name, tag_name_len, NULL);
+    lxb_dom_node_t *frag_root = lxb_html_document_parse_fragment(doc, element, RSTRING_PTR(new), RSTRING_LEN(new));
+
+    while (frag_root->first_child != NULL)
+    {
+      lxb_dom_node_t *child = frag_root->first_child;
+      lxb_dom_node_remove(child);
+      insert_after ? lxb_dom_node_insert_after(nl_node_self->node, child) : lxb_dom_node_insert_before(nl_node_self->node, child);
+    }
+    lxb_dom_node_destroy(frag_root);
+  }
+  else if (rb_obj_class(new) == cNokolexborNode)
+  {
+    lxb_dom_node_t *node_new = nl_rb_node_unwrap(new)->node;
+    insert_after ? lxb_dom_node_insert_after(nl_node_self->node, node_new) : lxb_dom_node_insert_before(nl_node_self->node, node_new);
+  }
+  else
+  {
+    rb_raise(rb_eArgError, "Unsupported node type");
   }
   return Qnil;
 }

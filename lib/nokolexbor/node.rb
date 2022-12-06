@@ -31,7 +31,11 @@ module Nokolexbor
     end
 
     def replace(node)
-      add_sibling(:previous, node)
+      if node.is_a?(NodeSet)
+        node.each { |n| add_sibling(:previous, n) }
+      else
+        add_sibling(:previous, node)
+      end
       remove
     end
 
