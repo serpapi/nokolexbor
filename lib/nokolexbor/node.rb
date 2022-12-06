@@ -78,6 +78,17 @@ module Nokolexbor
       remove
     end
 
+    def children=(node)
+      children.remove
+      if node.is_a?(NodeSet)
+        node.each { |n| add_child(n) }
+      else
+        add_child(node)
+      end
+    end
+
+    alias_method :inner_html=, :children=
+
     def xpath(*args)
       paths, handler, ns, binds = extract_params(args)
 

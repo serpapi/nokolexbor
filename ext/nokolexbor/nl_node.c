@@ -370,6 +370,14 @@ static VALUE
 nl_node_remove(VALUE self)
 {
   lxb_dom_node_t *node = nl_rb_node_unwrap(self);
+  lxb_dom_node_remove(node);
+  return Qnil;
+}
+
+static VALUE
+nl_node_destroy(VALUE self)
+{
+  lxb_dom_node_t *node = nl_rb_node_unwrap(self);
   lxb_dom_node_destroy(node);
   return Qnil;
 }
@@ -450,6 +458,39 @@ nl_node_add_sibling(VALUE self, VALUE next_or_previous, VALUE new)
 }
 
 static VALUE
+nl_node_add_child(VALUE self, VALUE new)
+{
+  lxb_dom_node_t *node = nl_rb_node_unwrap(self);
+  lxb_dom_document_t *doc = node->owner_document;
+
+  if (TYPE(new) == T_STRING)
+  {
+    size_t tag_name_len;
+    lxb_char_t *tag_name = lxb_tag_name_by_id(lxb_html_document_tags(doc), LXB_TAG__UNDEF, &tag_name_len);
+    lxb_dom_element_t *element = lxb_dom_document_create_element(doc, tag_name, tag_name_len, NULL);
+    lxb_dom_node_t *frag_root = lxb_html_document_parse_fragment(doc, element, RSTRING_PTR(new), RSTRING_LEN(new));
+
+    while (frag_root->first_child != NULL)
+    {
+      lxb_dom_node_t *child = frag_root->first_child;
+      lxb_dom_node_remove(child);
+      lxb_dom_node_insert_child(node, child);
+    }
+    lxb_dom_node_destroy(frag_root);
+  }
+  else if (rb_obj_class(new) == cNokolexborNode)
+  {
+    lxb_dom_node_t *node_new = nl_rb_node_unwrap(new);
+    lxb_dom_node_insert_child(node, node_new);
+  }
+  else
+  {
+    rb_raise(rb_eArgError, "Unsupported node type");
+  }
+  return Qnil;
+}
+
+static VALUE
 nl_node_get_type(VALUE self)
 {
   return INT2NUM(nl_rb_node_unwrap(self)->type);
@@ -475,9 +516,11 @@ void Init_nl_node(void)
   rb_define_method(cNokolexborNode, "children", nl_node_children, 0);
   rb_define_method(cNokolexborNode, "child", nl_node_child, 0);
   rb_define_method(cNokolexborNode, "remove", nl_node_remove, 0);
+  rb_define_method(cNokolexborNode, "destroy", nl_node_destroy, 0);
   rb_define_method(cNokolexborNode, "attrs", nl_node_attrs, 0);
   rb_define_method(cNokolexborNode, "name", nl_node_name, 0);
   rb_define_method(cNokolexborNode, "add_sibling", nl_node_add_sibling, 2);
+  rb_define_method(cNokolexborNode, "add_child", nl_node_add_child, 1);
   rb_define_method(cNokolexborNode, "node_type", nl_node_get_type, 0);
 
   rb_define_alias(cNokolexborNode, "attr", "[]");
@@ -487,6 +530,5 @@ void Init_nl_node(void)
   rb_define_alias(cNokolexborNode, "to_html", "outer_html");
   rb_define_alias(cNokolexborNode, "previous_element", "previous");
   rb_define_alias(cNokolexborNode, "next_element", "next");
-  rb_define_alias(cNokolexborNode, "destroy", "remove");
   rb_define_alias(cNokolexborNode, "type", "node_type");
 }
