@@ -4,32 +4,15 @@ extern VALUE mNokolexbor;
 VALUE cNokolexborNodeSet;
 
 static void
-mark_nl_node_set(lexbor_array_t *array)
-{
-  for (int i = 0; i < array->length; i++)
-  {
-    nl_node_t *nl_node = (nl_node_t *)array->list[i];
-    if (nl_node->rb_node)
-    {
-      rb_gc_mark(nl_node->rb_node);
-    }
-  }
-}
-
-static void
 free_nl_node_set(lexbor_array_t *array)
 {
-  for (int i = 0; i < array->length; i++)
-  {
-    free(array->list[i]);
-  }
   lexbor_array_destroy(array, true);
 }
 
 const rb_data_type_t nl_node_set_type = {
-    "NodeSet",
+    "Nokolexbor::NodeSet",
     {
-        mark_nl_node_set,
+        0,
         free_nl_node_set,
     },
     0,
@@ -71,9 +54,9 @@ static VALUE
 nl_node_set_push(VALUE self, VALUE rb_node)
 {
   lexbor_array_t *array = nl_rb_node_set_unwrap(self);
-  nl_node_t *nl_node = nl_rb_node_unwrap(rb_node);
+  lxb_dom_node_t *node = nl_rb_node_unwrap(rb_node);
 
-  lexbor_array_push(array, nl_node_dup(nl_node));
+  lexbor_array_push(array, node);
 
   return self;
 }
@@ -82,11 +65,11 @@ static VALUE
 nl_node_set_delete(VALUE self, VALUE rb_node)
 {
   lexbor_array_t *array = nl_rb_node_set_unwrap(self);
-  nl_node_t *nl_node = nl_rb_node_unwrap(rb_node);
+  lxb_dom_node_t *node = nl_rb_node_unwrap(rb_node);
 
   int i;
   for (i = 0; i < array->length; i++)
-    if (array->list[i] == nl_node)
+    if (array->list[i] == node)
     {
       break;
     }
@@ -104,10 +87,10 @@ static VALUE
 nl_node_set_is_include(VALUE self, VALUE rb_node)
 {
   lexbor_array_t *array = nl_rb_node_set_unwrap(self);
-  nl_node_t *nl_node = nl_rb_node_unwrap(rb_node);
+  lxb_dom_node_t *node = nl_rb_node_unwrap(rb_node);
 
   for (int i = 0; i < array->length; i++)
-    if (array->list[i] == nl_node)
+    if (array->list[i] == node)
     {
       return Qtrue;
     }
@@ -129,18 +112,8 @@ nl_node_set_index_at(VALUE self, long offset)
     offset += array->length;
   }
 
-  nl_node_t *nl_node = lexbor_array_get(array, offset);
-  if (!nl_node)
-  {
-    return Qnil;
-  }
-  if (!nl_node->rb_node)
-  {
-    VALUE doc = rb_iv_get(self, "@document");
-    nl_node->rb_node = nl_rb_node_create(nl_node->node, doc);
-    nl_node->rb_document = doc;
-  }
-  return nl_node->rb_node;
+  lxb_dom_node_t *node = lexbor_array_get(array, offset);
+  return nl_rb_node_create(node, nl_rb_document_get(self));
 }
 
 static VALUE
@@ -167,7 +140,7 @@ nl_node_set_subseq(VALUE self, long beg, long len)
 
   for (int j = beg; j < beg + len; ++j)
   {
-    lexbor_array_push(new_array, nl_node_dup(old_array->list[j]));
+    lexbor_array_push(new_array, old_array->list[j]);
   }
   return TypedData_Wrap_Struct(cNokolexborNodeSet, &nl_node_set_type, new_array);
 }
@@ -222,16 +195,12 @@ nl_node_set_to_array(VALUE self)
   lexbor_array_t *array = nl_rb_node_set_unwrap(self);
 
   VALUE list = rb_ary_new2(array->length);
+  VALUE doc = nl_rb_document_get(self);
   for (int i = 0; i < array->length; i++)
   {
-    nl_node_t *nl_node = (nl_node_t *)array->list[i];
-    if (!nl_node->rb_node)
-    {
-      VALUE doc = rb_iv_get(self, "@document");
-      nl_node->rb_node = nl_rb_node_create(nl_node->node, doc);
-      nl_node->rb_document = doc;
-    }
-    rb_ary_push(list, nl_node->rb_node);
+    lxb_dom_node_t *node = (lxb_dom_node_t *)array->list[i];
+    VALUE rb_node = nl_rb_node_create(node, doc);
+    rb_ary_push(list, rb_node);
   }
 
   return list;

@@ -5,14 +5,13 @@ extern VALUE cNokolexborNode;
 VALUE cNokolexborDocument;
 
 static void
-free_nl_document(nl_document_t *nl_document)
+free_nl_document(lxb_dom_document_t *document)
 {
-  lxb_html_document_destroy(nl_document->document);
-  lexbor_free(nl_document);
+  lxb_html_document_destroy(document);
 }
 
 const rb_data_type_t nl_document_type = {
-    "Document",
+    "Nokolexbor::Document",
     {
         0,
         free_nl_document,
@@ -42,15 +41,7 @@ nl_document_parse(VALUE self, VALUE rb_html)
     return Qnil;
   }
 
-  nl_document_t *nl_document = lexbor_malloc(sizeof(nl_document_t));
-  VALUE rb_document = TypedData_Wrap_Struct(cNokolexborDocument, &nl_document_type, nl_document);
-
-  nl_document->nl_node.node = &document->dom_document.node;
-  nl_document->nl_node.rb_document = rb_document;
-  nl_document->document = document;
-  nl_document->rb_document = rb_document;
-
-  return rb_document;
+  return TypedData_Wrap_Struct(cNokolexborDocument, &nl_document_type, document);
 }
 
 void Init_nl_document(void)

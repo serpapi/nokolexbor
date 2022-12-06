@@ -73,12 +73,13 @@ xpath2ruby(xmlXPathObjectPtr c_xpath_object, xmlXPathContextPtr ctx, VALUE rb_do
     xmlFree(c_xpath_object->stringval);
     return rb_retval;
 
-  case XPATH_NODESET: {
+  case XPATH_NODESET:
+  {
     lexbor_array_t *array = lexbor_array_create();
     lexbor_array_init(array, c_xpath_object->nodesetval->nodeNr);
     for (int i = 0; i < c_xpath_object->nodesetval->nodeNr; i++)
     {
-      lexbor_array_push(array, nl_node_create(c_xpath_object->nodesetval->nodeTab[i]));
+      lexbor_array_push(array, c_xpath_object->nodesetval->nodeTab[i]);
     }
     return nl_rb_node_set_create_with_data(array, rb_document);
   }
@@ -138,8 +139,9 @@ rb_xml_xpath_context_evaluate(int argc, VALUE *argv, VALUE self)
     rb_exc_raise(rb_ary_entry(errors, 0));
   }
 
-  retval = xpath2ruby(xpath, ctx, rb_iv_get(self, "@document"));
-  if (retval == Qundef) {
+  retval = xpath2ruby(xpath, ctx, nl_rb_document_get(self));
+  if (retval == Qundef)
+  {
     retval = rb_funcall(cNokolexborNodeSet, rb_intern("new"), 1, rb_ary_new());
   }
 
@@ -155,18 +157,19 @@ rb_xml_xpath_context_evaluate(int argc, VALUE *argv, VALUE self)
  * Create a new XPathContext with +node+ as the reference point.
  */
 static VALUE
-rb_xml_xpath_context_new(VALUE klass, VALUE nodeobj)
+rb_xml_xpath_context_new(VALUE klass, VALUE rb_node)
 {
   xmlXPathContextPtr ctx;
   VALUE self;
 
-  nl_node_t *nl_node = nl_rb_node_unwrap(nodeobj);
+  lxb_dom_node_t *node = nl_rb_node_unwrap(rb_node);
 
-  ctx = xmlXPathNewContext(nl_node->node->owner_document);
-  ctx->node = nl_node->node;
+  ctx = xmlXPathNewContext(node->owner_document);
+  ctx->node = node;
 
   self = Data_Wrap_Struct(klass, 0, free_xml_xpath_context, ctx);
-  rb_iv_set(self, "@document", nl_node->rb_document);
+  rb_iv_set(self, "@document", rb_iv_get(rb_node, "@document"));
+
   return self;
 }
 
