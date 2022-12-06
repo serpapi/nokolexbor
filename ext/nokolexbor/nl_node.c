@@ -16,7 +16,7 @@ mark_nl_node(nl_node_t *nl_node)
 static void
 free_nl_node(nl_node_t *nl_node)
 {
-  lexbor_free(nl_node);
+  free(nl_node);
 }
 
 static const rb_data_type_t nl_node_type = {
@@ -33,7 +33,7 @@ static const rb_data_type_t nl_node_type = {
 VALUE
 nl_rb_node_create(lxb_dom_node_t *node, VALUE rb_document)
 {
-  nl_node_t *nl_node = lexbor_malloc(sizeof(nl_node_t));
+  nl_node_t *nl_node = malloc(sizeof(nl_node_t));
   nl_node->node = node;
   nl_node->rb_document = rb_document;
   VALUE ret = TypedData_Wrap_Struct(cNokolexborNode, &nl_node_type, nl_node);
@@ -45,7 +45,7 @@ nl_rb_node_create(lxb_dom_node_t *node, VALUE rb_document)
 nl_node_t *
 nl_node_create(lxb_dom_node_t *node)
 {
-  nl_node_t *nl_node = lexbor_calloc(1, sizeof(nl_node_t));
+  nl_node_t *nl_node = calloc(1, sizeof(nl_node_t));
   nl_node->node = node;
   return nl_node;
 }
@@ -53,7 +53,7 @@ nl_node_create(lxb_dom_node_t *node)
 nl_node_t *
 nl_node_dup(nl_node_t *nl_node)
 {
-  nl_node_t *nl_node_new = lexbor_malloc(sizeof(nl_node_t));
+  nl_node_t *nl_node_new = malloc(sizeof(nl_node_t));
   memcpy(nl_node_new, nl_node, sizeof(nl_node_t));
   return nl_node_new;
 }

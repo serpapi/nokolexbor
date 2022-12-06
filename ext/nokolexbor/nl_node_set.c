@@ -21,7 +21,7 @@ free_nl_node_set(lexbor_array_t *array)
 {
   for (int i = 0; i < array->length; i++)
   {
-    lexbor_free(array->list[i]);
+    free(array->list[i]);
   }
   lexbor_array_destroy(array, true);
 }
