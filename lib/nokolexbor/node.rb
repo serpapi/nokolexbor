@@ -2,6 +2,43 @@
 
 module Nokolexbor
   class Node
+    ELEMENT_NODE = 1
+    ATTRIBUTE_NODE = 2
+    TEXT_NODE = 3
+    CDATA_SECTION_NODE = 4
+    ENTITY_REF_NODE = 5
+    ENTITY_NODE = 6
+    PI_NODE = 7
+    COMMENT_NODE = 8
+    DOCUMENT_NODE = 9
+    DOCUMENT_TYPE_NODE = 10
+    DOCUMENT_FRAG_NODE = 11
+    NOTATION_NODE = 12
+
+    def comment?
+      type == COMMENT_NODE
+    end
+
+    def cdata?
+      type == CDATA_SECTION_NODE
+    end
+
+    def processing_instruction?
+      type == PI_NODE
+    end
+
+    def text?
+      type == TEXT_NODE
+    end
+
+    def fragment?
+      type == DOCUMENT_FRAG_NODE
+    end
+
+    def element?
+      type == ELEMENT_NODE
+    end
+
     def ancestors
       return NodeSet.new unless respond_to?(:parent)
       return NodeSet.new unless parent

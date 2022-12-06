@@ -422,13 +422,6 @@ nl_node_name(VALUE self)
 }
 
 static VALUE
-nl_node_is_comment(VALUE self)
-{
-  nl_node_t *nl_node = nl_rb_node_unwrap(self);
-  return nl_node->node->type == LXB_DOM_NODE_TYPE_COMMENT ? Qtrue : Qfalse;
-}
-
-static VALUE
 nl_node_add_sibling(VALUE self, VALUE next_or_previous, VALUE new)
 {
   nl_node_t *nl_node_self = nl_rb_node_unwrap(self);
@@ -475,6 +468,12 @@ nl_node_add_sibling(VALUE self, VALUE next_or_previous, VALUE new)
   return Qnil;
 }
 
+static VALUE
+nl_node_get_type(VALUE self)
+{
+  return INT2NUM(nl_rb_node_unwrap(self)->node->type);
+}
+
 void Init_nl_node(void)
 {
   cNokolexborNode = rb_define_class_under(mNokolexbor, "Node", rb_cObject);
@@ -497,8 +496,8 @@ void Init_nl_node(void)
   rb_define_method(cNokolexborNode, "remove", nl_node_remove, 0);
   rb_define_method(cNokolexborNode, "attrs", nl_node_attrs, 0);
   rb_define_method(cNokolexborNode, "name", nl_node_name, 0);
-  rb_define_method(cNokolexborNode, "comment?", nl_node_is_comment, 0);
   rb_define_method(cNokolexborNode, "add_sibling", nl_node_add_sibling, 2);
+  rb_define_method(cNokolexborNode, "node_type", nl_node_get_type, 0);
 
   rb_define_alias(cNokolexborNode, "attr", "[]");
   rb_define_alias(cNokolexborNode, "text", "content");
@@ -508,4 +507,5 @@ void Init_nl_node(void)
   rb_define_alias(cNokolexborNode, "previous_element", "previous");
   rb_define_alias(cNokolexborNode, "next_element", "next");
   rb_define_alias(cNokolexborNode, "destroy", "remove");
+  rb_define_alias(cNokolexborNode, "type", "node_type");
 }
