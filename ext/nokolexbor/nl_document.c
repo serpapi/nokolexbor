@@ -48,6 +48,7 @@ nl_document_parse(VALUE self, VALUE rb_html)
   nl_document->nl_node.node = &document->dom_document.node;
   nl_document->nl_node.rb_document = rb_document;
   nl_document->document = document;
+  nl_document->rb_document = rb_document;
 
   return rb_document;
 }

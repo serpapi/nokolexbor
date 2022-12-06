@@ -15,6 +15,8 @@ module Nokolexbor
     DOCUMENT_FRAG_NODE = 11
     NOTATION_NODE = 12
 
+    attr_reader :document
+
     def comment?
       type == COMMENT_NODE
     end
@@ -40,8 +42,8 @@ module Nokolexbor
     end
 
     def ancestors
-      return NodeSet.new unless respond_to?(:parent)
-      return NodeSet.new unless parent
+      return NodeSet.new(@document) unless respond_to?(:parent)
+      return NodeSet.new(@document) unless parent
 
       parents = [parent]
 
@@ -51,7 +53,7 @@ module Nokolexbor
         parents << ctx_parent
       end
 
-      NodeSet.new(parents)
+      NodeSet.new(@document, parents)
     end
 
     def matches?(selector)
@@ -96,7 +98,7 @@ module Nokolexbor
         return xpath_impl(node, paths.first, handler, ns, binds)
       end
 
-      NodeSet.new do |combined|
+      NodeSet.new(@document) do |combined|
         paths.each do |path|
           xpath_impl(node, path, handler, ns, binds).each { |set| combined << set }
         end

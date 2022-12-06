@@ -73,13 +73,15 @@ xpath2ruby(xmlXPathObjectPtr c_xpath_object, xmlXPathContextPtr ctx, VALUE rb_do
     xmlFree(c_xpath_object->stringval);
     return rb_retval;
 
-  case XPATH_NODESET:
-    rb_retval = rb_ary_new();
+  case XPATH_NODESET: {
+    lexbor_array_t *array = lexbor_array_create();
+    lexbor_array_init(array, c_xpath_object->nodesetval->nodeNr);
     for (int i = 0; i < c_xpath_object->nodesetval->nodeNr; i++)
     {
-      rb_ary_push(rb_retval, nl_rb_node_create(c_xpath_object->nodesetval->nodeTab[i], rb_document));
+      lexbor_array_push(array, nl_node_create(c_xpath_object->nodesetval->nodeTab[i]));
     }
-    return rb_retval;
+    return nl_rb_node_set_create_with_data(array, rb_document);
+  }
 
   case XPATH_NUMBER:
     return rb_float_new(c_xpath_object->floatval);

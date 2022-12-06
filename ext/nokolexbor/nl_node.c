@@ -7,12 +7,6 @@ VALUE cNokolexborNode;
 
 extern rb_data_type_t nl_document_type;
 
-typedef struct
-{
-  VALUE rb_ary;
-  VALUE rb_document;
-} nl_node_css_callback_ctx;
-
 static void
 mark_nl_node(nl_node_t *nl_node)
 {
@@ -42,7 +36,26 @@ nl_rb_node_create(lxb_dom_node_t *node, VALUE rb_document)
   nl_node_t *nl_node = lexbor_malloc(sizeof(nl_node_t));
   nl_node->node = node;
   nl_node->rb_document = rb_document;
-  return TypedData_Wrap_Struct(cNokolexborNode, &nl_node_type, nl_node);
+  VALUE ret = TypedData_Wrap_Struct(cNokolexborNode, &nl_node_type, nl_node);
+  rb_iv_set(ret, "@document", rb_document);
+  nl_node->rb_node = ret;
+  return ret;
+}
+
+nl_node_t *
+nl_node_create(lxb_dom_node_t *node)
+{
+  nl_node_t *nl_node = lexbor_calloc(1, sizeof(nl_node_t));
+  nl_node->node = node;
+  return nl_node;
+}
+
+nl_node_t *
+nl_node_dup(nl_node_t *nl_node)
+{
+  nl_node_t *nl_node_new = lexbor_malloc(sizeof(nl_node_t));
+  memcpy(nl_node_new, nl_node, sizeof(nl_node_t));
+  return nl_node_new;
 }
 
 inline nl_node_t *
@@ -122,11 +135,10 @@ nl_node_at_css_callback(lxb_dom_node_t *node, lxb_css_selector_specificity_t *sp
 }
 
 static lxb_status_t
-nl_node_css_callback(lxb_dom_node_t *node, lxb_css_selector_specificity_t *spec, void *_ctx)
+nl_node_css_callback(lxb_dom_node_t *node, lxb_css_selector_specificity_t *spec, void *ctx)
 {
-  nl_node_css_callback_ctx *ctx = (nl_node_css_callback_ctx *)_ctx;
-  VALUE rb_node = nl_rb_node_create(node, ctx->rb_document);
-  rb_ary_push(ctx->rb_ary, rb_node);
+  lexbor_array_t *array = (lexbor_array_t *)ctx;
+  lexbor_array_push(array, nl_node_create(node));
   return LXB_STATUS_OK;
 }
 
@@ -190,17 +202,19 @@ nl_node_at_css(VALUE self, VALUE selector)
     return Qnil;
   }
 
-  return nl_rb_node_create(result_node, self);
+  nl_node_t *nl_node = nl_rb_node_unwrap(self);
+  return nl_rb_node_create(result_node, nl_node->rb_document);
 }
 
 static VALUE
 nl_node_css(VALUE self, VALUE selector)
 {
-  VALUE rb_node_ary = rb_ary_new();
-  nl_node_css_callback_ctx ctx = {rb_node_ary, self};
-  nl_node_find(self, selector, nl_node_css_callback, &ctx);
+  nl_node_t *nl_node = nl_rb_node_unwrap(self);
+  lexbor_array_t *array = lexbor_array_create();
+  lexbor_array_init(array, 1);
+  nl_node_find(self, selector, nl_node_css_callback, array);
 
-  return rb_funcall(cNokolexborNodeSet, rb_intern("new"), 1, rb_node_ary);
+  return nl_rb_node_set_create_with_data(array, nl_node->rb_document);
 }
 
 static VALUE
@@ -361,16 +375,16 @@ nl_node_children(VALUE self)
 {
   nl_node_t *nl_node = nl_rb_node_unwrap(self);
   lxb_dom_node_t *child = lxb_dom_node_first_child(nl_node->node);
-  VALUE ary_children = rb_ary_new();
+  lexbor_array_t *array = lexbor_array_create();
+  lexbor_array_init(array, 1);
 
   while (child != NULL)
   {
-    rb_ary_push(ary_children, nl_rb_node_create(child, nl_node->rb_document));
-
+    lexbor_array_push(array, nl_node_create(child));
     child = lxb_dom_node_next(child);
   }
 
-  return rb_funcall(cNokolexborNodeSet, rb_intern("new"), 1, ary_children);
+  return nl_rb_node_set_create_with_data(array, nl_node->rb_document);
 }
 
 static VALUE
