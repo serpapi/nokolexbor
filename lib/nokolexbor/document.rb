@@ -2,8 +2,5 @@
 
 module Nokolexbor
   class Document < Node
-    def attrs
-      {}
-    end
   end
 end

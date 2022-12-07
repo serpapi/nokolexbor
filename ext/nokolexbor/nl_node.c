@@ -62,6 +62,12 @@ static VALUE
 nl_node_get_attr(VALUE self, VALUE rb_attr)
 {
   lxb_dom_node_t *node = nl_rb_node_unwrap(self);
+
+  if (node->type != LXB_DOM_NODE_TYPE_ELEMENT)
+  {
+    return Qnil;
+  }
+
   VALUE rb_attr_s = rb_String(rb_attr);
   const char *attr_c = RSTRING_PTR(rb_attr_s);
   int attr_len = RSTRING_LEN(rb_attr_s);
@@ -83,6 +89,12 @@ static VALUE
 nl_node_set_attr(VALUE self, VALUE rb_attr, VALUE rb_value)
 {
   lxb_dom_node_t *node = nl_rb_node_unwrap(self);
+
+  if (node->type != LXB_DOM_NODE_TYPE_ELEMENT)
+  {
+    return Qnil;
+  }
+
   VALUE rb_attr_s = rb_String(rb_attr);
   VALUE rb_value_s = rb_String(rb_value);
 
@@ -102,6 +114,12 @@ static VALUE
 nl_node_remove_attr(VALUE self, VALUE rb_attr)
 {
   lxb_dom_node_t *node = nl_rb_node_unwrap(self);
+
+  if (node->type != LXB_DOM_NODE_TYPE_ELEMENT)
+  {
+    return Qnil;
+  }
+
   VALUE rb_attr_s = rb_String(rb_attr);
 
   const char *attr_c = RSTRING_PTR(rb_attr_s);
@@ -241,6 +259,12 @@ static VALUE
 nl_node_has_key(VALUE self, VALUE rb_attr)
 {
   lxb_dom_node_t *node = nl_rb_node_unwrap(self);
+
+  if (node->type != LXB_DOM_NODE_TYPE_ELEMENT)
+  {
+    return Qfalse;
+  }
+
   VALUE rb_attr_s = rb_String(rb_attr);
   const char *attr_c = RSTRING_PTR(rb_attr_s);
   int attr_len = RSTRING_LEN(rb_attr_s);
@@ -254,8 +278,14 @@ static VALUE
 nl_node_keys(VALUE self)
 {
   lxb_dom_node_t *node = nl_rb_node_unwrap(self);
-  lxb_dom_attr_t *attr = lxb_dom_element_first_attribute(lxb_html_interface_element(node));
   VALUE ary_keys = rb_ary_new();
+
+  if (node->type != LXB_DOM_NODE_TYPE_ELEMENT)
+  {
+    return ary_keys;
+  }
+
+  lxb_dom_attr_t *attr = lxb_dom_element_first_attribute(lxb_html_interface_element(node));
 
   while (attr != NULL)
   {
@@ -273,8 +303,14 @@ static VALUE
 nl_node_values(VALUE self)
 {
   lxb_dom_node_t *node = nl_rb_node_unwrap(self);
-  lxb_dom_attr_t *attr = lxb_dom_element_first_attribute(lxb_html_interface_element(node));
   VALUE ary_values = rb_ary_new();
+
+  if (node->type != LXB_DOM_NODE_TYPE_ELEMENT)
+  {
+    return ary_values;
+  }
+
+  lxb_dom_attr_t *attr = lxb_dom_element_first_attribute(lxb_html_interface_element(node));
 
   while (attr != NULL)
   {
@@ -295,8 +331,14 @@ static VALUE
 nl_node_attrs(VALUE self)
 {
   lxb_dom_node_t *node = nl_rb_node_unwrap(self);
-  lxb_dom_attr_t *attr = lxb_dom_element_first_attribute(lxb_html_interface_element(node));
   VALUE rb_hash = rb_hash_new();
+
+  if (node->type != LXB_DOM_NODE_TYPE_ELEMENT)
+  {
+    return rb_hash;
+  }
+
+  lxb_dom_attr_t *attr = lxb_dom_element_first_attribute(lxb_html_interface_element(node));
 
   while (attr != NULL)
   {
@@ -525,20 +567,24 @@ nl_node_last_element_child(VALUE self)
   lxb_dom_node_t *parent = nl_rb_node_unwrap(self);
   lxb_dom_node_t *cur;
 
-  if (parent == NULL) {
+  if (parent == NULL)
+  {
     return Qnil;
   }
-  switch (parent->type) {
-    case LXB_DOM_NODE_TYPE_ELEMENT:
-    case LXB_DOM_NODE_TYPE_ENTITY:
-    case LXB_DOM_NODE_TYPE_DOCUMENT:
-      cur = parent->last_child;
-      break;
-    default:
-      return Qnil;
+  switch (parent->type)
+  {
+  case LXB_DOM_NODE_TYPE_ELEMENT:
+  case LXB_DOM_NODE_TYPE_ENTITY:
+  case LXB_DOM_NODE_TYPE_DOCUMENT:
+    cur = parent->last_child;
+    break;
+  default:
+    return Qnil;
   }
-  while (cur != NULL) {
-    if (cur->type == LXB_DOM_NODE_TYPE_ELEMENT) {
+  while (cur != NULL)
+  {
+    if (cur->type == LXB_DOM_NODE_TYPE_ELEMENT)
+    {
       return nl_rb_node_create(cur, nl_rb_document_get(self));
     }
     cur = cur->prev;
