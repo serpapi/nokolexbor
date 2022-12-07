@@ -532,6 +532,7 @@ void Init_nl_node(void)
   rb_define_alias(cNokolexborNode, "inner_text", "content");
   rb_define_alias(cNokolexborNode, "to_str", "content");
   rb_define_alias(cNokolexborNode, "to_html", "outer_html");
+  rb_define_alias(cNokolexborNode, "to_s", "outer_html");
   rb_define_alias(cNokolexborNode, "previous_element", "previous");
   rb_define_alias(cNokolexborNode, "next_element", "next");
   rb_define_alias(cNokolexborNode, "type", "node_type");
