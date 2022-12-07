@@ -519,6 +519,33 @@ nl_node_get_type(VALUE self)
   return INT2NUM(nl_rb_node_unwrap(self)->type);
 }
 
+static VALUE
+nl_node_last_element_child(VALUE self)
+{
+  lxb_dom_node_t *parent = nl_rb_node_unwrap(self);
+  lxb_dom_node_t *cur;
+
+  if (parent == NULL) {
+    return Qnil;
+  }
+  switch (parent->type) {
+    case LXB_DOM_NODE_TYPE_ELEMENT:
+    case LXB_DOM_NODE_TYPE_ENTITY:
+    case LXB_DOM_NODE_TYPE_DOCUMENT:
+      cur = parent->last_child;
+      break;
+    default:
+      return Qnil;
+  }
+  while (cur != NULL) {
+    if (cur->type == LXB_DOM_NODE_TYPE_ELEMENT) {
+      return nl_rb_node_create(cur, nl_rb_document_get(self));
+    }
+    cur = cur->prev;
+  }
+  return Qnil;
+}
+
 void Init_nl_node(void)
 {
   cNokolexborNode = rb_define_class_under(mNokolexbor, "Node", rb_cObject);
@@ -546,6 +573,7 @@ void Init_nl_node(void)
   rb_define_method(cNokolexborNode, "add_sibling", nl_node_add_sibling, 2);
   rb_define_method(cNokolexborNode, "add_child", nl_node_add_child, 1);
   rb_define_method(cNokolexborNode, "node_type", nl_node_get_type, 0);
+  rb_define_method(cNokolexborNode, "last_element_child", nl_node_last_element_child, 0);
 
   rb_define_alias(cNokolexborNode, "attr", "[]");
   rb_define_alias(cNokolexborNode, "set_attr", "[]=");
