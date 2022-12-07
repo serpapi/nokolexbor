@@ -36,7 +36,7 @@ index 398d1bb..b35bfab 100644
      {"grammar-error", (void *) &lxb_css_selectors_pseudo_data_pseudo_element[LXB_CSS_SELECTOR_PSEUDO_ELEMENT_GRAMMAR_ERROR], 13, 0}, 
      {"before", (void *) &lxb_css_selectors_pseudo_data_pseudo_element[LXB_CSS_SELECTOR_PSEUDO_ELEMENT_BEFORE], 6, 0}, 
 diff --git i/source/lexbor/selectors/selectors.c w/source/lexbor/selectors/selectors.c
-index c2d18ea..79061ea 100644
+index c2d18ea..84b5b14 100644
 --- i/source/lexbor/selectors/selectors.c
 +++ w/source/lexbor/selectors/selectors.c
 @@ -156,6 +156,12 @@ lxb_selectors_descendant(lxb_selectors_t *selectors, lxb_selectors_entry_t *entr
@@ -91,7 +91,16 @@ index c2d18ea..79061ea 100644
  
          node = node->next;
      }
-@@ -290,6 +314,12 @@ lxb_selectors_following(lxb_selectors_t *selectors, lxb_selectors_entry_t *entry
+@@ -262,6 +286,8 @@ lxb_selectors_sibling(lxb_selectors_t *selectors, lxb_selectors_entry_t *entry,
+ {
+     node = node->next;
+ 
++    if (node == NULL) return NULL;
++
+     do {
+         if (node->type == LXB_DOM_NODE_TYPE_ELEMENT) {
+             if (lxb_selectors_match(selectors, entry, selector, node)) {
+@@ -290,6 +316,12 @@ lxb_selectors_following(lxb_selectors_t *selectors, lxb_selectors_entry_t *entry
          {
              return node;
          }
@@ -104,7 +113,7 @@ index c2d18ea..79061ea 100644
  
          node = node->next;
      }
-@@ -1429,6 +1459,8 @@ lxb_selectors_pseudo_element(lxb_selectors_t *selectors,
+@@ -1429,6 +1461,8 @@ lxb_selectors_pseudo_element(lxb_selectors_t *selectors,
      lxb_css_selector_pseudo_t *pseudo = &selector->u.pseudo;
  
      switch (pseudo->type) {

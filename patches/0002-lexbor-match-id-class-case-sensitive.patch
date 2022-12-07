@@ -1,8 +1,8 @@
 diff --git i/source/lexbor/selectors/selectors.c w/source/lexbor/selectors/selectors.c
-index c2d18ea..e7c1709 100644
+index c2d18ea..84b5b14 100644
 --- i/source/lexbor/selectors/selectors.c
 +++ w/source/lexbor/selectors/selectors.c
-@@ -751,7 +781,7 @@ lxb_selectors_match(lxb_selectors_t *selectors, lxb_selectors_entry_t *entry,
+@@ -751,7 +783,7 @@ lxb_selectors_match(lxb_selectors_t *selectors, lxb_selectors_entry_t *entry,
              src = &selector->name;
  
              if (trg->length == src->length
@@ -11,7 +11,7 @@ index c2d18ea..e7c1709 100644
              {
                  return true;
              }
-@@ -766,7 +796,7 @@ lxb_selectors_match(lxb_selectors_t *selectors, lxb_selectors_entry_t *entry,
+@@ -766,7 +798,7 @@ lxb_selectors_match(lxb_selectors_t *selectors, lxb_selectors_entry_t *entry,
              }
  
              return lxb_selectors_match_class(element->attr_class->value,
