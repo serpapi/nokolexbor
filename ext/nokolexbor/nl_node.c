@@ -48,6 +48,10 @@ nl_node_content(VALUE self)
 
   size_t str_len = 0;
   lxb_char_t *text = lxb_dom_node_text_content(node, &str_len);
+  if (text == NULL)
+  {
+    return rb_str_new("", 0);
+  }
   VALUE rb_str = rb_utf8_str_new(text, str_len);
   lxb_dom_document_destroy_text(node->owner_document, text);
 
