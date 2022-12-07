@@ -115,7 +115,12 @@ nl_node_remove_attr(VALUE self, VALUE rb_attr)
 static lxb_status_t
 nl_node_at_css_callback(lxb_dom_node_t *node, lxb_css_selector_specificity_t *spec, void *ctx)
 {
-  *(lxb_dom_node_t **)ctx = node;
+  lxb_dom_node_t **node_ptr_ptr = (lxb_dom_node_t **)ctx;
+  if (*node_ptr_ptr == NULL)
+  {
+    *node_ptr_ptr = node;
+  }
+  // TODO: Try to clear lxb_css_selector_list_t to stop matching next selector
   // Stop at first result
   return LXB_STATUS_STOP;
 }
