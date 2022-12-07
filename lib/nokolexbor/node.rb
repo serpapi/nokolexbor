@@ -45,7 +45,7 @@ module Nokolexbor
       type == ELEMENT_NODE
     end
 
-    def ancestors
+    def ancestors(selector = nil)
       return NodeSet.new(@document) unless respond_to?(:parent)
       return NodeSet.new(@document) unless parent
 
@@ -57,7 +57,14 @@ module Nokolexbor
         parents << ctx_parent
       end
 
-      NodeSet.new(@document, parents)
+      return NodeSet.new(@document, parents) unless selector
+
+      root = parents.last
+      search_results = root.search(selector)
+
+      NodeSet.new(@document, parents.find_all do |parent|
+        search_results.include?(parent)
+      end)
     end
 
     def matches?(selector)
