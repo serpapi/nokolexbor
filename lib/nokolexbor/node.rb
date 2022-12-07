@@ -19,6 +19,8 @@ module Nokolexbor
 
     attr_reader :document
 
+    LOOKS_LIKE_XPATH = %r{^(\./|/|\.\.|\.$)}
+
     def comment?
       type == COMMENT_NODE
     end
@@ -106,6 +108,30 @@ module Nokolexbor
     def at_xpath(*args)
       xpath(*args).first
     end
+
+    def search(*args)
+      paths, handler, ns, binds = extract_params(args)
+
+      if paths.size == 1 && !LOOKS_LIKE_XPATH.match?(paths.first)
+        return css(paths.first)
+      end
+
+      xpath(*(paths + [ns, handler, binds].compact))
+    end
+
+    alias_method :/, :search
+
+    def at(*args)
+      paths, handler, ns, binds = extract_params(args)
+
+      if paths.size == 1 && !LOOKS_LIKE_XPATH.match?(paths.first)
+        return at_css(paths.first)
+      end
+
+      at_xpath(*(paths + [ns, handler, binds].compact))
+    end
+
+    alias_method :%, :at
 
     private
 
