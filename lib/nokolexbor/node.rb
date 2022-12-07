@@ -133,6 +133,71 @@ module Nokolexbor
 
     alias_method :%, :at
 
+    def classes
+      kwattr_values("class")
+    end
+
+    def add_class(names)
+      kwattr_add("class", names)
+    end
+
+    def append_class(names)
+      kwattr_append("class", names)
+    end
+
+    def remove_class(names = nil)
+      kwattr_remove("class", names)
+    end
+
+    def kwattr_values(attribute_name)
+      keywordify(attr(attribute_name) || [])
+    end
+
+    def kwattr_add(attribute_name, keywords)
+      keywords = keywordify(keywords)
+      current_kws = kwattr_values(attribute_name)
+      new_kws = (current_kws + (keywords - current_kws)).join(" ")
+      set_attr(attribute_name, new_kws)
+      self
+    end
+
+    def kwattr_append(attribute_name, keywords)
+      keywords = keywordify(keywords)
+      current_kws = kwattr_values(attribute_name)
+      new_kws = (current_kws + keywords).join(" ")
+      set_attr(attribute_name, new_kws)
+      self
+    end
+
+    def kwattr_remove(attribute_name, keywords)
+      if keywords.nil?
+        remove_attr(attribute_name)
+        return self
+      end
+
+      keywords = keywordify(keywords)
+      current_kws = kwattr_values(attribute_name)
+      new_kws = current_kws - keywords
+      if new_kws.empty?
+        remove_attr(attribute_name)
+      else
+        set_attr(attribute_name, new_kws.join(" "))
+      end
+      self
+    end
+
+    def keywordify(keywords)
+      case keywords
+      when Enumerable
+        keywords
+      when String
+        keywords.scan(/\S+/)
+      else
+        raise ArgumentError,
+          "Keyword attributes must be passed as either a String or an Enumerable, but received #{keywords.class}"
+      end
+    end
+
     private
 
     def xpath_internal(node, paths, handler, ns, binds)

@@ -98,6 +98,20 @@ nl_node_set_attr(VALUE self, VALUE rb_attr, VALUE rb_value)
   return rb_value;
 }
 
+static VALUE
+nl_node_remove_attr(VALUE self, VALUE rb_attr)
+{
+  lxb_dom_node_t *node = nl_rb_node_unwrap(self);
+  VALUE rb_attr_s = rb_String(rb_attr);
+
+  const char *attr_c = RSTRING_PTR(rb_attr_s);
+  int attr_len = RSTRING_LEN(rb_attr_s);
+
+  lxb_dom_element_t *element = lxb_html_interface_element(node);
+
+  return lxb_dom_element_remove_attribute(element, attr_c, attr_len) == LXB_STATUS_OK ? Qtrue : Qfalse;
+}
+
 static lxb_status_t
 nl_node_at_css_callback(lxb_dom_node_t *node, lxb_css_selector_specificity_t *spec, void *ctx)
 {
@@ -506,6 +520,7 @@ void Init_nl_node(void)
   rb_define_method(cNokolexborNode, "content", nl_node_content, 0);
   rb_define_method(cNokolexborNode, "[]", nl_node_get_attr, 1);
   rb_define_method(cNokolexborNode, "[]=", nl_node_set_attr, 2);
+  rb_define_method(cNokolexborNode, "remove_attr", nl_node_remove_attr, 1);
   rb_define_method(cNokolexborNode, "==", nl_node_equals, 1);
   rb_define_method(cNokolexborNode, "css", nl_node_css, 1);
   rb_define_method(cNokolexborNode, "at_css", nl_node_at_css, 1);
@@ -528,6 +543,7 @@ void Init_nl_node(void)
   rb_define_method(cNokolexborNode, "node_type", nl_node_get_type, 0);
 
   rb_define_alias(cNokolexborNode, "attr", "[]");
+  rb_define_alias(cNokolexborNode, "set_attr", "[]=");
   rb_define_alias(cNokolexborNode, "text", "content");
   rb_define_alias(cNokolexborNode, "inner_text", "content");
   rb_define_alias(cNokolexborNode, "to_str", "content");
