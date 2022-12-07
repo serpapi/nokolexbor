@@ -67,25 +67,75 @@ module Nokolexbor
     end
 
     alias_method :destroy, :remove
+    alias_method :to_ary, :to_a
 
-    def at_css(selector)
+    def pop
+      return nil if length == 0
+
+      delete(last)
+    end
+
+    def shift
+      return nil if length == 0
+
+      delete(first)
+    end
+
+    def ==(other)
+      return false unless other.is_a?(NodeSet)
+      return false unless length == other.length
+
+      each_with_index do |node, i|
+        return false unless node == other[i]
+      end
+      true
+    end
+
+    def children
+      node_set = NodeSet.new(@document)
+      each do |node|
+        node.children.each { |n| node_set.push(n) }
+      end
+      node_set
+    end
+
+    def reverse
+      node_set = NodeSet.new(@document)
+      (length - 1).downto(0) do |x|
+        node_set.push(self[x])
+      end
+      node_set
+    end
+
+    def at_css(*args)
       self.each do |node|
-        if child = node.at_css(selector)
+        if child = node.at_css(*args)
           return child
         end
       end
       nil
     end
 
-    def css(selector)
-      ret = []
-      each do |node|
-        node.css(selector).each do |inner_node|
-          ret << inner_node
+    def css(*args)
+      NodeSet.new(@document) do |set|
+        each do |node|
+          node.css(*args).each do |inner_node|
+            set << inner_node
+          end
         end
       end
-      NodeSet.new(@document, ret)
-      # self.map { |node| node.css(selector) }.flatten(1)
+    end
+
+    def xpath(*args)
+      paths, handler, ns, binds = extract_params(args)
+
+      NodeSet.new(@document) do |set|
+        each do |node|
+          node.send(:xpath_internal, paths, handler, ns, binds).each do |inner_node|
+            set << inner_node
+          end
+        end
+      end
     end
       
   end

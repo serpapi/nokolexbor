@@ -13,5 +13,6 @@ module Nokolexbor
     alias_method :text, :value
     alias_method :content, :value
     alias_method :to_s, :value
+    alias_method :to_str, :value
   end
 end

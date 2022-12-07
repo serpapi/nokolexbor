@@ -3,6 +3,16 @@
 extern VALUE mNokolexbor;
 VALUE cNokolexborNodeSet;
 
+lxb_status_t
+lexbor_array_push_unique(lexbor_array_t *array, void *value)
+{
+  for (int i = 0; i < array->length; i++)
+    if (array->list[i] == value)
+      return LXB_STATUS_STOPPED;
+
+  return lexbor_array_push(array, value);
+}
+
 static void
 free_nl_node_set(lexbor_array_t *array)
 {
@@ -56,7 +66,7 @@ nl_node_set_push(VALUE self, VALUE rb_node)
   lexbor_array_t *array = nl_rb_node_set_unwrap(self);
   lxb_dom_node_t *node = nl_rb_node_unwrap(rb_node);
 
-  lexbor_array_push(array, node);
+  lexbor_array_push_unique(array, node);
 
   return self;
 }
@@ -206,6 +216,33 @@ nl_node_set_to_array(VALUE self)
   return list;
 }
 
+static VALUE
+nl_node_set_union(VALUE self, VALUE other)
+{
+  if (!rb_obj_is_kind_of(other, cNokolexborNodeSet))
+  {
+    rb_raise(rb_eArgError, "parameter must be a Nokolexbor::NodeSet");
+  }
+
+  lexbor_array_t *self_array = nl_rb_node_set_unwrap(self);
+  lexbor_array_t *other_array = nl_rb_node_set_unwrap(other);
+
+  lexbor_array_t *new_array = lexbor_array_create();
+  lexbor_array_init(new_array, self_array->length + other_array->length);
+  for (int i = 0; i < self_array->length; i++)
+  {
+    new_array->list[i] = self_array->list[i];
+  }
+  new_array->length = self_array->length;
+
+  for (int i = 0; i < other_array->length; i++)
+  {
+    lexbor_array_push_unique(new_array, other_array->list[i]);
+  }
+
+  return nl_rb_node_set_create_with_data(new_array, nl_rb_document_get(self));
+}
+
 void Init_nl_node_set(void)
 {
   cNokolexborNodeSet = rb_define_class_under(mNokolexbor, "NodeSet", rb_cObject);
@@ -216,10 +253,12 @@ void Init_nl_node_set(void)
   rb_define_method(cNokolexborNodeSet, "[]", nl_node_set_slice, -1);
   rb_define_method(cNokolexborNodeSet, "slice", nl_node_set_slice, -1);
   rb_define_method(cNokolexborNodeSet, "push", nl_node_set_push, 1);
+  rb_define_method(cNokolexborNodeSet, "|", nl_node_set_union, 1);
   rb_define_method(cNokolexborNodeSet, "to_a", nl_node_set_to_array, 0);
   rb_define_method(cNokolexborNodeSet, "delete", nl_node_set_delete, 1);
   rb_define_method(cNokolexborNodeSet, "include?", nl_node_set_is_include, 1);
 
   rb_define_alias(cNokolexborNodeSet, "<<", "push");
   rb_define_alias(cNokolexborNodeSet, "size", "length");
+  rb_define_alias(cNokolexborNodeSet, "+", "|");
 }
