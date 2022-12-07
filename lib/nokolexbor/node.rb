@@ -2,6 +2,8 @@
 
 module Nokolexbor
   class Node
+    include Enumerable
+
     ELEMENT_NODE = 1
     ATTRIBUTE_NODE = 2
     TEXT_NODE = 3
@@ -84,6 +86,12 @@ module Nokolexbor
         node.each { |n| add_child(n) }
       else
         add_child(node)
+      end
+    end
+
+    def each
+      attributes.each do |node|
+        yield [node.name, node.value]
       end
     end
 
