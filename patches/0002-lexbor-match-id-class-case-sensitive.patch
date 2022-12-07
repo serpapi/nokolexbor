@@ -1,0 +1,22 @@
+diff --git i/source/lexbor/selectors/selectors.c w/source/lexbor/selectors/selectors.c
+index c2d18ea..e7c1709 100644
+--- i/source/lexbor/selectors/selectors.c
++++ w/source/lexbor/selectors/selectors.c
+@@ -751,7 +781,7 @@ lxb_selectors_match(lxb_selectors_t *selectors, lxb_selectors_entry_t *entry,
+             src = &selector->name;
+ 
+             if (trg->length == src->length
+-                && lexbor_str_data_ncasecmp(trg->data, src->data, src->length))
++                && lexbor_str_data_ncmp(trg->data, src->data, src->length))
+             {
+                 return true;
+             }
+@@ -766,7 +796,7 @@ lxb_selectors_match(lxb_selectors_t *selectors, lxb_selectors_entry_t *entry,
+             }
+ 
+             return lxb_selectors_match_class(element->attr_class->value,
+-                                             &selector->name, true);
++                                             &selector->name, false);
+ 
+         case LXB_CSS_SELECTOR_TYPE_ATTRIBUTE:
+             element = lxb_dom_interface_element(node);
