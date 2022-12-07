@@ -600,8 +600,8 @@ void Init_nl_node(void)
   rb_define_method(cNokolexborNode, "[]=", nl_node_set_attr, 2);
   rb_define_method(cNokolexborNode, "remove_attr", nl_node_remove_attr, 1);
   rb_define_method(cNokolexborNode, "==", nl_node_equals, 1);
-  rb_define_method(cNokolexborNode, "css", nl_node_css, 1);
-  rb_define_method(cNokolexborNode, "at_css", nl_node_at_css, 1);
+  rb_define_method(cNokolexborNode, "css_impl", nl_node_css, 1);
+  rb_define_method(cNokolexborNode, "at_css_impl", nl_node_at_css, 1);
   rb_define_method(cNokolexborNode, "inner_html", nl_node_inner_html, 0);
   rb_define_method(cNokolexborNode, "outer_html", nl_node_outer_html, 0);
   rb_define_method(cNokolexborNode, "key?", nl_node_has_key, 1);

@@ -99,6 +99,14 @@ module Nokolexbor
 
     alias_method :inner_html=, :children=
 
+    def css(*args)
+      css_impl(args.join(', '))
+    end
+
+    def at_css(*args)
+      at_css_impl(args.join(', '))
+    end
+
     def xpath(*args)
       paths, handler, ns, binds = extract_params(args)
 
