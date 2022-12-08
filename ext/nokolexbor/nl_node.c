@@ -546,6 +546,7 @@ nl_node_add_child(VALUE self, VALUE new)
   else if (rb_obj_class(new) == cNokolexborNode)
   {
     lxb_dom_node_t *node_new = nl_rb_node_unwrap(new);
+    lxb_dom_node_remove(node_new);
     lxb_dom_node_insert_child(node, node_new);
   }
   else
