@@ -49,6 +49,11 @@ nl_node_set_allocate(VALUE klass)
 VALUE
 nl_rb_node_set_create_with_data(lexbor_array_t *array, VALUE rb_document)
 {
+  if (array == NULL)
+  {
+    array = lexbor_array_create();
+    lexbor_array_init(array, 1);
+  }
   VALUE ret = TypedData_Wrap_Struct(cNokolexborNodeSet, &nl_node_set_type, array);
   rb_iv_set(ret, "@document", rb_document);
   return ret;
