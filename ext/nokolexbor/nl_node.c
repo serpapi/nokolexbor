@@ -147,7 +147,7 @@ static lxb_status_t
 nl_node_css_callback(lxb_dom_node_t *node, lxb_css_selector_specificity_t *spec, void *ctx)
 {
   lexbor_array_t *array = (lexbor_array_t *)ctx;
-  lexbor_array_push(array, node);
+  lexbor_array_push_unique(array, node);
   return LXB_STATUS_OK;
 }
 

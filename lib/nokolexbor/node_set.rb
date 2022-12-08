@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Nokolexbor
-  class NodeSet
+  class NodeSet < Node
     include Enumerable
 
     def initialize(document, list = [])
@@ -60,6 +60,7 @@ module Nokolexbor
       self.map(&:outer_html).join
     end
 
+    alias_method :to_s, :outer_html
     alias_method :to_html, :outer_html
 
     def remove
@@ -131,7 +132,7 @@ module Nokolexbor
 
       NodeSet.new(@document) do |set|
         each do |node|
-          node.send(:xpath_internal, paths, handler, ns, binds).each do |inner_node|
+          node.send(:xpath_internal, node, paths, handler, ns, binds).each do |inner_node|
             set << inner_node
           end
         end

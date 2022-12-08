@@ -1,6 +1,7 @@
 #include "nokolexbor.h"
 
 extern VALUE mNokolexbor;
+extern VALUE cNokolexborNode;
 VALUE cNokolexborNodeSet;
 
 lxb_status_t
@@ -250,7 +251,7 @@ nl_node_set_union(VALUE self, VALUE other)
 
 void Init_nl_node_set(void)
 {
-  cNokolexborNodeSet = rb_define_class_under(mNokolexbor, "NodeSet", rb_cObject);
+  cNokolexborNodeSet = rb_define_class_under(mNokolexbor, "NodeSet", cNokolexborNode);
 
   rb_define_alloc_func(cNokolexborNodeSet, nl_node_set_allocate);
 

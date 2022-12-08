@@ -30,4 +30,7 @@ lxb_inline VALUE nl_rb_document_get(VALUE rb_node_or_doc)
 const lxb_char_t *
 lxb_dom_node_name_qualified(lxb_dom_node_t *node, size_t *len);
 
+lxb_status_t
+lexbor_array_push_unique(lexbor_array_t *array, void *value);
+
 #endif
