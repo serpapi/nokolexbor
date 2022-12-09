@@ -164,7 +164,7 @@ nl_node_find(VALUE self, VALUE selector, lxb_selectors_cb_f cb, void *ctx)
   lxb_status_t status = lxb_css_parser_init(parser, NULL, NULL);
   if (status != LXB_STATUS_OK)
   {
-    return;
+    nl_raise_lexbor_error(status);
   }
 
   /* Selectors. */
@@ -172,7 +172,7 @@ nl_node_find(VALUE self, VALUE selector, lxb_selectors_cb_f cb, void *ctx)
   status = lxb_selectors_init(selectors);
   if (status != LXB_STATUS_OK)
   {
-    return;
+    nl_raise_lexbor_error(status);
   }
 
   /* Parse and get the log. */
@@ -180,14 +180,14 @@ nl_node_find(VALUE self, VALUE selector, lxb_selectors_cb_f cb, void *ctx)
   lxb_css_selector_list_t *list = lxb_css_selectors_parse_relative_list(parser, selector_c, selector_len);
   if (parser->status != LXB_STATUS_OK)
   {
-    return;
+    nl_raise_lexbor_error(parser->status);
   }
 
   /* Find HTML nodes by CSS Selectors. */
   status = lxb_selectors_find(selectors, node, list, cb, ctx);
   if (status != LXB_STATUS_OK)
   {
-    return;
+    nl_raise_lexbor_error(status);
   }
 
   /* Destroy Selectors object. */

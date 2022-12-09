@@ -14,6 +14,7 @@ void Init_nl_node(void);
 void Init_nl_node_set(void);
 void Init_nl_xpath_context(void);
 
+void nl_raise_lexbor_error(lxb_status_t error);
 lxb_dom_node_t *nl_rb_node_unwrap(VALUE rb_node);
 VALUE nl_rb_node_create(lxb_dom_node_t *node, VALUE rb_document);
 VALUE nl_rb_node_set_create_with_data(lexbor_array_t *array, VALUE rb_document);
