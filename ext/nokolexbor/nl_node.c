@@ -1,8 +1,14 @@
 #include "nokolexbor.h"
 
+#define SORT_NAME css_result
+#define SORT_TYPE lxb_dom_node_t *
+#define SORT_CMP(x, y) (x->user >= y->user ? (x->user == y->user ? 0 : 1) : -1)
+#include "timsort.h"
+
 extern VALUE mNokolexbor;
 extern VALUE cNokolexborDocument;
 extern VALUE cNokolexborNodeSet;
+extern VALUE eLexborError;
 VALUE cNokolexborNode;
 
 extern rb_data_type_t nl_document_type;
@@ -133,12 +139,8 @@ nl_node_remove_attr(VALUE self, VALUE rb_attr)
 static lxb_status_t
 nl_node_at_css_callback(lxb_dom_node_t *node, lxb_css_selector_specificity_t *spec, void *ctx)
 {
-  lxb_dom_node_t **node_ptr_ptr = (lxb_dom_node_t **)ctx;
-  if (*node_ptr_ptr == NULL)
-  {
-    *node_ptr_ptr = node;
-  }
-  // TODO: Try to clear lxb_css_selector_list_t to stop matching next selector
+  lexbor_array_t *array = (lexbor_array_t *)ctx;
+  lexbor_array_push_unique(array, node);
   // Stop at first result
   return LXB_STATUS_STOP;
 }
@@ -200,18 +202,79 @@ nl_node_find(VALUE self, VALUE selector, lxb_selectors_cb_f cb, void *ctx)
   lxb_css_selector_list_destroy_memory(list);
 }
 
+static void
+mark_node_orders(lxb_dom_node_t *root)
+{
+  int count = 1;
+  root->user = count;
+  lxb_dom_node_t *node = root;
+  do
+  {
+    if (node->first_child != NULL)
+    {
+      node = node->first_child;
+      node->user = ++count;
+    }
+    else
+    {
+      while (node != root && node->next == NULL)
+      {
+        node = node->parent;
+      }
+
+      if (node == root)
+      {
+        break;
+      }
+
+      node = node->next;
+      node->user = ++count;
+    }
+
+  } while (true);
+}
+
+// Sort nodes in document traversal order (the same as Nokorigi)
+void sort_nodes_if_necessary(VALUE selector, lxb_dom_document_t *doc, lexbor_array_t *array)
+{
+  // No need to sort if there's only one selector, the results are natually in document traversal order
+  if (strnstr(RSTRING_PTR(selector), ",", RSTRING_LEN(selector)) != NULL)
+  {
+    int need_order = 0;
+    // Check if we have already markded orders, note that
+    // we need to order again if new nodes are added to the document
+    for (int i = 0; i < array->length; i++)
+    {
+      if (((lxb_dom_node_t *)array->list[i])->user == 0)
+      {
+        need_order = 1;
+        break;
+      }
+    }
+    if (need_order)
+    {
+      mark_node_orders(doc);
+    }
+    css_result_tim_sort(&array->list[0], array->length);
+  }
+}
+
 static VALUE
 nl_node_at_css(VALUE self, VALUE selector)
 {
-  lxb_dom_node_t *result_node = NULL;
-  nl_node_find(self, selector, nl_node_at_css_callback, &result_node);
+  lxb_dom_node_t *node = nl_rb_node_unwrap(self);
+  lexbor_array_t *array = lexbor_array_create();
+  lexbor_array_init(array, 1);
+  nl_node_find(self, selector, nl_node_at_css_callback, array);
 
-  if (result_node == NULL)
+  if (array->length == 0)
   {
     return Qnil;
   }
 
-  return nl_rb_node_create(result_node, nl_rb_document_get(self));
+  sort_nodes_if_necessary(selector, node->owner_document, array);
+
+  return nl_rb_node_create(array->list[0], nl_rb_document_get(self));
 }
 
 static VALUE
@@ -221,6 +284,8 @@ nl_node_css(VALUE self, VALUE selector)
   lexbor_array_t *array = lexbor_array_create();
   lexbor_array_init(array, 1);
   nl_node_find(self, selector, nl_node_css_callback, array);
+
+  sort_nodes_if_necessary(selector, node->owner_document, array);
 
   return nl_rb_node_set_create_with_data(array, nl_rb_document_get(self));
 }
