@@ -108,25 +108,6 @@ module Nokolexbor
       node_set
     end
 
-    def at_css(*args)
-      self.each do |node|
-        if child = node.at_css(*args)
-          return child
-        end
-      end
-      nil
-    end
-
-    def css(*args)
-      NodeSet.new(@document) do |set|
-        each do |node|
-          node.css(*args).each do |inner_node|
-            set << inner_node
-          end
-        end
-      end
-    end
-
     def xpath(*args)
       paths, handler, ns, binds = extract_params(args)
 

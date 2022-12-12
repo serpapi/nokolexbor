@@ -3,6 +3,12 @@
 extern VALUE mNokolexbor;
 extern VALUE cNokolexborNode;
 VALUE cNokolexborNodeSet;
+extern rb_data_type_t nl_document_type;
+
+VALUE nl_node_at_css(VALUE self, VALUE selector);
+VALUE nl_node_css(VALUE self, VALUE selector);
+
+typedef VALUE (*nl_node_find_f)(VALUE self, VALUE selector);
 
 lxb_status_t
 lexbor_array_push_unique(lexbor_array_t *array, void *value)
@@ -249,6 +255,52 @@ nl_node_set_union(VALUE self, VALUE other)
   return nl_rb_node_set_create_with_data(new_array, nl_rb_document_get(self));
 }
 
+static VALUE
+nl_node_set_find(VALUE self, VALUE selector, nl_node_find_f finder)
+{
+  VALUE rb_doc = nl_rb_document_get(self);
+  lxb_dom_document_t *doc;
+  TypedData_Get_Struct(rb_doc, lxb_dom_document_t, &nl_document_type, doc);
+  lxb_dom_document_fragment_t *frag = lxb_dom_document_fragment_interface_create(doc);
+  lexbor_array_t *array = nl_rb_node_set_unwrap(self);
+  lexbor_array_t *backup_array = lexbor_array_create();
+  lexbor_array_init(backup_array, array->length);
+  // Backup original node data and re-group them into a fragment
+  for (int i = 0; i < array->length; i++)
+  {
+    lxb_dom_node_t *node = (lxb_dom_node_t *)array->list[i];
+    lxb_dom_node_t *backup_node = malloc(sizeof(lxb_dom_node_t));
+    memcpy(backup_node, node, sizeof(lxb_dom_node_t));
+    lexbor_array_push(backup_array, backup_node);
+    lxb_dom_node_insert_child(&frag->node, node);
+  }
+  VALUE rb_frag = nl_rb_node_create(&frag->node, nl_rb_document_get(self));
+
+  VALUE ret = finder(rb_frag, selector);
+
+  lxb_dom_document_fragment_interface_destroy(frag);
+  // Restore original node data
+  for (int i = 0; i < array->length; i++)
+  {
+    memcpy(array->list[i], backup_array->list[i], sizeof(lxb_dom_node_t));
+    free(backup_array->list[i]);
+  }
+  lexbor_array_destroy(backup_array, true);
+  return ret;
+}
+
+static VALUE
+nl_node_set_at_css(VALUE self, VALUE selector)
+{
+  return nl_node_set_find(self, selector, nl_node_at_css);
+}
+
+static VALUE
+nl_node_set_css(VALUE self, VALUE selector)
+{
+  return nl_node_set_find(self, selector, nl_node_css);
+}
+
 void Init_nl_node_set(void)
 {
   cNokolexborNodeSet = rb_define_class_under(mNokolexbor, "NodeSet", cNokolexborNode);
@@ -263,6 +315,8 @@ void Init_nl_node_set(void)
   rb_define_method(cNokolexborNodeSet, "to_a", nl_node_set_to_array, 0);
   rb_define_method(cNokolexborNodeSet, "delete", nl_node_set_delete, 1);
   rb_define_method(cNokolexborNodeSet, "include?", nl_node_set_is_include, 1);
+  rb_define_method(cNokolexborNodeSet, "at_css", nl_node_set_at_css, 1);
+  rb_define_method(cNokolexborNodeSet, "css", nl_node_set_css, 1);
 
   rb_define_alias(cNokolexborNodeSet, "<<", "push");
   rb_define_alias(cNokolexborNodeSet, "size", "length");

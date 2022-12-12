@@ -259,7 +259,7 @@ void sort_nodes_if_necessary(VALUE selector, lxb_dom_document_t *doc, lexbor_arr
   }
 }
 
-static VALUE
+VALUE
 nl_node_at_css(VALUE self, VALUE selector)
 {
   lxb_dom_node_t *node = nl_rb_node_unwrap(self);
@@ -277,7 +277,7 @@ nl_node_at_css(VALUE self, VALUE selector)
   return nl_rb_node_create(array->list[0], nl_rb_document_get(self));
 }
 
-static VALUE
+VALUE
 nl_node_css(VALUE self, VALUE selector)
 {
   lxb_dom_node_t *node = nl_rb_node_unwrap(self);
