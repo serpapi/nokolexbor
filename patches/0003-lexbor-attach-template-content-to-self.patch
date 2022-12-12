@@ -1,0 +1,13 @@
+diff --git i/source/lexbor/html/interfaces/template_element.c w/source/lexbor/html/interfaces/template_element.c
+index 884fede..29c1e69 100755
+--- i/source/lexbor/html/interfaces/template_element.c
++++ w/source/lexbor/html/interfaces/template_element.c
+@@ -29,6 +29,8 @@ lxb_html_template_element_interface_create(lxb_html_document_t *document)
+         return lxb_html_template_element_interface_destroy(element);
+     }
+ 
++    lxb_dom_node_insert_child(&element->element.element.node, &element->content->node);
++
+     element->content->node.ns = LXB_NS_HTML;
+     element->content->host = lxb_dom_interface_element(element);
+ 
