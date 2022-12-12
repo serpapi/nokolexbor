@@ -6388,8 +6388,12 @@ xmlXPathNodeValHash(lxb_dom_node_t_ptr node) {
 		return(0);
 	    return(string[0] + (string[1] << 8));
 	case LXB_DOM_NODE_TYPE_ATTRIBUTE:
-	    tmp = ((lxb_dom_attr_t_ptr) node)->node.first_child;
-	    break;
+	    string = lxb_dom_attr_value(node, &tmp_len);
+	    if (string == NULL)
+		return(0);
+	    if (string[0] == 0)
+		return(0);
+	    return(string[0] + (string[1] << 8));
 	case LXB_DOM_NODE_TYPE_ELEMENT:
 	    tmp = node->first_child;
 	    break;
