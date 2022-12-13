@@ -441,30 +441,44 @@ static VALUE
 nl_node_previous(VALUE self)
 {
   lxb_dom_node_t *node = nl_rb_node_unwrap(self);
-  lxb_dom_node_t *prev = lxb_dom_node_prev(node);
-  if (prev)
+  return node->prev ? nl_rb_node_create(node->prev, nl_rb_document_get(self)) : Qnil;
+}
+
+static VALUE
+nl_node_previous_element(VALUE self)
+{
+  lxb_dom_node_t *node = nl_rb_node_unwrap(self);
+  while (node->prev != NULL)
   {
-    return nl_rb_node_create(prev, nl_rb_document_get(self));
+    node = node->prev;
+    if (node->type == LXB_DOM_NODE_TYPE_ELEMENT)
+    {
+      return nl_rb_node_create(node, nl_rb_document_get(self));
+    }
   }
-  else
-  {
-    return Qnil;
-  }
+  return Qnil;
 }
 
 static VALUE
 nl_node_next(VALUE self)
 {
   lxb_dom_node_t *node = nl_rb_node_unwrap(self);
-  lxb_dom_node_t *next = lxb_dom_node_next(node);
-  if (next)
+  return node->next ? nl_rb_node_create(node->next, nl_rb_document_get(self)) : Qnil;
+}
+
+static VALUE
+nl_node_next_element(VALUE self)
+{
+  lxb_dom_node_t *node = nl_rb_node_unwrap(self);
+  while (node->next != NULL)
   {
-    return nl_rb_node_create(next, nl_rb_document_get(self));
+    node = node->next;
+    if (node->type == LXB_DOM_NODE_TYPE_ELEMENT)
+    {
+      return nl_rb_node_create(node, nl_rb_document_get(self));
+    }
   }
-  else
-  {
-    return Qnil;
-  }
+  return Qnil;
 }
 
 static VALUE
@@ -706,7 +720,9 @@ void Init_nl_node(void)
   rb_define_method(cNokolexborNode, "values", nl_node_values, 0);
   rb_define_method(cNokolexborNode, "parent", nl_node_parent, 0);
   rb_define_method(cNokolexborNode, "previous", nl_node_previous, 0);
+  rb_define_method(cNokolexborNode, "previous_element", nl_node_previous_element, 0);
   rb_define_method(cNokolexborNode, "next", nl_node_next, 0);
+  rb_define_method(cNokolexborNode, "next_element", nl_node_next_element, 0);
   rb_define_method(cNokolexborNode, "children", nl_node_children, 0);
   rb_define_method(cNokolexborNode, "child", nl_node_child, 0);
   rb_define_method(cNokolexborNode, "remove", nl_node_remove, 0);
@@ -726,7 +742,5 @@ void Init_nl_node(void)
   rb_define_alias(cNokolexborNode, "to_str", "content");
   rb_define_alias(cNokolexborNode, "to_html", "outer_html");
   rb_define_alias(cNokolexborNode, "to_s", "outer_html");
-  rb_define_alias(cNokolexborNode, "previous_element", "previous");
-  rb_define_alias(cNokolexborNode, "next_element", "next");
   rb_define_alias(cNokolexborNode, "type", "node_type");
 }
