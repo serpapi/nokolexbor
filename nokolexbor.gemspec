@@ -5,12 +5,20 @@ require_relative 'lib/nokolexbor/version'
 Gem::Specification.new do |spec|
   spec.name          = 'nokolexbor'
   spec.version       = Nokolexbor::VERSION
-  spec.summary       = "Nokolexbor is a Ruby binding to the Lexbor library and is API-compatible with Nokogiri"
+  spec.date          = Time.now.strftime('%Y-%m-%d')
+  spec.summary       = "High performance HTML5 parser, with support for both CSS selectors and XPath."
+  spec.homepage      = "https://github.com/serpapi/nokolexbor"
   spec.authors       = ['Yicheng Zhou']
+  spec.email         = "zyc9012@gmail.com"
+  spec.license       = "MIT"
   spec.extensions    = ['ext/nokolexbor/extconf.rb']
   spec.require_paths = ['lib']
+  spec.description   = "Nokolexbor is a high performance HTML5 parser, with support for both CSS selectors and XPath. It's API is designed to be compatible with Nokogiri."
   spec.files         += Dir.glob("lib/**/*.rb")
+  spec.files         += Dir.glob("ext/**/*.[ch]")
+  spec.files         += Dir.glob("patches/**/*.patch")
   spec.files         += Dir.glob("vendor/lexbor/source/**/*")
-  spec.files         += Dir.glob("vendor/lexbor/{CMakeLists.txt,config.cmake,feature.cmake}")
-  spec.add_development_dependency "rake-compiler", ">= 0.9.0"
+  spec.files         += Dir.glob("vendor/lexbor/utils/lexbor/css/**/*")
+  spec.files         += Dir.glob("vendor/lexbor/{CMakeLists.txt,config.cmake,feature.cmake,version}")
+  spec.add_development_dependency "rake-compiler", "~> 1.0"
 end
