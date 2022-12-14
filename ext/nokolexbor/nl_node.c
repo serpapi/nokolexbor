@@ -277,11 +277,6 @@ nl_node_at_css(VALUE self, VALUE selector)
 {
   lxb_dom_node_t *node = nl_rb_node_unwrap(self);
   lexbor_array_t *array = lexbor_array_create();
-  lxb_status_t status = lexbor_array_init(array, 1);
-  if (status != LXB_STATUS_OK)
-  {
-    nl_raise_lexbor_error(status);
-  }
 
   nl_node_find(self, selector, nl_node_at_css_callback, array);
 
@@ -300,11 +295,6 @@ nl_node_css(VALUE self, VALUE selector)
 {
   lxb_dom_node_t *node = nl_rb_node_unwrap(self);
   lexbor_array_t *array = lexbor_array_create();
-  lxb_status_t status = lexbor_array_init(array, 1);
-  if (status != LXB_STATUS_OK)
-  {
-    nl_raise_lexbor_error(status);
-  }
 
   nl_node_find(self, selector, nl_node_css_callback, array);
 
@@ -522,11 +512,6 @@ nl_node_children(VALUE self)
   lxb_dom_node_t *node = nl_rb_node_unwrap(self);
   lxb_dom_node_t *child = node->first_child;
   lexbor_array_t *array = lexbor_array_create();
-  lxb_status_t status = lexbor_array_init(array, 1);
-  if (status != LXB_STATUS_OK)
-  {
-    nl_raise_lexbor_error(status);
-  }
 
   while (child != NULL)
   {

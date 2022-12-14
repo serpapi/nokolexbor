@@ -49,11 +49,6 @@ static VALUE
 nl_node_set_allocate(VALUE klass)
 {
   lexbor_array_t *array = lexbor_array_create();
-  lxb_status_t status = lexbor_array_init(array, 1);
-  if (status != LXB_STATUS_OK)
-  {
-    nl_raise_lexbor_error(status);
-  }
   return TypedData_Wrap_Struct(cNokolexborNodeSet, &nl_node_set_type, array);
 }
 
@@ -63,11 +58,6 @@ nl_rb_node_set_create_with_data(lexbor_array_t *array, VALUE rb_document)
   if (array == NULL)
   {
     array = lexbor_array_create();
-    lxb_status_t status = lexbor_array_init(array, 1);
-    if (status != LXB_STATUS_OK)
-    {
-      nl_raise_lexbor_error(status);
-    }
   }
   VALUE ret = TypedData_Wrap_Struct(cNokolexborNodeSet, &nl_node_set_type, array);
   rb_iv_set(ret, "@document", rb_document);
@@ -170,15 +160,18 @@ nl_node_set_subseq(VALUE self, long beg, long len)
   }
 
   lexbor_array_t *new_array = lexbor_array_create();
-  lxb_status_t status = lexbor_array_init(new_array, len);
-  if (status != LXB_STATUS_OK)
+  if (len > 0)
   {
-    nl_raise_lexbor_error(status);
+    lxb_status_t status = lexbor_array_init(new_array, len);
+    if (status != LXB_STATUS_OK)
+    {
+      nl_raise_lexbor_error(status);
+    }
   }
 
   for (int j = beg; j < beg + len; ++j)
   {
-    status = lexbor_array_push(new_array, old_array->list[j]);
+    lxb_status_t status = lexbor_array_push(new_array, old_array->list[j]);
     if (status != LXB_STATUS_OK)
     {
       nl_raise_lexbor_error(status);
@@ -259,6 +252,11 @@ nl_node_set_union(VALUE self, VALUE other)
   lexbor_array_t *self_array = nl_rb_node_set_unwrap(self);
   lexbor_array_t *other_array = nl_rb_node_set_unwrap(other);
 
+  if (self_array->length + other_array->length == 0)
+  {
+    return nl_rb_node_set_create_with_data(NULL, nl_rb_document_get(self));
+  }
+
   lexbor_array_t *new_array = lexbor_array_create();
   lxb_status_t status = lexbor_array_init(new_array, self_array->length + other_array->length);
   if (status != LXB_STATUS_OK)
@@ -293,11 +291,15 @@ nl_node_set_find(VALUE self, VALUE selector, nl_node_find_f finder)
     rb_raise(rb_eRuntimeError, "Error creating document fragment");
   }
   lexbor_array_t *array = nl_rb_node_set_unwrap(self);
+
   lexbor_array_t *backup_array = lexbor_array_create();
-  lxb_status_t status = lexbor_array_init(backup_array, array->length);
-  if (status != LXB_STATUS_OK)
+  if (array->length > 0)
   {
-    nl_raise_lexbor_error(status);
+    lxb_status_t status = lexbor_array_init(backup_array, array->length);
+    if (status != LXB_STATUS_OK)
+    {
+      nl_raise_lexbor_error(status);
+    }
   }
   // Backup original node data and re-group them into a fragment
   for (int i = 0; i < array->length; i++)
@@ -309,7 +311,7 @@ nl_node_set_find(VALUE self, VALUE selector, nl_node_find_f finder)
       nl_raise_lexbor_error(LXB_STATUS_ERROR_MEMORY_ALLOCATION);
     }
     memcpy(backup_node, node, sizeof(lxb_dom_node_t));
-    status = lexbor_array_push(backup_array, backup_node);
+    lxb_status_t status = lexbor_array_push(backup_array, backup_node);
     if (status != LXB_STATUS_OK)
     {
       nl_raise_lexbor_error(LXB_STATUS_ERROR_MEMORY_ALLOCATION);

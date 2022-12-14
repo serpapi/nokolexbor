@@ -79,6 +79,11 @@ xpath2ruby(xmlXPathObjectPtr c_xpath_object, xmlXPathContextPtr ctx, VALUE rb_do
     {
       return nl_rb_node_set_create_with_data(NULL, rb_document);
     }
+    if (c_xpath_object->nodesetval->nodeNr == 0)
+    {
+      return nl_rb_node_set_create_with_data(NULL, rb_document);
+    }
+
     lexbor_array_t *array = lexbor_array_create();
     lxb_status_t status = lexbor_array_init(array, c_xpath_object->nodesetval->nodeNr);
     if (status != LXB_STATUS_OK)
