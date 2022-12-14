@@ -32,13 +32,13 @@ nl_document_parse(VALUE self, VALUE rb_html)
   document = lxb_html_document_create();
   if (document == NULL)
   {
-    return Qnil;
+    rb_raise(rb_eRuntimeError, "Error creating document");
   }
 
   lxb_status_t status = lxb_html_document_parse(document, html_c, html_len);
   if (status != LXB_STATUS_OK)
   {
-    return Qnil;
+    nl_raise_lexbor_error(status);
   }
 
   return TypedData_Wrap_Struct(cNokolexborDocument, &nl_document_type, document);

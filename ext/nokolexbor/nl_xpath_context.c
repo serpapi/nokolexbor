@@ -80,7 +80,11 @@ xpath2ruby(xmlXPathObjectPtr c_xpath_object, xmlXPathContextPtr ctx, VALUE rb_do
       return nl_rb_node_set_create_with_data(NULL, rb_document);
     }
     lexbor_array_t *array = lexbor_array_create();
-    lexbor_array_init(array, c_xpath_object->nodesetval->nodeNr);
+    lxb_status_t status = lexbor_array_init(array, c_xpath_object->nodesetval->nodeNr);
+    if (status != LXB_STATUS_OK)
+    {
+      nl_raise_lexbor_error(status);
+    }
     memcpy(array->list, c_xpath_object->nodesetval->nodeTab, sizeof(lxb_dom_node_t *) * c_xpath_object->nodesetval->nodeNr);
     array->length = c_xpath_object->nodesetval->nodeNr;
     return nl_rb_node_set_create_with_data(array, rb_document);
