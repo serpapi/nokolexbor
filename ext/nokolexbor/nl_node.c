@@ -747,6 +747,14 @@ nl_node_last_element_child(VALUE self)
   return Qnil;
 }
 
+static VALUE
+nl_node_clone(VALUE self)
+{
+  lxb_dom_node_t *node = nl_rb_node_unwrap(self);
+  lxb_dom_node_t *clone = lxb_dom_node_clone(node, 1);
+  return nl_rb_node_create(clone, nl_rb_document_get(self));
+}
+
 void Init_nl_node(void)
 {
   cNokolexborNode = rb_define_class_under(mNokolexbor, "Node", rb_cObject);
@@ -778,6 +786,7 @@ void Init_nl_node(void)
   rb_define_method(cNokolexborNode, "node_type", nl_node_get_type, 0);
   rb_define_method(cNokolexborNode, "first_element_child", nl_node_first_element_child, 0);
   rb_define_method(cNokolexborNode, "last_element_child", nl_node_last_element_child, 0);
+  rb_define_method(cNokolexborNode, "clone", nl_node_clone, 0);
 
   rb_define_alias(cNokolexborNode, "attr", "[]");
   rb_define_alias(cNokolexborNode, "set_attr", "[]=");
@@ -787,4 +796,5 @@ void Init_nl_node(void)
   rb_define_alias(cNokolexborNode, "to_html", "outer_html");
   rb_define_alias(cNokolexborNode, "to_s", "outer_html");
   rb_define_alias(cNokolexborNode, "type", "node_type");
+  rb_define_alias(cNokolexborNode, "dup", "clone");
 }
