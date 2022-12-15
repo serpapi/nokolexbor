@@ -67,6 +67,26 @@ module Nokolexbor
       end)
     end
 
+    def wrap(node)
+      case node
+      when String
+        new_parent = fragment(node).child
+      when Node
+        new_parent = node.dup
+      else
+        raise ArgumentError, "Requires a String or Node argument, and cannot accept a #{node.class}"
+      end
+
+      if parent
+        add_sibling(:next, new_parent)
+      else
+        new_parent.remove
+      end
+      new_parent.add_child(self)
+
+      self
+    end
+
     def matches?(selector)
       ancestors.last.css(selector).any? { |node| node == self }
     end

@@ -608,6 +608,39 @@ nl_node_name(VALUE self)
   return rb_utf8_str_new(name, len);
 }
 
+static lxb_dom_node_t *
+nl_node_parse_fragment(lxb_html_document_t *doc, lxb_char_t *html, size_t size)
+{
+  size_t tag_name_len;
+  lxb_char_t *tag_name = lxb_tag_name_by_id(lxb_html_document_tags(doc), LXB_TAG__UNDEF, &tag_name_len);
+  if (tag_name == NULL)
+  {
+    rb_raise(rb_eRuntimeError, "Error getting tag name");
+  }
+  lxb_dom_element_t *element = lxb_dom_document_create_element(doc, tag_name, tag_name_len, NULL);
+  if (element == NULL)
+  {
+    rb_raise(rb_eRuntimeError, "Error creating element");
+  }
+  lxb_dom_node_t *frag_root = lxb_html_document_parse_fragment(doc, element, html, size);
+  if (frag_root == NULL)
+  {
+    rb_raise(rb_eArgError, "Error parsing HTML");
+  }
+  return frag_root;
+}
+
+static VALUE
+nl_node_fragment(VALUE self, VALUE html)
+{
+  Check_Type(html, T_STRING);
+  lxb_dom_node_t *node = nl_rb_node_unwrap(self);
+  lxb_dom_document_t *doc = node->owner_document;
+
+  lxb_dom_node_t *frag_root = nl_node_parse_fragment(doc, RSTRING_PTR(html), RSTRING_LEN(html));
+  return nl_rb_node_create(frag_root, nl_rb_document_get(self));
+}
+
 static VALUE
 nl_node_add_sibling(VALUE self, VALUE next_or_previous, VALUE new)
 {
@@ -630,22 +663,7 @@ nl_node_add_sibling(VALUE self, VALUE next_or_previous, VALUE new)
 
   if (TYPE(new) == T_STRING)
   {
-    size_t tag_name_len;
-    lxb_char_t *tag_name = lxb_tag_name_by_id(lxb_html_document_tags(doc), LXB_TAG__UNDEF, &tag_name_len);
-    if (tag_name == NULL)
-    {
-      rb_raise(rb_eRuntimeError, "Error getting tag name");
-    }
-    lxb_dom_element_t *element = lxb_dom_document_create_element(doc, tag_name, tag_name_len, NULL);
-    if (element == NULL)
-    {
-      rb_raise(rb_eRuntimeError, "Error creating element");
-    }
-    lxb_dom_node_t *frag_root = lxb_html_document_parse_fragment(doc, element, RSTRING_PTR(new), RSTRING_LEN(new));
-    if (frag_root == NULL)
-    {
-      rb_raise(rb_eArgError, "Error parsing HTML");
-    }
+    lxb_dom_node_t *frag_root = nl_node_parse_fragment(doc, RSTRING_PTR(new), RSTRING_LEN(new));
 
     while (frag_root->first_child != NULL)
     {
@@ -676,22 +694,7 @@ nl_node_add_child(VALUE self, VALUE new)
 
   if (TYPE(new) == T_STRING)
   {
-    size_t tag_name_len;
-    lxb_char_t *tag_name = lxb_tag_name_by_id(lxb_html_document_tags(doc), LXB_TAG__UNDEF, &tag_name_len);
-    if (tag_name == NULL)
-    {
-      rb_raise(rb_eRuntimeError, "Error getting tag name");
-    }
-    lxb_dom_element_t *element = lxb_dom_document_create_element(doc, tag_name, tag_name_len, NULL);
-    if (element == NULL)
-    {
-      rb_raise(rb_eRuntimeError, "Error creating element");
-    }
-    lxb_dom_node_t *frag_root = lxb_html_document_parse_fragment(doc, element, RSTRING_PTR(new), RSTRING_LEN(new));
-    if (frag_root == NULL)
-    {
-      rb_raise(rb_eArgError, "Error parsing HTML");
-    }
+    lxb_dom_node_t *frag_root = nl_node_parse_fragment(doc, RSTRING_PTR(new), RSTRING_LEN(new));
 
     while (frag_root->first_child != NULL)
     {
@@ -819,6 +822,7 @@ void Init_nl_node(void)
   rb_define_method(cNokolexborNode, "destroy", nl_node_destroy, 0);
   rb_define_method(cNokolexborNode, "attrs", nl_node_attrs, 0);
   rb_define_method(cNokolexborNode, "name", nl_node_name, 0);
+  rb_define_method(cNokolexborNode, "fragment", nl_node_fragment, 1);
   rb_define_method(cNokolexborNode, "add_sibling", nl_node_add_sibling, 2);
   rb_define_method(cNokolexborNode, "add_child", nl_node_add_child, 1);
   rb_define_method(cNokolexborNode, "node_type", nl_node_get_type, 0);
