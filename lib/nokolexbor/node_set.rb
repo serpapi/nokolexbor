@@ -4,10 +4,12 @@ module Nokolexbor
   class NodeSet < Node
     include Enumerable
 
-    def initialize(document, list = [])
-      @document = document
-      list.each { |x| self << x }
-      yield self if block_given?
+    def self.new(document, list = [])
+      obj = allocate
+      obj.instance_variable_set(:@document, document)
+      list.each { |x| obj << x }
+      yield obj if block_given?
+      obj
     end
 
     def each

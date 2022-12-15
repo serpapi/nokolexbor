@@ -41,11 +41,18 @@ nl_document_parse(VALUE self, VALUE rb_html)
     nl_raise_lexbor_error(status);
   }
 
-  return TypedData_Wrap_Struct(cNokolexborDocument, &nl_document_type, document);
+  return TypedData_Wrap_Struct(cNokolexborDocument, &nl_document_type, &document->dom_document);
+}
+
+static VALUE
+nl_document_new(VALUE self)
+{
+  return nl_document_parse(self, rb_str_new("", 0));
 }
 
 void Init_nl_document(void)
 {
   cNokolexborDocument = rb_define_class_under(mNokolexbor, "Document", cNokolexborNode);
+  rb_define_singleton_method(cNokolexborDocument, "new", nl_document_new, 0);
   rb_define_singleton_method(cNokolexborDocument, "parse", nl_document_parse, 1);
 }

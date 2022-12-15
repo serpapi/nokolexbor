@@ -53,6 +53,40 @@ nl_rb_node_unwrap(VALUE rb_node)
 }
 
 static VALUE
+nl_node_new(int argc, VALUE *argv, VALUE klass)
+{
+  lxb_dom_document_t *document;
+  lxb_dom_node_t *node;
+  VALUE rb_name;
+  VALUE rb_document;
+  VALUE rest;
+
+  rb_scan_args(argc, argv, "2*", &rb_name, &rb_document, &rest);
+
+  if (!rb_obj_is_kind_of(rb_document, cNokolexborDocument))
+  {
+    rb_raise(rb_eArgError, "Document must be a Nokolexbor::Document");
+  }
+
+  TypedData_Get_Struct(rb_document, lxb_dom_document_t, &nl_document_type, document);
+
+  lxb_dom_element_t *element = lxb_dom_document_create_element(document, StringValueCStr(rb_name), RSTRING_LEN(rb_name), NULL);
+  if (element == NULL)
+  {
+    rb_raise(rb_eRuntimeError, "Error creating element");
+  }
+
+  VALUE rb_node = nl_rb_node_create(&element->node, rb_document);
+
+  if (rb_block_given_p())
+  {
+    rb_yield(rb_node);
+  }
+
+  return rb_node;
+}
+
+static VALUE
 nl_node_content(VALUE self)
 {
   lxb_dom_node_t *node = nl_rb_node_unwrap(self);
@@ -759,6 +793,9 @@ nl_node_clone(VALUE self)
 void Init_nl_node(void)
 {
   cNokolexborNode = rb_define_class_under(mNokolexbor, "Node", rb_cObject);
+  rb_undef_alloc_func(cNokolexborNode);
+
+  rb_define_singleton_method(cNokolexborNode, "new", nl_node_new, -1);
   rb_define_method(cNokolexborNode, "content", nl_node_content, 0);
   rb_define_method(cNokolexborNode, "[]", nl_node_get_attr, 1);
   rb_define_method(cNokolexborNode, "[]=", nl_node_set_attr, 2);
