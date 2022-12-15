@@ -131,7 +131,7 @@ xmlNodeGetContent(const lxb_dom_node_t *cur)
  * Get the root element of the document (doc->children is a list
  * containing possibly comments, PIs, etc ...).
  *
- * Returns the #xmlNodePtr for the root or NULL
+ * Returns the #lxb_dom_node_t_ptr for the root or NULL
  */
 lxb_dom_node_t_ptr
 xmlDocGetRootElement(const lxb_dom_document_t *doc) {
@@ -145,4 +145,16 @@ xmlDocGetRootElement(const lxb_dom_document_t *doc) {
         ret = ret->next;
     }
     return(ret);
+}
+
+/**
+ * xmlFreeNodeList:
+ * @cur:  the first node in the list
+ *
+ * Free a node and all its siblings, this is a recursive behaviour, all
+ * the children are freed too.
+ */
+void
+xmlFreeNodeList(lxb_dom_node_t_ptr cur) {
+    // Should never be called
 }
