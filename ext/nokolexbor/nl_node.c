@@ -285,7 +285,7 @@ mark_node_orders(lxb_dom_node_t *root)
 void sort_nodes_if_necessary(VALUE selector, lxb_dom_document_t *doc, lexbor_array_t *array)
 {
   // No need to sort if there's only one selector, the results are natually in document traversal order
-  if (strstr(RSTRING_PTR(selector), ",") != NULL)
+  if (strchr(RSTRING_PTR(selector), ',') != NULL)
   {
     int need_order = 0;
     // Check if we have already markded orders, note that
