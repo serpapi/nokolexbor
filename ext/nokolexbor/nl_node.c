@@ -624,6 +624,7 @@ nl_node_add_sibling(VALUE self, VALUE next_or_previous, VALUE new)
   else if (rb_obj_class(new) == cNokolexborNode)
   {
     lxb_dom_node_t *node_new = nl_rb_node_unwrap(new);
+    lxb_dom_node_remove(node_new);
     insert_after ? lxb_dom_node_insert_after(node, node_new) : lxb_dom_node_insert_before(node, node_new);
   }
   else
