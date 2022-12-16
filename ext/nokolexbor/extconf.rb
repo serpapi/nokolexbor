@@ -115,7 +115,7 @@ Dir.chdir(EXT_DIR) do
   Dir.mkdir("build") if !Dir.exist?("build")
 
   Dir.chdir("build") do
-    run_cmake(10 * 60, "..")
+    run_cmake(10 * 60, "..#{Gem.win_platform? ? " -DLIBXML2_WITH_THREADS=OFF" : ""}")
   end
 end
 
