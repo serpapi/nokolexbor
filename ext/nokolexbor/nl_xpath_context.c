@@ -69,7 +69,7 @@ xpath2ruby(xmlXPathObjectPtr c_xpath_object, xmlXPathContextPtr ctx, VALUE rb_do
   switch (c_xpath_object->type)
   {
   case XPATH_STRING:
-    rb_retval = rb_utf8_str_new_cstr(c_xpath_object->stringval);
+    rb_retval = rb_utf8_str_new_cstr((const char *)c_xpath_object->stringval);
     xmlFree(c_xpath_object->stringval);
     return rb_retval;
 

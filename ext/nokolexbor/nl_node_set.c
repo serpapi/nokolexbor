@@ -13,7 +13,7 @@ typedef VALUE (*nl_node_find_f)(VALUE self, VALUE selector);
 lxb_status_t
 lexbor_array_push_unique(lexbor_array_t *array, void *value)
 {
-  for (int i = 0; i < array->length; i++)
+  for (size_t i = 0; i < array->length; i++)
     if (array->list[i] == value)
       return LXB_STATUS_STOPPED;
 
@@ -91,7 +91,7 @@ nl_node_set_delete(VALUE self, VALUE rb_node)
   lexbor_array_t *array = nl_rb_node_set_unwrap(self);
   lxb_dom_node_t *node = nl_rb_node_unwrap(rb_node);
 
-  int i;
+  size_t i;
   for (i = 0; i < array->length; i++)
     if (array->list[i] == node)
     {
@@ -113,7 +113,7 @@ nl_node_set_is_include(VALUE self, VALUE rb_node)
   lexbor_array_t *array = nl_rb_node_set_unwrap(self);
   lxb_dom_node_t *node = nl_rb_node_unwrap(rb_node);
 
-  for (int i = 0; i < array->length; i++)
+  for (size_t i = 0; i < array->length; i++)
     if (array->list[i] == node)
     {
       return Qtrue;
@@ -169,7 +169,7 @@ nl_node_set_subseq(VALUE self, long beg, long len)
     }
   }
 
-  for (int j = beg; j < beg + len; ++j)
+  for (long j = beg; j < beg + len; ++j)
   {
     lxb_status_t status = lexbor_array_push(new_array, old_array->list[j]);
     if (status != LXB_STATUS_OK)
@@ -231,7 +231,7 @@ nl_node_set_to_array(VALUE self)
 
   VALUE list = rb_ary_new2(array->length);
   VALUE doc = nl_rb_document_get(self);
-  for (int i = 0; i < array->length; i++)
+  for (size_t i = 0; i < array->length; i++)
   {
     lxb_dom_node_t *node = (lxb_dom_node_t *)array->list[i];
     VALUE rb_node = nl_rb_node_create(node, doc);
@@ -267,7 +267,7 @@ nl_node_set_union(VALUE self, VALUE other)
   memcpy(new_array->list, self_array->list, sizeof(lxb_dom_node_t *) * self_array->length);
   new_array->length = self_array->length;
 
-  for (int i = 0; i < other_array->length; i++)
+  for (size_t i = 0; i < other_array->length; i++)
   {
     lexbor_array_push_unique(new_array, other_array->list[i]);
   }
@@ -302,7 +302,7 @@ nl_node_set_find(VALUE self, VALUE selector, nl_node_find_f finder)
     }
   }
   // Backup original node data and re-group them into a fragment
-  for (int i = 0; i < array->length; i++)
+  for (size_t i = 0; i < array->length; i++)
   {
     lxb_dom_node_t *node = (lxb_dom_node_t *)array->list[i];
     lxb_dom_node_t *backup_node = malloc(sizeof(lxb_dom_node_t));
@@ -324,7 +324,7 @@ nl_node_set_find(VALUE self, VALUE selector, nl_node_find_f finder)
 
   lxb_dom_document_fragment_interface_destroy(frag);
   // Restore original node data
-  for (int i = 0; i < array->length; i++)
+  for (size_t i = 0; i < array->length; i++)
   {
     memcpy(array->list[i], backup_array->list[i], sizeof(lxb_dom_node_t));
     free(backup_array->list[i]);

@@ -5,7 +5,7 @@ extern VALUE cNokolexborNode;
 VALUE cNokolexborDocument;
 
 static void
-free_nl_document(lxb_dom_document_t *document)
+free_nl_document(lxb_html_document_t *document)
 {
   lxb_html_document_destroy(document);
 }
@@ -25,7 +25,7 @@ static VALUE
 nl_document_parse(VALUE self, VALUE rb_html)
 {
   const char *html_c = StringValuePtr(rb_html);
-  int html_len = RSTRING_LEN(rb_html);
+  size_t html_len = RSTRING_LEN(rb_html);
 
   lxb_html_document_t *document;
 
@@ -35,13 +35,13 @@ nl_document_parse(VALUE self, VALUE rb_html)
     rb_raise(rb_eRuntimeError, "Error creating document");
   }
 
-  lxb_status_t status = lxb_html_document_parse(document, html_c, html_len);
+  lxb_status_t status = lxb_html_document_parse(document, (const lxb_char_t *)html_c, html_len);
   if (status != LXB_STATUS_OK)
   {
     nl_raise_lexbor_error(status);
   }
 
-  return TypedData_Wrap_Struct(cNokolexborDocument, &nl_document_type, &document->dom_document);
+  return TypedData_Wrap_Struct(cNokolexborDocument, &nl_document_type, document);
 }
 
 static VALUE
