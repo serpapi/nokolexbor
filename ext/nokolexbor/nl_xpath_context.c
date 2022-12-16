@@ -179,7 +179,7 @@ rb_xml_xpath_context_new(VALUE klass, VALUE rb_node)
   ctx->node = node;
 
   self = Data_Wrap_Struct(klass, 0, free_xml_xpath_context, ctx);
-  rb_iv_set(self, "@document", rb_iv_get(rb_node, "@document"));
+  rb_iv_set(self, "@document", nl_rb_document_get(rb_node));
 
   return self;
 }
