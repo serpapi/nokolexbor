@@ -16,9 +16,12 @@ Gem::Specification.new do |spec|
   spec.description   = "Nokolexbor is a high performance HTML5 parser, with support for both CSS selectors and XPath. It's API is designed to be compatible with Nokogiri."
   spec.files         += Dir.glob("lib/**/*.rb")
   spec.files         += Dir.glob("ext/**/*.[ch]")
+  spec.files         += Dir.glob("ext/**/*.in")
+  spec.files         += Dir.glob("ext/**/CMakeLists.txt")
   spec.files         += Dir.glob("patches/**/*.patch")
   spec.files         += Dir.glob("vendor/lexbor/source/**/*")
   spec.files         += Dir.glob("vendor/lexbor/utils/lexbor/css/**/*")
   spec.files         += Dir.glob("vendor/lexbor/{CMakeLists.txt,config.cmake,feature.cmake,version}")
   spec.add_development_dependency "rake-compiler", "~> 1.0"
+  spec.metadata["msys2_mingw_dependencies"] = "cmake"
 end

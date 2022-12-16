@@ -1,0 +1,26 @@
+/* config.h.  Generated from config.h.in by configure.  */
+/* config.h.in.  Generated from configure.ac by autoheader.  */
+
+/* Define if __attribute__((destructor)) is accepted */
+#cmakedefine ATTRIBUTE_DESTRUCTOR @ATTRIBUTE_DESTRUCTOR@
+
+/* Define to 1 if you have the <inttypes.h> header file. */
+#cmakedefine HAVE_INTTYPES_H 1
+
+/* Define if <pthread.h> is there */
+#cmakedefine HAVE_PTHREAD_H 1
+
+/* Define to 1 if you have the `rand_r' function. */
+#cmakedefine HAVE_RAND_R 1
+
+/* Define to 1 if you have the <stdint.h> header file. */
+#cmakedefine HAVE_STDINT_H 1
+
+/* Define for Solaris 2.5.1 so the uint32_t typedef from <sys/synch.h>,
+   <pthread.h>, or <semaphore.h> is not used. If the typedef were allowed, the
+   #define below would cause a syntax error. */
+#cmakedefine _UINT32_T @_UINT32_T@
+
+/* Define to the type of an unsigned integer type of width exactly 32 bits if
+   such a type exists and the standard includes do not define it. */
+#cmakedefine uint32_t @uint32_t@

@@ -12,8 +12,11 @@ cmake_flags << "-DLEXBOR_BUILD_STATIC=ON"
 # For debugging
 # cmake_flags << "-DLEXBOR_OPTIMIZATION_LEVEL='-O0 -g'"
 
+append_cflags("-DLEXBOR_STATIC")
+append_cflags("-DLIBXML_STATIC")
+
 def sys(cmd)
-  puts " -- #{cmd}"
+  puts "-- #{cmd}"
   unless ret = xsystem(cmd)
     raise "ERROR: '#{cmd}' failed"
   end
@@ -79,19 +82,16 @@ else
 end
 
 if !MAKE
-  abort "ERROR: GNU make is required to build Rugged."
+  abort "ERROR: GNU make is required to build Lexbor."
 end
 
 CWD = File.expand_path(File.dirname(__FILE__))
 LEXBOR_DIR = File.join(CWD, '..', '..', 'vendor', 'lexbor')
+EXT_DIR = File.join(CWD, '..', '..', 'ext', 'nokolexbor')
 INSTALL_DIR = File.join(LEXBOR_DIR, 'dist')
 
 if !find_executable('cmake')
-  abort "ERROR: CMake is required to build Rugged."
-end
-
-if !Gem.win_platform? && !find_executable('pkg-config')
-  abort "ERROR: pkg-config is required to build Rugged."
+  abort "ERROR: CMake is required to build Lexbor."
 end
 
 Dir.chdir(LEXBOR_DIR) do
@@ -110,6 +110,15 @@ Dir.chdir(LEXBOR_DIR) do
   end
 end
 
+# Generate config.h and xmlversion.h for libxml2
+Dir.chdir(EXT_DIR) do
+  Dir.mkdir("build") if !Dir.exist?("build")
+
+  Dir.chdir("build") do
+    run_cmake(10 * 60, "..")
+  end
+end
+
 # Prepend the vendored lexbor build dir to the $DEFLIBPATH.
 #
 # By default, $DEFLIBPATH includes $(libpath), which usually points
@@ -117,7 +126,7 @@ end
 # installed through rbenv or rvm).
 #
 # This was causing system-wide lexbor installations to be preferred
-# over of our vendored lexbor version when building rugged.
+# over of our vendored lexbor version when building lexbor.
 #
 # By putting the path to the vendored lexbor library at the front of
 # $DEFLIBPATH, we can ensure that our bundled version is always used.

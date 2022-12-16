@@ -1,5 +1,7 @@
 .DS_STORE
 *.bundle
+*.so
+*.dll
 *.swp
 Gemfile.lock
 tmp/
@@ -9,3 +11,8 @@ vendor/gems
 bin/
 pkg/
 rdoc/
+
+# Generated files
+ext/nokolexbor/build/
+ext/nokolexbor/config.h
+ext/nokolexbor/libxml/xmlversion.h
