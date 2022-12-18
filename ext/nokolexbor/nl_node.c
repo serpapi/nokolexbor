@@ -451,6 +451,10 @@ nl_node_values(VALUE self)
     {
       rb_ary_push(ary_values, rb_utf8_str_new((const char *)tmp, tmp_len));
     }
+    else
+    {
+      rb_ary_push(ary_values, rb_str_new("", 0));
+    }
 
     attr = lxb_dom_element_next_attribute(attr);
   }
@@ -478,7 +482,7 @@ nl_node_attrs(VALUE self)
     VALUE rb_key = rb_utf8_str_new((const char *)tmp, tmp_len);
 
     tmp = lxb_dom_attr_value(attr, &tmp_len);
-    VALUE rb_value = tmp != NULL ? rb_utf8_str_new((const char *)tmp, tmp_len) : Qnil;
+    VALUE rb_value = tmp != NULL ? rb_utf8_str_new((const char *)tmp, tmp_len) : rb_str_new("", 0);
 
     rb_hash_aset(rb_hash, rb_key, rb_value);
 
@@ -832,11 +836,13 @@ void Init_nl_node(void)
 
   rb_define_alias(cNokolexborNode, "attr", "[]");
   rb_define_alias(cNokolexborNode, "set_attr", "[]=");
+  rb_define_alias(cNokolexborNode, "delete", "remove_attr");
   rb_define_alias(cNokolexborNode, "text", "content");
   rb_define_alias(cNokolexborNode, "inner_text", "content");
   rb_define_alias(cNokolexborNode, "to_str", "content");
   rb_define_alias(cNokolexborNode, "to_html", "outer_html");
   rb_define_alias(cNokolexborNode, "to_s", "outer_html");
+  rb_define_alias(cNokolexborNode, "unlink", "remove");
   rb_define_alias(cNokolexborNode, "type", "node_type");
   rb_define_alias(cNokolexborNode, "dup", "clone");
 }

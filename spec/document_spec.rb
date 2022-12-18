@@ -52,7 +52,7 @@ describe Nokolexbor::Document do
   it 'works with ::text selector' do
     nodes = @doc.css('article > ::text')
     _(nodes).must_be_instance_of Nokolexbor::NodeSet
-    _(nodes.last.to_html.strip).must_equal 'Text content 2'
+    _(nodes.to_html.squish).must_equal 'Text content 1 Text content 2'
   end
 
   it 'works with at_xpath' do

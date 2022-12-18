@@ -119,8 +119,8 @@ module Nokolexbor
     end
 
     def each
-      attributes.each do |node|
-        yield [node.name, node.value]
+      attributes.each do |name, node|
+        yield [name, node.value]
       end
     end
 
