@@ -1,4 +1,5 @@
 require 'rake/extensiontask'
+require 'rake/testtask'
 
 Rake::ExtensionTask.new('nokolexbor') do |ext|
   ext.lib_dir = "lib/nokolexbor"
@@ -17,3 +18,12 @@ namespace :clean do
   end
 end
 Rake::Task[:clean].prerequisites << "clean:lexbor" << "clean:libxml2"
+
+Rake::TestTask.new do |t|
+  t.libs << 'spec'
+  t.pattern = 'spec/**/*_spec.rb'
+  t.verbose = false
+  t.warning = true
+end
+
+task :default => [:compile, :test]
