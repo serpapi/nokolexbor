@@ -1,5 +1,7 @@
 # Nokolexbor
 
+[![CI](https://github.com/serpapi/nokolexbor/actions/workflows/ci.yml/badge.svg)](https://github.com/serpapi/nokolexbor/actions/workflows/ci.yml)
+
 A high performance HTML5 parser for Ruby based on [Lexbor](https://github.com/lexbor/lexbor/), with support for both CSS selectors and XPath. It's API is designed to be compatible with [Nokogiri](https://github.com/sparklemotion/nokogiri).
 
 ## Installation
