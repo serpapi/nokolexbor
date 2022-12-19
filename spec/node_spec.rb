@@ -566,7 +566,7 @@ describe Nokolexbor::Node do
     end
 
     it 'raises if expression is invalid' do
-      _{ @root.xpath('.//text1()') }.must_raise RuntimeError
+      _{ @root.xpath('.//text1()') }.must_raise Nokolexbor::XPath::SyntaxError
     end
   end
 end
