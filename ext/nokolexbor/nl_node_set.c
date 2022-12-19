@@ -177,7 +177,7 @@ nl_node_set_subseq(VALUE self, long beg, long len)
       nl_raise_lexbor_error(status);
     }
   }
-  return TypedData_Wrap_Struct(cNokolexborNodeSet, &nl_node_set_type, new_array);
+  return nl_rb_node_set_create_with_data(new_array, nl_rb_document_get(self));
 }
 
 static VALUE
