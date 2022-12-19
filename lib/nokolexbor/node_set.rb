@@ -69,8 +69,12 @@ module Nokolexbor
       self.each(&:remove)
     end
 
-    alias_method :destroy, :remove
+    alias_method :unlink, :remove
     alias_method :to_ary, :to_a
+
+    def destroy
+      self.each(&:destroy)
+    end
 
     def pop
       return nil if length == 0

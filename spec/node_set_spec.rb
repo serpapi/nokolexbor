@@ -4,12 +4,12 @@ describe Nokolexbor::NodeSet do
   before do
     @doc = Nokolexbor::HTML <<-HTML
       <section>
-        <div class='a'></div>
-        <div class='b'></div>
-        <div class='c'></div>
-        <div class='d'></div>
-        <div class='e'></div>
-        <div class='f'></div>
+        <div class='a'><span>A</span></div>
+        <div class='b'>B</div>
+        <div class='c'>C</div>
+        <div class='d'>D</div>
+        <div class='e'>E</div>
+        <div class='f'>F</div>
         <h1><a></a></h1>
       </section>
     HTML
@@ -85,5 +85,95 @@ describe Nokolexbor::NodeSet do
   it 'include?' do
     _(@nodes.include?(@nodes[-1])).must_equal true
     _(@nodes.include?(Nokolexbor::Node.new('div', @nodes[0].document))).must_equal false
+  end
+
+  it 'is enumerable' do
+    _(@nodes.map {|n| n['class']}.join).must_equal 'abcdef'
+  end
+
+  it 'first' do
+    _(@nodes.first['class']).must_equal 'a'
+    _(@nodes.first(2).last['class']).must_equal 'b'
+  end
+
+  it 'last' do
+    _(@nodes.last['class']).must_equal 'f'
+  end
+
+  it 'empty?' do
+    _(@nodes.empty?).must_equal false
+    _(Nokolexbor::NodeSet.new(@nodes.first.document).empty?).must_equal true
+  end
+
+  it 'index' do
+    _(@nodes.index(@nodes[2])).must_equal 2
+  end
+
+  it 'content' do
+    [:content, :text, :inner_text, :to_str].each do |method|
+      _(@nodes.send(method)).must_equal 'ABCDEF'
+    end
+  end
+
+  it 'inner_html' do
+    _(@nodes.inner_html).must_equal '<span>A</span>BCDEF'
+  end
+
+  it 'outer_html' do
+    [:outer_html, :to_s, :to_html].each do |method|
+      _(@nodes.send(method)).must_equal '<div class="a"><span>A</span></div><div class="b">B</div><div class="c">C</div><div class="d">D</div><div class="e">E</div><div class="f">F</div>'
+    end
+  end
+
+  it 'remove' do
+    @nodes.remove
+    _(@doc.at_css('section').inner_html.squish).must_equal '<h1><a></a></h1>'
+  end
+
+  it 'pop' do
+    @nodes.pop
+    _(@nodes.size).must_equal 5
+    _(@nodes.last['class']).must_equal 'e'
+  end
+
+  it 'shift' do
+    @nodes.shift
+    _(@nodes.size).must_equal 5
+    _(@nodes.first['class']).must_equal 'b'
+  end
+
+  it 'equals' do
+    other_node_set = Nokolexbor::NodeSet.new(@nodes.first.document)
+    empty_node_set = Nokolexbor::NodeSet.new(@nodes.first.document)
+    @nodes.each do |n|
+      other_node_set << n
+    end
+    _(other_node_set).must_equal @nodes
+    _(other_node_set).wont_equal empty_node_set
+  end
+
+  it 'children' do
+    children = @nodes.children
+    _(children.size).must_equal 6
+    _(children[0].name).must_equal 'span'
+    _(children[1].name).must_equal '#text'
+    _(children[1].text).must_equal 'B'
+  end
+
+  it 'reverse' do
+    reversed_nodes = @nodes.reverse
+    _(reversed_nodes.size).must_equal 6
+    _(reversed_nodes.first['class']).must_equal 'f'
+  end
+
+  describe 'xpath' do
+    it 'basic usage' do
+      result = @nodes.xpath('.//text()')
+      _(result.size).must_equal 6
+      _(result[0].name).must_equal '#text'
+      _(result[0].text).must_equal 'A'
+      _(result[1].name).must_equal '#text'
+      _(result[1].text).must_equal 'B'
+    end
   end
 end
