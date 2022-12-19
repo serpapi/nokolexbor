@@ -17,13 +17,32 @@ permissions:
   contents: read
 
 jobs:
-  test:
-
+  build:
     runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: true
+    - name: Set up Ruby
+      uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: '2.6'
+        bundler-cache: true # runs 'bundle install' and caches installed gems automatically
+    - name: Build gem
+      run: gem build *.gemspec
+    - uses: actions/upload-artifact@v3
+      with:
+        name: gem
+        path: '*.gem'
+        retention-days: 1
+
+  install-gem-and-test:
+    needs: build
     strategy:
       matrix:
         ruby-version: ['2.6', '2.7', '3.0', '3.1']
-
+        os: ['ubuntu', 'macos', 'windows']
+    runs-on: ${{ matrix.os }}-latest
     steps:
     - uses: actions/checkout@v3
       with:
@@ -32,6 +51,13 @@ jobs:
       uses: ruby/setup-ruby@v1
       with:
         ruby-version: ${{ matrix.ruby-version }}
-        bundler-cache: true # runs 'bundle install' and caches installed gems automatically
+        # bundler-cache: true # runs 'bundle install' and caches installed gems automatically
+    - uses: actions/download-artifact@v3
+      with:
+        name: gem
+    - name: Install gem
+      run: |
+        gem install *.gem
+        bundle install
     - name: Run tests
-      run: bundle exec rake
+      run: rake test-gem # don't use bundle exec as it will load this library by default

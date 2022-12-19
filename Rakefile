@@ -22,8 +22,12 @@ Rake::Task[:clean].prerequisites << "clean:lexbor" << "clean:libxml2"
 Rake::TestTask.new do |t|
   t.libs << 'spec'
   t.pattern = 'spec/**/*_spec.rb'
-  t.verbose = false
-  t.warning = true
+end
+
+Rake::TestTask.new('test-gem') do |t|
+  t.libs << 'spec'
+  t.libs.delete('lib')
+  t.pattern = 'spec/**/*_spec.rb'
 end
 
 task :default => [:compile, :test]
