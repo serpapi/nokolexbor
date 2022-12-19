@@ -67,7 +67,7 @@ nl_node_new(int argc, VALUE *argv, VALUE klass)
     rb_raise(rb_eArgError, "Document must be a Nokolexbor::Document");
   }
 
-  TypedData_Get_Struct(rb_document, lxb_dom_document_t, &nl_document_type, document);
+  document = nl_rb_document_unwrap(rb_document);
 
   lxb_dom_element_t *element = lxb_dom_document_create_element(document, (const lxb_char_t *)StringValueCStr(rb_name), RSTRING_LEN(rb_name), NULL);
   if (element == NULL)
@@ -174,7 +174,7 @@ nl_node_remove_attr(VALUE self, VALUE rb_attr)
   return lxb_dom_element_remove_attribute(element, (const lxb_char_t *)attr_c, attr_len) == LXB_STATUS_OK ? Qtrue : Qfalse;
 }
 
-static lxb_status_t
+lxb_status_t
 nl_node_at_css_callback(lxb_dom_node_t *node, lxb_css_selector_specificity_t *spec, void *ctx)
 {
   lexbor_array_t *array = (lexbor_array_t *)ctx;
@@ -187,7 +187,7 @@ nl_node_at_css_callback(lxb_dom_node_t *node, lxb_css_selector_specificity_t *sp
   return LXB_STATUS_STOP;
 }
 
-static lxb_status_t
+lxb_status_t
 nl_node_css_callback(lxb_dom_node_t *node, lxb_css_selector_specificity_t *spec, void *ctx)
 {
   lexbor_array_t *array = (lexbor_array_t *)ctx;
@@ -199,7 +199,7 @@ nl_node_css_callback(lxb_dom_node_t *node, lxb_css_selector_specificity_t *spec,
   return LXB_STATUS_OK;
 }
 
-static void
+void
 nl_node_find(VALUE self, VALUE selector, lxb_selectors_cb_f cb, void *ctx)
 {
   const char *selector_c = StringValuePtr(selector);
@@ -305,7 +305,7 @@ void sort_nodes_if_necessary(VALUE selector, lxb_dom_document_t *doc, lexbor_arr
   }
 }
 
-VALUE
+static VALUE
 nl_node_at_css(VALUE self, VALUE selector)
 {
   lxb_dom_node_t *node = nl_rb_node_unwrap(self);
@@ -320,10 +320,14 @@ nl_node_at_css(VALUE self, VALUE selector)
 
   sort_nodes_if_necessary(selector, node->owner_document, array);
 
-  return nl_rb_node_create(array->list[0], nl_rb_document_get(self));
+  VALUE ret = nl_rb_node_create(array->list[0], nl_rb_document_get(self));
+
+  lexbor_array_destroy(array, true);
+
+  return ret;
 }
 
-VALUE
+static VALUE
 nl_node_css(VALUE self, VALUE selector)
 {
   lxb_dom_node_t *node = nl_rb_node_unwrap(self);

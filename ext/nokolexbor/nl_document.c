@@ -50,6 +50,14 @@ nl_document_new(VALUE self)
   return nl_document_parse(self, rb_str_new("", 0));
 }
 
+lxb_dom_document_t *
+nl_rb_document_unwrap(VALUE rb_doc)
+{
+  lxb_dom_document_t *doc;
+  TypedData_Get_Struct(rb_doc, lxb_dom_document_t, &nl_document_type, doc);
+  return doc;
+}
+
 void Init_nl_document(void)
 {
   cNokolexborDocument = rb_define_class_under(mNokolexbor, "Document", cNokolexborNode);

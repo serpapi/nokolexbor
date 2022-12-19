@@ -3,7 +3,7 @@ require 'spec_helper'
 describe Nokolexbor::NodeSet do
   before do
     @doc = Nokolexbor::HTML <<-HTML
-      <a>
+      <section>
         <div class='a'></div>
         <div class='b'></div>
         <div class='c'></div>
@@ -11,7 +11,7 @@ describe Nokolexbor::NodeSet do
         <div class='e'></div>
         <div class='f'></div>
         <h1><a></a></h1>
-      </a>
+      </section>
     HTML
     @nodes = @doc.css('div')
   end
@@ -27,8 +27,8 @@ describe Nokolexbor::NodeSet do
     end
 
     it 'results are in document traversal order' do
-      nodes = @root.css('a, h1, div.a')
-      _(nodes.size).must_equal 4
+      nodes = @doc.css('a, h1, div.a')
+      _(nodes.size).must_equal 3
       _(nodes[0].name).must_equal 'div'
       _(nodes[0]['class']).must_equal 'a'
       _(nodes[1].name).must_equal 'h1'
