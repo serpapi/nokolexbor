@@ -1,16 +1,22 @@
 require 'mkmf'
 require 'timeout'
 
-# For debugging
-# CONFIG["optflags"] = "-O0"
-# CONFIG["debugflags"] = "-ggdb3"
-
 cmake_flags = [ ENV["CMAKE_FLAGS"] ]
 cmake_flags << "-DLEXBOR_BUILD_TESTS_CPP=OFF"
 cmake_flags << "-DLEXBOR_BUILD_SHARED=OFF"
 cmake_flags << "-DLEXBOR_BUILD_STATIC=ON"
-# For debugging
-# cmake_flags << "-DLEXBOR_OPTIMIZATION_LEVEL='-O0 -g'"
+
+if ENV['NOKOLEXBOR_DEBUG']
+  CONFIG["optflags"] = "-O0"
+  CONFIG["debugflags"] = "-ggdb3"
+  cmake_flags << "-DLEXBOR_OPTIMIZATION_LEVEL='-O0 -g'"
+end
+
+if ENV['NOKOLEXBOR_ASAN']
+  $LDFLAGS << " -fsanitize=address"
+  $CFLAGS << " -fsanitize=address"
+  cmake_flags << "-DLEXBOR_BUILD_WITH_ASAN=ON"
+end
 
 append_cflags("-DLEXBOR_STATIC")
 append_cflags("-DLIBXML_STATIC")
