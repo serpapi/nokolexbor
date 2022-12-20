@@ -22,8 +22,18 @@ const rb_data_type_t nl_document_type = {
 };
 
 static VALUE
-nl_document_parse(VALUE self, VALUE rb_html)
+nl_document_parse(VALUE self, VALUE rb_string_or_io)
 {
+  VALUE id_read = rb_intern("read");
+  VALUE rb_html;
+  if (rb_respond_to(rb_string_or_io, id_read))
+  {
+    rb_html = rb_funcall(rb_string_or_io, id_read, 0);
+  }
+  else
+  {
+    rb_html = rb_string_or_io;
+  }
   const char *html_c = StringValuePtr(rb_html);
   size_t html_len = RSTRING_LEN(rb_html);
 
