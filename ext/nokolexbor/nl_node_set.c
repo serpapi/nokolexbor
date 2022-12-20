@@ -5,7 +5,7 @@ extern VALUE cNokolexborNode;
 VALUE cNokolexborNodeSet;
 extern rb_data_type_t nl_document_type;
 
-void nl_node_find(VALUE self, VALUE selector, lxb_selectors_cb_f cb, void *ctx);
+lxb_status_t nl_node_find(VALUE self, VALUE selector, lxb_selectors_cb_f cb, void *ctx);
 void sort_nodes_if_necessary(VALUE selector, lxb_dom_document_t *doc, lexbor_array_t *array);
 lxb_status_t nl_node_at_css_callback(lxb_dom_node_t *node, lxb_css_selector_specificity_t *spec, void *ctx);
 lxb_status_t nl_node_css_callback(lxb_dom_node_t *node, lxb_css_selector_specificity_t *spec, void *ctx);
@@ -275,8 +275,8 @@ nl_node_set_union(VALUE self, VALUE other)
   return nl_rb_node_set_create_with_data(new_array, nl_rb_document_get(self));
 }
 
-static void
-nl_node_set_find(VALUE self, VALUE selector, lxb_selectors_cb_f cb, void* ctx)
+static lxb_status_t
+nl_node_set_find(VALUE self, VALUE selector, lxb_selectors_cb_f cb, void *ctx)
 {
   lxb_dom_document_t *doc = nl_rb_document_unwrap(nl_rb_document_get(self));
   if (doc == NULL)
@@ -319,7 +319,7 @@ nl_node_set_find(VALUE self, VALUE selector, lxb_selectors_cb_f cb, void* ctx)
   }
   VALUE rb_frag = nl_rb_node_create(&frag->node, nl_rb_document_get(self));
 
-  nl_node_find(rb_frag, selector, cb, ctx);
+  lxb_status_t status = nl_node_find(rb_frag, selector, cb, ctx);
 
   lxb_dom_document_fragment_interface_destroy(frag);
   // Restore original node data
@@ -329,6 +329,8 @@ nl_node_set_find(VALUE self, VALUE selector, lxb_selectors_cb_f cb, void* ctx)
     free(backup_array->list[i]);
   }
   lexbor_array_destroy(backup_array, true);
+
+  return status;
 }
 
 static VALUE
@@ -337,10 +339,17 @@ nl_node_set_at_css(VALUE self, VALUE selector)
   lexbor_array_t *array = lexbor_array_create();
   lxb_dom_document_t *doc = nl_rb_document_unwrap(nl_rb_document_get(self));
 
-  nl_node_set_find(self, selector, nl_node_at_css_callback, array);
+  lxb_status_t status = nl_node_set_find(self, selector, nl_node_at_css_callback, array);
+
+  if (status != LXB_STATUS_OK)
+  {
+    lexbor_array_destroy(array, true);
+    nl_raise_lexbor_error(status);
+  }
 
   if (array->length == 0)
   {
+    lexbor_array_destroy(array, true);
     return Qnil;
   }
 
@@ -359,7 +368,12 @@ nl_node_set_css(VALUE self, VALUE selector)
   lexbor_array_t *array = lexbor_array_create();
   lxb_dom_document_t *doc = nl_rb_document_unwrap(nl_rb_document_get(self));
 
-  nl_node_set_find(self, selector, nl_node_css_callback, array);
+  lxb_status_t status = nl_node_set_find(self, selector, nl_node_css_callback, array);
+  if (status != LXB_STATUS_OK)
+  {
+    lexbor_array_destroy(array, true);
+    nl_raise_lexbor_error(status);
+  }
 
   sort_nodes_if_necessary(selector, doc, array);
 

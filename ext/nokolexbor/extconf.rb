@@ -6,7 +6,7 @@ cmake_flags << "-DLEXBOR_BUILD_TESTS_CPP=OFF"
 cmake_flags << "-DLEXBOR_BUILD_SHARED=OFF"
 cmake_flags << "-DLEXBOR_BUILD_STATIC=ON"
 
-if ENV['NOKOLEXBOR_DEBUG']
+if ENV['NOKOLEXBOR_DEBUG'] || ENV['NOKOLEXBOR_ASAN']
   CONFIG["optflags"] = "-O0"
   CONFIG["debugflags"] = "-ggdb3"
   cmake_flags << "-DLEXBOR_OPTIMIZATION_LEVEL='-O0 -g'"
@@ -14,7 +14,7 @@ end
 
 if ENV['NOKOLEXBOR_ASAN']
   $LDFLAGS << " -fsanitize=address"
-  $CFLAGS << " -fsanitize=address"
+  $CFLAGS << " -fsanitize=address -DNOKOLEXBOR_ASAN"
   cmake_flags << "-DLEXBOR_BUILD_WITH_ASAN=ON"
 end
 

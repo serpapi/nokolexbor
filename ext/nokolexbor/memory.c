@@ -13,6 +13,11 @@
 #include <ruby.h>
 #include "lexbor/core/base.h"
 
+// Disable using ruby memory functions when ASAN is enabled,
+// otherwise memory leak info will be all about ruby which
+// is useless.
+#ifndef NOKOLEXBOR_ASAN
+
 void *
 lexbor_malloc(size_t size)
 {
@@ -37,3 +42,5 @@ lexbor_free(void *dst)
     ruby_xfree(dst);
     return NULL;
 }
+
+#endif

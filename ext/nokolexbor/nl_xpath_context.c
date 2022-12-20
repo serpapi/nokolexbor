@@ -205,6 +205,7 @@ nl_xpath_context_evaluate(int argc, VALUE *argv, VALUE self)
 
   if (xpath == NULL)
   {
+    xmlXPathFreeNodeSetList(xpath);
     rb_exc_raise(rb_ary_entry(errors, 0));
   }
 
@@ -244,7 +245,11 @@ nl_xpath_context_new(VALUE klass, VALUE rb_node)
 
 void Init_nl_xpath_context(void)
 {
+#ifndef NOKOLEXBOR_ASAN
   xmlMemSetup((xmlFreeFunc)ruby_xfree, (xmlMallocFunc)ruby_xmalloc, (xmlReallocFunc)ruby_xrealloc, ruby_strdup);
+#else
+  xmlMemSetup((xmlFreeFunc)free, (xmlMallocFunc)malloc, (xmlReallocFunc)realloc, strdup);
+#endif
 
   cNokolexborXpathContext = rb_define_class_under(mNokolexbor, "XPathContext", rb_cObject);
   mNokolexborXpath = rb_define_module_under(mNokolexbor, "XPath");

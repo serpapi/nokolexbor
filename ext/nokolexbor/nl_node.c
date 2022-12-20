@@ -199,7 +199,7 @@ nl_node_css_callback(lxb_dom_node_t *node, lxb_css_selector_specificity_t *spec,
   return LXB_STATUS_OK;
 }
 
-void
+lxb_status_t
 nl_node_find(VALUE self, VALUE selector, lxb_selectors_cb_f cb, void *ctx)
 {
   const char *selector_c = StringValuePtr(selector);
@@ -207,37 +207,44 @@ nl_node_find(VALUE self, VALUE selector, lxb_selectors_cb_f cb, void *ctx)
 
   lxb_dom_node_t *node = nl_rb_node_unwrap(self);
 
+  lxb_status_t status;
+  lxb_css_parser_t *parser = NULL;
+  lxb_selectors_t *selectors = NULL;
+  lxb_css_selector_list_t *list = NULL;
+
   /* Create CSS parser. */
-  lxb_css_parser_t *parser = lxb_css_parser_create();
-  lxb_status_t status = lxb_css_parser_init(parser, NULL, NULL);
+  parser = lxb_css_parser_create();
+  status = lxb_css_parser_init(parser, NULL, NULL);
   if (status != LXB_STATUS_OK)
   {
-    nl_raise_lexbor_error(status);
+    goto cleanup;
   }
 
   /* Selectors. */
-  lxb_selectors_t *selectors = lxb_selectors_create();
+  selectors = lxb_selectors_create();
   status = lxb_selectors_init(selectors);
   if (status != LXB_STATUS_OK)
   {
-    nl_raise_lexbor_error(status);
+    goto cleanup;
   }
 
   /* Parse and get the log. */
   // TODO: Cache the list for reuse, improves performance
-  lxb_css_selector_list_t *list = lxb_css_selectors_parse_relative_list(parser, (const lxb_char_t *)selector_c, selector_len);
+  list = lxb_css_selectors_parse_relative_list(parser, (const lxb_char_t *)selector_c, selector_len);
   if (parser->status != LXB_STATUS_OK)
   {
-    nl_raise_lexbor_error(parser->status);
+    status = parser->status;
+    goto cleanup;
   }
 
   /* Find HTML nodes by CSS Selectors. */
   status = lxb_selectors_find(selectors, node, list, cb, ctx);
   if (status != LXB_STATUS_OK)
   {
-    nl_raise_lexbor_error(status);
+    goto cleanup;
   }
 
+cleanup:
   /* Destroy Selectors object. */
   (void)lxb_selectors_destroy(selectors, true);
 
@@ -246,6 +253,8 @@ nl_node_find(VALUE self, VALUE selector, lxb_selectors_cb_f cb, void *ctx)
 
   /* Destroy all object for all CSS Selector List. */
   lxb_css_selector_list_destroy_memory(list);
+
+  return status;
 }
 
 static void
@@ -311,10 +320,17 @@ nl_node_at_css(VALUE self, VALUE selector)
   lxb_dom_node_t *node = nl_rb_node_unwrap(self);
   lexbor_array_t *array = lexbor_array_create();
 
-  nl_node_find(self, selector, nl_node_at_css_callback, array);
+  lxb_status_t status = nl_node_find(self, selector, nl_node_at_css_callback, array);
+
+  if (status != LXB_STATUS_OK)
+  {
+    lexbor_array_destroy(array, true);
+    nl_raise_lexbor_error(status);
+  }
 
   if (array->length == 0)
   {
+    lexbor_array_destroy(array, true);
     return Qnil;
   }
 
@@ -333,7 +349,12 @@ nl_node_css(VALUE self, VALUE selector)
   lxb_dom_node_t *node = nl_rb_node_unwrap(self);
   lexbor_array_t *array = lexbor_array_create();
 
-  nl_node_find(self, selector, nl_node_css_callback, array);
+  lxb_status_t status = nl_node_find(self, selector, nl_node_css_callback, array);
+  if (status != LXB_STATUS_OK)
+  {
+    lexbor_array_destroy(array, true);
+    nl_raise_lexbor_error(status);
+  }
 
   sort_nodes_if_necessary(selector, node->owner_document, array);
 
