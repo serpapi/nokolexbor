@@ -48,18 +48,18 @@ require 'open-uri'
 doc = Nokolexbor::HTML(URI.open('https://github.com/serpapi/nokolexbor'))
 
 # Search for nodes by css
-doc.css('ul.menu li a', 'article h2').each do |link|
-  puts link.content
+doc.css('#readme h1', 'article h2', 'p[dir=auto]').each do |node|
+  puts node.content
 end
 
 # Search for text nodes by css
-doc.css('article > ::text').each do |text|
+doc.css('#readme p > ::text').each do |text|
   puts text.content
 end
 
 # Search for nodes by xpath
-doc.xpath('//ul//li/a', '//article//h2').each do |link|
-  puts link.content
+doc.xpath('//div[@id="readme"]//h1', '//article//h2').each do |node|
+  puts node.content
 end
 ```
 
