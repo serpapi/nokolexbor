@@ -11,3 +11,16 @@ index 884fede..29c1e69 100755
      element->content->node.ns = LXB_NS_HTML;
      element->content->host = lxb_dom_interface_element(element);
  
+diff --git i/source/lexbor/html/serialize.c w/source/lexbor/html/serialize.c
+index df9689d..5e2ff91 100755
+--- i/source/lexbor/html/serialize.c
++++ w/source/lexbor/html/serialize.c
+@@ -272,7 +272,7 @@ lxb_html_serialize_node_cb(lxb_dom_node_t *node,
+             }
+         }
+ 
+-        skip_it = lxb_html_node_is_void(node);
++        skip_it = lxb_html_node_is_void(node) || node->local_name == LXB_TAG_TEMPLATE;
+ 
+         if (skip_it == false && node->first_child != NULL) {
+             node = node->first_child;

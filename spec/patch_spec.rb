@@ -81,6 +81,10 @@ describe "Patches to lexbor" do
       _(@doc.xpath('//div').size).must_equal 5
       _(@doc.xpath('//div').map {|n| n['class']}).must_equal %w{a b c d e}
     end
+
+    it 'doc can be serialized without error' do
+      _(@doc.to_html).must_be_instance_of String
+    end
   end
 
 end
