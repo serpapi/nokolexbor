@@ -4,7 +4,7 @@
 
 Nokolexbor is a drop-in replacement for Nokogiri. It's 5.2x faster at parsing HTML and up to 997x faster at CSS selectors.
 
-It's a performance-focused HTML/XML parser for Ruby based on [Lexbor](https://github.com/lexbor/lexbor/). It supports both CSS selectors and XPath. Nokolexbor's API is designed to be 1:1 compatible as much as possible with [Nokogiri's API](https://github.com/sparklemotion/nokogiri).
+It's a performance-focused HTML parser for Ruby based on [Lexbor](https://github.com/lexbor/lexbor/). It supports both CSS selectors and XPath. Nokolexbor's API is designed to be 1:1 compatible as much as possible with [Nokogiri's API](https://github.com/sparklemotion/nokogiri).
 
 ## Requirements
 
