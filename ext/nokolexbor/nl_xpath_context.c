@@ -205,7 +205,7 @@ nl_xpath_context_evaluate(int argc, VALUE *argv, VALUE self)
 
   if (xpath == NULL)
   {
-    xmlXPathFreeNodeSetList(xpath);
+    xmlXPathFreeObject(xpath);
     rb_exc_raise(rb_ary_entry(errors, 0));
   }
 
@@ -215,7 +215,7 @@ nl_xpath_context_evaluate(int argc, VALUE *argv, VALUE self)
     retval = rb_funcall(cNokolexborNodeSet, rb_intern("new"), 1, rb_ary_new());
   }
 
-  xmlXPathFreeNodeSetList(xpath);
+  xmlXPathFreeObject(xpath);
 
   return retval;
 }
