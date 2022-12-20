@@ -60,4 +60,4 @@ jobs:
         gem install *.gem
         bundle install
     - name: Run tests
-      run: rake test-gem # don't use bundle exec as it will load this library by default
+      run: rake test:gem # don't use bundle exec as it will load this library by default
