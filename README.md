@@ -2,11 +2,37 @@
 
 [![CI](https://github.com/serpapi/nokolexbor/actions/workflows/ci.yml/badge.svg)](https://github.com/serpapi/nokolexbor/actions/workflows/ci.yml)
 
-A high performance HTML5 parser for Ruby based on [Lexbor](https://github.com/lexbor/lexbor/), with support for both CSS selectors and XPath. It's API is designed to be compatible with [Nokogiri](https://github.com/sparklemotion/nokogiri).
+Nokolexbor is a drop-in replacement for Nokogiri. It's 5.2x faster at parsing HTML and up to 997x faster at CSS selectors.
+
+It's a performance-focused HTML parser for Ruby based on [Lexbor](https://github.com/lexbor/lexbor/). It supports both CSS selectors and XPath. Nokolexbor's API is designed to be 1:1 compatible as much as possible with [Nokogiri's API](https://github.com/sparklemotion/nokogiri).
+
+## Requirements
+
+Nokolexbor requires CMake to compile C extensions:
+
+### macOS
+
+```
+brew install cmake
+```
+
+### Linux (Debian, Ubuntu, etc.)
+
+```
+sudo apt-get install cmake
+```
 
 ## Installation
 
-Nokolexbor contains C extensions and requires `cmake` to compile the source, check it before installing the gem.
+Add to your Gemfile:
+
+```ruby
+gem 'nokolexbor'
+```
+
+Then, run `bundle install`.
+
+Or, install the gem directly:
 
 ```
 gem install nokolexbor
@@ -16,46 +42,26 @@ gem install nokolexbor
 
 ```ruby
 require 'nokolexbor'
-
-html = <<-HTML
-<html>
-  <body>
-    <ul class='menu'>
-      <li><a href='http://example1.com'>Example 1</a></li>
-      <li><a href='http://example2.com'>Example 2</a></li>
-      <li><a href='http://example3.com'>Example 3</a></li>
-    </ul>
-    <div>
-      <article>
-        <h1>Title</h1>
-        Text content 1
-        <h2>Sub title</h2>
-        Text content 2
-      </article>
-    </div>
-  </body>
-</html>
-HTML
+require 'open-uri'
 
 # Parse HTML document
-doc = Nokolexbor::HTML(html)
+doc = Nokolexbor::HTML(URI.open('https://github.com/serpapi/nokolexbor'))
 
 # Search for nodes by css
-doc.css('ul.menu li a', 'article h2').each do |link|
-  puts link.content
+doc.css('#readme h1', 'article h2', 'p[dir=auto]').each do |node|
+  puts node.content
 end
 
 # Search for text nodes by css
-doc.css('article > ::text').each do |text|
+doc.css('#readme p > ::text').each do |text|
   puts text.content
 end
 
 # Search for nodes by xpath
-doc.xpath('//ul//li/a', '//article//h2').each do |link|
-  puts link.content
+doc.xpath('//div[@id="readme"]//h1', '//article//h2').each do |node|
+  puts node.content
 end
 ```
-
 
 ## Features
 * A subset of Nokogiri compatible API.
