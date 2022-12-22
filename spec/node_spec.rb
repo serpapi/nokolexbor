@@ -537,7 +537,7 @@ describe Nokolexbor::Node do
     before do
       @doc = Nokolexbor::HTML <<-HTML
         <div>
-          <h1 class='top'>
+          <h1 id='topid' class='top'>
             <a>
               <h1 class='inner'>Text</h1>
             </a>
@@ -554,6 +554,7 @@ describe Nokolexbor::Node do
       _(@root.xpath('.//h1').size).must_equal 2
       _(@root.xpath('.//h1[@class="inner"]').size).must_equal 1
       _(@root.xpath('.//h1[@class="inner"]/text()').first.type).must_equal Nokolexbor::Node::TEXT_NODE
+      _(@root.xpath('id("topid")').size).must_equal 1
     end
 
     it 'nodes in results are unique' do
