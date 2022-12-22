@@ -55,8 +55,7 @@ nl_node_set_allocate(VALUE klass)
 VALUE
 nl_rb_node_set_create_with_data(lexbor_array_t *array, VALUE rb_document)
 {
-  if (array == NULL)
-  {
+  if (array == NULL) {
     array = lexbor_array_create();
   }
   VALUE ret = TypedData_Wrap_Struct(cNokolexborNodeSet, &nl_node_set_type, array);
@@ -77,8 +76,7 @@ nl_node_set_push(VALUE self, VALUE rb_node)
   lxb_dom_node_t *node = nl_rb_node_unwrap(rb_node);
 
   lxb_status_t status = lexbor_array_push_unique(array, node);
-  if (status != LXB_STATUS_OK && status != LXB_STATUS_STOPPED)
-  {
+  if (status != LXB_STATUS_OK && status != LXB_STATUS_STOPPED) {
     nl_raise_lexbor_error(status);
   }
 
@@ -93,13 +91,11 @@ nl_node_set_delete(VALUE self, VALUE rb_node)
 
   size_t i;
   for (i = 0; i < array->length; i++)
-    if (array->list[i] == node)
-    {
+    if (array->list[i] == node) {
       break;
     }
 
-  if (i >= array->length)
-  {
+  if (i >= array->length) {
     // not found
     return Qnil;
   }
@@ -114,8 +110,7 @@ nl_node_set_is_include(VALUE self, VALUE rb_node)
   lxb_dom_node_t *node = nl_rb_node_unwrap(rb_node);
 
   for (size_t i = 0; i < array->length; i++)
-    if (array->list[i] == node)
-    {
+    if (array->list[i] == node) {
       return Qtrue;
     }
 
@@ -126,13 +121,11 @@ static VALUE
 nl_node_set_index_at(VALUE self, long offset)
 {
   lexbor_array_t *array = nl_rb_node_set_unwrap(self);
-  if (offset >= (long)array->length || abs((int)offset) > (long)array->length)
-  {
+  if (offset >= (long)array->length || abs((int)offset) > (long)array->length) {
     return Qnil;
   }
 
-  if (offset < 0)
-  {
+  if (offset < 0) {
     offset += array->length;
   }
 
@@ -145,35 +138,28 @@ nl_node_set_subseq(VALUE self, long beg, long len)
 {
   lexbor_array_t *old_array = nl_rb_node_set_unwrap(self);
 
-  if (beg > (long)old_array->length)
-  {
+  if (beg > (long)old_array->length) {
     return Qnil;
   }
-  if (beg < 0 || len < 0)
-  {
+  if (beg < 0 || len < 0) {
     return Qnil;
   }
 
-  if ((beg + len) > (long)old_array->length)
-  {
+  if ((beg + len) > (long)old_array->length) {
     len = old_array->length - beg;
   }
 
   lexbor_array_t *new_array = lexbor_array_create();
-  if (len > 0)
-  {
+  if (len > 0) {
     lxb_status_t status = lexbor_array_init(new_array, len);
-    if (status != LXB_STATUS_OK)
-    {
+    if (status != LXB_STATUS_OK) {
       nl_raise_lexbor_error(status);
     }
   }
 
-  for (long j = beg; j < beg + len; ++j)
-  {
+  for (long j = beg; j < beg + len; ++j) {
     lxb_status_t status = lexbor_array_push(new_array, old_array->list[j]);
-    if (status != LXB_STATUS_OK)
-    {
+    if (status != LXB_STATUS_OK) {
       nl_raise_lexbor_error(status);
     }
   }
@@ -188,31 +174,26 @@ nl_node_set_slice(int argc, VALUE *argv, VALUE self)
 
   lexbor_array_t *array = nl_rb_node_set_unwrap(self);
 
-  if (argc == 2)
-  {
+  if (argc == 2) {
     beg = NUM2LONG(argv[0]);
     len = NUM2LONG(argv[1]);
-    if (beg < 0)
-    {
+    if (beg < 0) {
       beg += array->length;
     }
     return nl_node_set_subseq(self, beg, len);
   }
 
-  if (argc != 1)
-  {
+  if (argc != 1) {
     rb_scan_args(argc, argv, "11", NULL, NULL);
   }
   arg = argv[0];
 
-  if (FIXNUM_P(arg))
-  {
+  if (FIXNUM_P(arg)) {
     return nl_node_set_index_at(self, FIX2LONG(arg));
   }
 
   /* if arg is Range */
-  switch (rb_range_beg_len(arg, &beg, &len, array->length, 0))
-  {
+  switch (rb_range_beg_len(arg, &beg, &len, array->length, 0)) {
   case Qfalse:
     break;
   case Qnil:
@@ -231,8 +212,7 @@ nl_node_set_to_array(VALUE self)
 
   VALUE list = rb_ary_new2(array->length);
   VALUE doc = nl_rb_document_get(self);
-  for (size_t i = 0; i < array->length; i++)
-  {
+  for (size_t i = 0; i < array->length; i++) {
     lxb_dom_node_t *node = (lxb_dom_node_t *)array->list[i];
     VALUE rb_node = nl_rb_node_create(node, doc);
     rb_ary_push(list, rb_node);
@@ -244,31 +224,27 @@ nl_node_set_to_array(VALUE self)
 static VALUE
 nl_node_set_union(VALUE self, VALUE other)
 {
-  if (!rb_obj_is_kind_of(other, cNokolexborNodeSet))
-  {
+  if (!rb_obj_is_kind_of(other, cNokolexborNodeSet)) {
     rb_raise(rb_eArgError, "Parameter must be a Nokolexbor::NodeSet");
   }
 
   lexbor_array_t *self_array = nl_rb_node_set_unwrap(self);
   lexbor_array_t *other_array = nl_rb_node_set_unwrap(other);
 
-  if (self_array->length + other_array->length == 0)
-  {
+  if (self_array->length + other_array->length == 0) {
     return nl_rb_node_set_create_with_data(NULL, nl_rb_document_get(self));
   }
 
   lexbor_array_t *new_array = lexbor_array_create();
   lxb_status_t status = lexbor_array_init(new_array, self_array->length + other_array->length);
-  if (status != LXB_STATUS_OK)
-  {
+  if (status != LXB_STATUS_OK) {
     nl_raise_lexbor_error(status);
   }
 
   memcpy(new_array->list, self_array->list, sizeof(lxb_dom_node_t *) * self_array->length);
   new_array->length = self_array->length;
 
-  for (size_t i = 0; i < other_array->length; i++)
-  {
+  for (size_t i = 0; i < other_array->length; i++) {
     lexbor_array_push_unique(new_array, other_array->list[i]);
   }
 
@@ -279,40 +255,33 @@ static lxb_status_t
 nl_node_set_find(VALUE self, VALUE selector, lxb_selectors_cb_f cb, void *ctx)
 {
   lxb_dom_document_t *doc = nl_rb_document_unwrap(nl_rb_document_get(self));
-  if (doc == NULL)
-  {
+  if (doc == NULL) {
     rb_raise(rb_eRuntimeError, "Error getting document");
   }
   // Wrap direct children with a temporary fragment so that they can be searched
   lxb_dom_document_fragment_t *frag = lxb_dom_document_fragment_interface_create(doc);
-  if (frag == NULL)
-  {
+  if (frag == NULL) {
     rb_raise(rb_eRuntimeError, "Error creating document fragment");
   }
   lexbor_array_t *array = nl_rb_node_set_unwrap(self);
 
   lexbor_array_t *backup_array = lexbor_array_create();
-  if (array->length > 0)
-  {
+  if (array->length > 0) {
     lxb_status_t status = lexbor_array_init(backup_array, array->length);
-    if (status != LXB_STATUS_OK)
-    {
+    if (status != LXB_STATUS_OK) {
       nl_raise_lexbor_error(status);
     }
   }
   // Backup original node data and re-group them into a fragment
-  for (size_t i = 0; i < array->length; i++)
-  {
+  for (size_t i = 0; i < array->length; i++) {
     lxb_dom_node_t *node = (lxb_dom_node_t *)array->list[i];
     lxb_dom_node_t *backup_node = malloc(sizeof(lxb_dom_node_t));
-    if (backup_node == NULL)
-    {
+    if (backup_node == NULL) {
       nl_raise_lexbor_error(LXB_STATUS_ERROR_MEMORY_ALLOCATION);
     }
     memcpy(backup_node, node, sizeof(lxb_dom_node_t));
     lxb_status_t status = lexbor_array_push(backup_array, backup_node);
-    if (status != LXB_STATUS_OK)
-    {
+    if (status != LXB_STATUS_OK) {
       nl_raise_lexbor_error(LXB_STATUS_ERROR_MEMORY_ALLOCATION);
     }
     lxb_dom_node_insert_child(&frag->node, node);
@@ -323,8 +292,7 @@ nl_node_set_find(VALUE self, VALUE selector, lxb_selectors_cb_f cb, void *ctx)
 
   lxb_dom_document_fragment_interface_destroy(frag);
   // Restore original node data
-  for (size_t i = 0; i < array->length; i++)
-  {
+  for (size_t i = 0; i < array->length; i++) {
     memcpy(array->list[i], backup_array->list[i], sizeof(lxb_dom_node_t));
     free(backup_array->list[i]);
   }
@@ -341,14 +309,12 @@ nl_node_set_at_css(VALUE self, VALUE selector)
 
   lxb_status_t status = nl_node_set_find(self, selector, nl_node_at_css_callback, array);
 
-  if (status != LXB_STATUS_OK)
-  {
+  if (status != LXB_STATUS_OK) {
     lexbor_array_destroy(array, true);
     nl_raise_lexbor_error(status);
   }
 
-  if (array->length == 0)
-  {
+  if (array->length == 0) {
     lexbor_array_destroy(array, true);
     return Qnil;
   }
@@ -369,8 +335,7 @@ nl_node_set_css(VALUE self, VALUE selector)
   lxb_dom_document_t *doc = nl_rb_document_unwrap(nl_rb_document_get(self));
 
   lxb_status_t status = nl_node_set_find(self, selector, nl_node_css_callback, array);
-  if (status != LXB_STATUS_OK)
-  {
+  if (status != LXB_STATUS_OK) {
     lexbor_array_destroy(array, true);
     nl_raise_lexbor_error(status);
   }

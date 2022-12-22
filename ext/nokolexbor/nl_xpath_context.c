@@ -1,11 +1,11 @@
-#include <ruby.h>
-#include <ruby/util.h>
-#include "nokolexbor.h"
 #include "libxml.h"
 #include "libxml/globals.h"
+#include "libxml/parserInternals.h"
 #include "libxml/xpath.h"
 #include "libxml/xpathInternals.h"
-#include "libxml/parserInternals.h"
+#include "nokolexbor.h"
+#include <ruby.h>
+#include <ruby/util.h>
 
 #define RBSTR_OR_QNIL(_str) (_str ? rb_utf8_str_new_cstr(_str) : Qnil)
 
@@ -34,8 +34,8 @@ nl_xpath_context_register_ns(VALUE self, VALUE prefix, VALUE uri)
   Data_Get_Struct(self, xmlXPathContext, ctx);
 
   nl_xmlXPathRegisterNs(ctx,
-                     (const xmlChar *)StringValueCStr(prefix),
-                     (const xmlChar *)StringValueCStr(uri));
+                        (const xmlChar *)StringValueCStr(prefix),
+                        (const xmlChar *)StringValueCStr(uri));
   return self;
 }
 
@@ -55,8 +55,8 @@ nl_xpath_context_register_variable(VALUE self, VALUE name, VALUE value)
   xmlValue = nl_xmlXPathNewCString(StringValueCStr(value));
 
   nl_xmlXPathRegisterVariable(ctx,
-                           (const xmlChar *)StringValueCStr(name),
-                           xmlValue);
+                              (const xmlChar *)StringValueCStr(name),
+                              xmlValue);
 
   return self;
 }
@@ -70,28 +70,23 @@ xpath2ruby(xmlXPathObjectPtr c_xpath_object, xmlXPathContextPtr ctx, VALUE rb_do
 {
   VALUE rb_retval;
 
-  switch (c_xpath_object->type)
-  {
+  switch (c_xpath_object->type) {
   case XPATH_STRING:
     rb_retval = rb_utf8_str_new_cstr((const char *)c_xpath_object->stringval);
     nl_xmlFree(c_xpath_object->stringval);
     return rb_retval;
 
-  case XPATH_NODESET:
-  {
-    if (c_xpath_object->nodesetval == NULL)
-    {
+  case XPATH_NODESET: {
+    if (c_xpath_object->nodesetval == NULL) {
       return nl_rb_node_set_create_with_data(NULL, rb_document);
     }
-    if (c_xpath_object->nodesetval->nodeNr == 0)
-    {
+    if (c_xpath_object->nodesetval->nodeNr == 0) {
       return nl_rb_node_set_create_with_data(NULL, rb_document);
     }
 
     lexbor_array_t *array = lexbor_array_create();
     lxb_status_t status = lexbor_array_init(array, c_xpath_object->nodesetval->nodeNr);
-    if (status != LXB_STATUS_OK)
-    {
+    if (status != LXB_STATUS_OK) {
       nl_raise_lexbor_error(status);
     }
     memcpy(array->list, c_xpath_object->nodesetval->nodeTab, sizeof(lxb_dom_node_t *) * c_xpath_object->nodesetval->nodeNr);
@@ -122,8 +117,7 @@ nl_xpath_wrap_syntax_error(xmlErrorPtr error)
       &msg,
       cNokolexborXpathSyntaxError);
 
-  if (error)
-  {
+  if (error) {
     rb_iv_set(e, "@domain", INT2NUM(error->domain));
     rb_iv_set(e, "@code", INT2NUM(error->code));
     rb_iv_set(e, "@level", INT2NUM((short)error->level));
@@ -182,8 +176,7 @@ nl_xpath_context_evaluate(int argc, VALUE *argv, VALUE self)
 
   Data_Get_Struct(self, xmlXPathContext, ctx);
 
-  if (rb_scan_args(argc, argv, "11", &search_path, &xpath_handler) == 1)
-  {
+  if (rb_scan_args(argc, argv, "11", &search_path, &xpath_handler) == 1) {
     xpath_handler = Qnil;
   }
 
@@ -203,15 +196,13 @@ nl_xpath_context_evaluate(int argc, VALUE *argv, VALUE self)
   nl_xmlSetStructuredErrorFunc(NULL, NULL);
   nl_xmlSetGenericErrorFunc(NULL, NULL);
 
-  if (xpath == NULL)
-  {
+  if (xpath == NULL) {
     nl_xmlXPathFreeObject(xpath);
     rb_exc_raise(rb_ary_entry(errors, 0));
   }
 
   retval = xpath2ruby(xpath, ctx, nl_rb_document_get(self));
-  if (retval == Qundef)
-  {
+  if (retval == Qundef) {
     retval = rb_funcall(cNokolexborNodeSet, rb_intern("new"), 1, rb_ary_new());
   }
 

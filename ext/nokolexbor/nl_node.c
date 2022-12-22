@@ -27,8 +27,7 @@ static const rb_data_type_t nl_node_type = {
 VALUE
 nl_rb_node_create(lxb_dom_node_t *node, VALUE rb_document)
 {
-  if (node == NULL)
-  {
+  if (node == NULL) {
     rb_raise(rb_eArgError, "Cannot create Nokolexbor::Node with null pointer");
   }
 
@@ -41,12 +40,9 @@ inline lxb_dom_node_t *
 nl_rb_node_unwrap(VALUE rb_node)
 {
   lxb_dom_node_t *node;
-  if (rb_obj_class(rb_node) == cNokolexborDocument)
-  {
+  if (rb_obj_class(rb_node) == cNokolexborDocument) {
     TypedData_Get_Struct(rb_node, lxb_dom_node_t, &nl_document_type, node);
-  }
-  else
-  {
+  } else {
     TypedData_Get_Struct(rb_node, lxb_dom_node_t, &nl_node_type, node);
   }
   return node;
@@ -62,23 +58,20 @@ nl_node_new(int argc, VALUE *argv, VALUE klass)
 
   rb_scan_args(argc, argv, "2*", &rb_name, &rb_document, &rest);
 
-  if (!rb_obj_is_kind_of(rb_document, cNokolexborDocument))
-  {
+  if (!rb_obj_is_kind_of(rb_document, cNokolexborDocument)) {
     rb_raise(rb_eArgError, "Document must be a Nokolexbor::Document");
   }
 
   document = nl_rb_document_unwrap(rb_document);
 
   lxb_dom_element_t *element = lxb_dom_document_create_element(document, (const lxb_char_t *)StringValueCStr(rb_name), RSTRING_LEN(rb_name), NULL);
-  if (element == NULL)
-  {
+  if (element == NULL) {
     rb_raise(rb_eRuntimeError, "Error creating element");
   }
 
   VALUE rb_node = nl_rb_node_create(&element->node, rb_document);
 
-  if (rb_block_given_p())
-  {
+  if (rb_block_given_p()) {
     rb_yield(rb_node);
   }
 
@@ -92,8 +85,7 @@ nl_node_content(VALUE self)
 
   size_t str_len = 0;
   lxb_char_t *text = lxb_dom_node_text_content(node, &str_len);
-  if (text == NULL)
-  {
+  if (text == NULL) {
     return rb_str_new("", 0);
   }
   VALUE rb_str = rb_utf8_str_new((char *)text, str_len);
@@ -107,8 +99,7 @@ nl_node_get_attr(VALUE self, VALUE rb_attr)
 {
   lxb_dom_node_t *node = nl_rb_node_unwrap(self);
 
-  if (node->type != LXB_DOM_NODE_TYPE_ELEMENT)
-  {
+  if (node->type != LXB_DOM_NODE_TYPE_ELEMENT) {
     return Qnil;
   }
 
@@ -118,8 +109,7 @@ nl_node_get_attr(VALUE self, VALUE rb_attr)
 
   lxb_dom_element_t *element = lxb_dom_interface_element(node);
 
-  if (!lxb_dom_element_has_attribute(element, (const lxb_char_t *)attr_c, attr_len))
-  {
+  if (!lxb_dom_element_has_attribute(element, (const lxb_char_t *)attr_c, attr_len)) {
     return Qnil;
   }
 
@@ -134,8 +124,7 @@ nl_node_set_attr(VALUE self, VALUE rb_attr, VALUE rb_value)
 {
   lxb_dom_node_t *node = nl_rb_node_unwrap(self);
 
-  if (node->type != LXB_DOM_NODE_TYPE_ELEMENT)
-  {
+  if (node->type != LXB_DOM_NODE_TYPE_ELEMENT) {
     return Qnil;
   }
 
@@ -159,8 +148,7 @@ nl_node_remove_attr(VALUE self, VALUE rb_attr)
 {
   lxb_dom_node_t *node = nl_rb_node_unwrap(self);
 
-  if (node->type != LXB_DOM_NODE_TYPE_ELEMENT)
-  {
+  if (node->type != LXB_DOM_NODE_TYPE_ELEMENT) {
     return Qnil;
   }
 
@@ -179,8 +167,7 @@ nl_node_at_css_callback(lxb_dom_node_t *node, lxb_css_selector_specificity_t *sp
 {
   lexbor_array_t *array = (lexbor_array_t *)ctx;
   lxb_status_t status = lexbor_array_push_unique(array, node);
-  if (status != LXB_STATUS_OK && status != LXB_STATUS_STOPPED)
-  {
+  if (status != LXB_STATUS_OK && status != LXB_STATUS_STOPPED) {
     nl_raise_lexbor_error(status);
   }
   // Stop at first result
@@ -192,8 +179,7 @@ nl_node_css_callback(lxb_dom_node_t *node, lxb_css_selector_specificity_t *spec,
 {
   lexbor_array_t *array = (lexbor_array_t *)ctx;
   lxb_status_t status = lexbor_array_push_unique(array, node);
-  if (status != LXB_STATUS_OK && status != LXB_STATUS_STOPPED)
-  {
+  if (status != LXB_STATUS_OK && status != LXB_STATUS_STOPPED) {
     nl_raise_lexbor_error(status);
   }
   return LXB_STATUS_OK;
@@ -215,32 +201,28 @@ nl_node_find(VALUE self, VALUE selector, lxb_selectors_cb_f cb, void *ctx)
   /* Create CSS parser. */
   parser = lxb_css_parser_create();
   status = lxb_css_parser_init(parser, NULL, NULL);
-  if (status != LXB_STATUS_OK)
-  {
+  if (status != LXB_STATUS_OK) {
     goto cleanup;
   }
 
   /* Selectors. */
   selectors = lxb_selectors_create();
   status = lxb_selectors_init(selectors);
-  if (status != LXB_STATUS_OK)
-  {
+  if (status != LXB_STATUS_OK) {
     goto cleanup;
   }
 
   /* Parse and get the log. */
   // TODO: Cache the list for reuse, improves performance
   list = lxb_css_selectors_parse_relative_list(parser, (const lxb_char_t *)selector_c, selector_len);
-  if (parser->status != LXB_STATUS_OK)
-  {
+  if (parser->status != LXB_STATUS_OK) {
     status = parser->status;
     goto cleanup;
   }
 
   /* Find HTML nodes by CSS Selectors. */
   status = lxb_selectors_find(selectors, node, list, cb, ctx);
-  if (status != LXB_STATUS_OK)
-  {
+  if (status != LXB_STATUS_OK) {
     goto cleanup;
   }
 
@@ -263,22 +245,16 @@ mark_node_orders(lxb_dom_node_t *root)
   size_t count = 1;
   root->user = (void *)count;
   lxb_dom_node_t *node = root;
-  do
-  {
-    if (node->first_child != NULL)
-    {
+  do {
+    if (node->first_child != NULL) {
       node = node->first_child;
       node->user = (void *)++count;
-    }
-    else
-    {
-      while (node != root && node->next == NULL)
-      {
+    } else {
+      while (node != root && node->next == NULL) {
         node = node->parent;
       }
 
-      if (node == root)
-      {
+      if (node == root) {
         break;
       }
 
@@ -293,21 +269,17 @@ mark_node_orders(lxb_dom_node_t *root)
 void nl_sort_nodes_if_necessary(VALUE selector, lxb_dom_document_t *doc, lexbor_array_t *array)
 {
   // No need to sort if there's only one selector, the results are natually in document traversal order
-  if (strchr(RSTRING_PTR(selector), ',') != NULL)
-  {
+  if (strchr(RSTRING_PTR(selector), ',') != NULL) {
     int need_order = 0;
     // Check if we have already markded orders, note that
     // we need to order again if new nodes are added to the document
-    for (size_t i = 0; i < array->length; i++)
-    {
-      if (((lxb_dom_node_t *)array->list[i])->user == 0)
-      {
+    for (size_t i = 0; i < array->length; i++) {
+      if (((lxb_dom_node_t *)array->list[i])->user == 0) {
         need_order = 1;
         break;
       }
     }
-    if (need_order)
-    {
+    if (need_order) {
       mark_node_orders(&doc->node);
     }
     nl_css_result_tim_sort((lxb_dom_node_t **)&array->list[0], array->length);
@@ -322,14 +294,12 @@ nl_node_at_css(VALUE self, VALUE selector)
 
   lxb_status_t status = nl_node_find(self, selector, nl_node_at_css_callback, array);
 
-  if (status != LXB_STATUS_OK)
-  {
+  if (status != LXB_STATUS_OK) {
     lexbor_array_destroy(array, true);
     nl_raise_lexbor_error(status);
   }
 
-  if (array->length == 0)
-  {
+  if (array->length == 0) {
     lexbor_array_destroy(array, true);
     return Qnil;
   }
@@ -350,8 +320,7 @@ nl_node_css(VALUE self, VALUE selector)
   lexbor_array_t *array = lexbor_array_create();
 
   lxb_status_t status = nl_node_find(self, selector, nl_node_css_callback, array);
-  if (status != LXB_STATUS_OK)
-  {
+  if (status != LXB_STATUS_OK) {
     lexbor_array_destroy(array, true);
     nl_raise_lexbor_error(status);
   }
@@ -367,17 +336,14 @@ nl_node_inner_html(VALUE self)
   lxb_dom_node_t *node = nl_rb_node_unwrap(self);
   lexbor_str_t str = {0};
   lxb_status_t status = lxb_html_serialize_deep_str(node, &str);
-  if (status != LXB_STATUS_OK)
-  {
-    if (str.data != NULL)
-    {
+  if (status != LXB_STATUS_OK) {
+    if (str.data != NULL) {
       lexbor_str_destroy(&str, node->owner_document->text, false);
     }
     nl_raise_lexbor_error(status);
   }
 
-  if (str.data != NULL)
-  {
+  if (str.data != NULL) {
     VALUE ret = rb_utf8_str_new((const char *)str.data, str.length);
     lexbor_str_destroy(&str, node->owner_document->text, false);
     return ret;
@@ -392,17 +358,14 @@ nl_node_outer_html(VALUE self)
   lxb_dom_node_t *node = nl_rb_node_unwrap(self);
   lexbor_str_t str = {0};
   lxb_status_t status = lxb_html_serialize_tree_str(node, &str);
-  if (status != LXB_STATUS_OK)
-  {
-    if (str.data != NULL)
-    {
+  if (status != LXB_STATUS_OK) {
+    if (str.data != NULL) {
       lexbor_str_destroy(&str, node->owner_document->text, false);
     }
     nl_raise_lexbor_error(status);
   }
 
-  if (str.data != NULL)
-  {
+  if (str.data != NULL) {
     VALUE ret = rb_utf8_str_new((const char *)str.data, str.length);
     lexbor_str_destroy(&str, node->owner_document->text, false);
     return ret;
@@ -416,8 +379,7 @@ nl_node_has_key(VALUE self, VALUE rb_attr)
 {
   lxb_dom_node_t *node = nl_rb_node_unwrap(self);
 
-  if (node->type != LXB_DOM_NODE_TYPE_ELEMENT)
-  {
+  if (node->type != LXB_DOM_NODE_TYPE_ELEMENT) {
     return Qfalse;
   }
 
@@ -436,15 +398,13 @@ nl_node_keys(VALUE self)
   lxb_dom_node_t *node = nl_rb_node_unwrap(self);
   VALUE ary_keys = rb_ary_new();
 
-  if (node->type != LXB_DOM_NODE_TYPE_ELEMENT)
-  {
+  if (node->type != LXB_DOM_NODE_TYPE_ELEMENT) {
     return ary_keys;
   }
 
   lxb_dom_attr_t *attr = lxb_dom_element_first_attribute(lxb_dom_interface_element(node));
 
-  while (attr != NULL)
-  {
+  while (attr != NULL) {
     size_t tmp_len;
     const lxb_char_t *tmp = lxb_dom_attr_qualified_name(attr, &tmp_len);
     rb_ary_push(ary_keys, rb_utf8_str_new((const char *)tmp, tmp_len));
@@ -461,23 +421,18 @@ nl_node_values(VALUE self)
   lxb_dom_node_t *node = nl_rb_node_unwrap(self);
   VALUE ary_values = rb_ary_new();
 
-  if (node->type != LXB_DOM_NODE_TYPE_ELEMENT)
-  {
+  if (node->type != LXB_DOM_NODE_TYPE_ELEMENT) {
     return ary_values;
   }
 
   lxb_dom_attr_t *attr = lxb_dom_element_first_attribute(lxb_dom_interface_element(node));
 
-  while (attr != NULL)
-  {
+  while (attr != NULL) {
     size_t tmp_len;
     const lxb_char_t *tmp = lxb_dom_attr_value(attr, &tmp_len);
-    if (tmp != NULL)
-    {
+    if (tmp != NULL) {
       rb_ary_push(ary_values, rb_utf8_str_new((const char *)tmp, tmp_len));
-    }
-    else
-    {
+    } else {
       rb_ary_push(ary_values, rb_str_new("", 0));
     }
 
@@ -493,15 +448,13 @@ nl_node_attrs(VALUE self)
   lxb_dom_node_t *node = nl_rb_node_unwrap(self);
   VALUE rb_hash = rb_hash_new();
 
-  if (node->type != LXB_DOM_NODE_TYPE_ELEMENT)
-  {
+  if (node->type != LXB_DOM_NODE_TYPE_ELEMENT) {
     return rb_hash;
   }
 
   lxb_dom_attr_t *attr = lxb_dom_element_first_attribute(lxb_dom_interface_element(node));
 
-  while (attr != NULL)
-  {
+  while (attr != NULL) {
     size_t tmp_len;
     const lxb_char_t *tmp = lxb_dom_attr_qualified_name(attr, &tmp_len);
     VALUE rb_key = rb_utf8_str_new((const char *)tmp, tmp_len);
@@ -535,11 +488,9 @@ static VALUE
 nl_node_previous_element(VALUE self)
 {
   lxb_dom_node_t *node = nl_rb_node_unwrap(self);
-  while (node->prev != NULL)
-  {
+  while (node->prev != NULL) {
     node = node->prev;
-    if (node->type == LXB_DOM_NODE_TYPE_ELEMENT)
-    {
+    if (node->type == LXB_DOM_NODE_TYPE_ELEMENT) {
       return nl_rb_node_create(node, nl_rb_document_get(self));
     }
   }
@@ -557,11 +508,9 @@ static VALUE
 nl_node_next_element(VALUE self)
 {
   lxb_dom_node_t *node = nl_rb_node_unwrap(self);
-  while (node->next != NULL)
-  {
+  while (node->next != NULL) {
     node = node->next;
-    if (node->type == LXB_DOM_NODE_TYPE_ELEMENT)
-    {
+    if (node->type == LXB_DOM_NODE_TYPE_ELEMENT) {
       return nl_rb_node_create(node, nl_rb_document_get(self));
     }
   }
@@ -575,8 +524,7 @@ nl_node_children(VALUE self)
   lxb_dom_node_t *child = node->first_child;
   lexbor_array_t *array = lexbor_array_create();
 
-  while (child != NULL)
-  {
+  while (child != NULL) {
     lexbor_array_push(array, child);
     child = child->next;
   }
@@ -619,8 +567,7 @@ nl_node_equals(VALUE self, VALUE other)
 const lxb_char_t *
 lxb_dom_node_name_qualified(lxb_dom_node_t *node, size_t *len)
 {
-  if (node->type == LXB_DOM_NODE_TYPE_ELEMENT)
-  {
+  if (node->type == LXB_DOM_NODE_TYPE_ELEMENT) {
     return lxb_dom_element_qualified_name(lxb_dom_interface_element(node),
                                           len);
   }
@@ -642,18 +589,15 @@ nl_node_parse_fragment(lxb_dom_document_t *doc, lxb_char_t *html, size_t size)
   size_t tag_name_len;
   lxb_html_document_t *html_doc = lxb_html_interface_document(doc);
   const lxb_char_t *tag_name = lxb_tag_name_by_id(lxb_html_document_tags(html_doc), LXB_TAG__UNDEF, &tag_name_len);
-  if (tag_name == NULL)
-  {
+  if (tag_name == NULL) {
     rb_raise(rb_eRuntimeError, "Error getting tag name");
   }
   lxb_dom_element_t *element = lxb_dom_document_create_element(doc, tag_name, tag_name_len, NULL);
-  if (element == NULL)
-  {
+  if (element == NULL) {
     rb_raise(rb_eRuntimeError, "Error creating element");
   }
   lxb_dom_node_t *frag_root = lxb_html_document_parse_fragment(html_doc, element, html, size);
-  if (frag_root == NULL)
-  {
+  if (frag_root == NULL) {
     rb_raise(rb_eArgError, "Error parsing HTML");
   }
   return frag_root;
@@ -677,39 +621,28 @@ nl_node_add_sibling(VALUE self, VALUE next_or_previous, VALUE new)
   lxb_dom_document_t *doc = node->owner_document;
 
   int insert_after;
-  if (rb_eql(rb_String(next_or_previous), rb_str_new_literal("next")))
-  {
+  if (rb_eql(rb_String(next_or_previous), rb_str_new_literal("next"))) {
     insert_after = 1;
-  }
-  else if (rb_eql(rb_String(next_or_previous), rb_str_new_literal("previous")))
-  {
+  } else if (rb_eql(rb_String(next_or_previous), rb_str_new_literal("previous"))) {
     insert_after = 0;
-  }
-  else
-  {
+  } else {
     rb_raise(rb_eArgError, "Unsupported inserting position");
   }
 
-  if (TYPE(new) == T_STRING)
-  {
+  if (TYPE(new) == T_STRING) {
     lxb_dom_node_t *frag_root = nl_node_parse_fragment(doc, (lxb_char_t *)RSTRING_PTR(new), RSTRING_LEN(new));
 
-    while (frag_root->first_child != NULL)
-    {
+    while (frag_root->first_child != NULL) {
       lxb_dom_node_t *child = frag_root->first_child;
       lxb_dom_node_remove(child);
       insert_after ? lxb_dom_node_insert_after(node, child) : lxb_dom_node_insert_before(node, child);
     }
     lxb_dom_node_destroy(frag_root);
-  }
-  else if (rb_obj_class(new) == cNokolexborNode)
-  {
+  } else if (rb_obj_class(new) == cNokolexborNode) {
     lxb_dom_node_t *node_new = nl_rb_node_unwrap(new);
     lxb_dom_node_remove(node_new);
     insert_after ? lxb_dom_node_insert_after(node, node_new) : lxb_dom_node_insert_before(node, node_new);
-  }
-  else
-  {
+  } else {
     rb_raise(rb_eArgError, "Unsupported node type");
   }
   return Qnil;
@@ -721,26 +654,20 @@ nl_node_add_child(VALUE self, VALUE new)
   lxb_dom_node_t *node = nl_rb_node_unwrap(self);
   lxb_dom_document_t *doc = node->owner_document;
 
-  if (TYPE(new) == T_STRING)
-  {
+  if (TYPE(new) == T_STRING) {
     lxb_dom_node_t *frag_root = nl_node_parse_fragment(doc, (lxb_char_t *)RSTRING_PTR(new), RSTRING_LEN(new));
 
-    while (frag_root->first_child != NULL)
-    {
+    while (frag_root->first_child != NULL) {
       lxb_dom_node_t *child = frag_root->first_child;
       lxb_dom_node_remove(child);
       lxb_dom_node_insert_child(node, child);
     }
     lxb_dom_node_destroy(frag_root);
-  }
-  else if (rb_obj_class(new) == cNokolexborNode)
-  {
+  } else if (rb_obj_class(new) == cNokolexborNode) {
     lxb_dom_node_t *node_new = nl_rb_node_unwrap(new);
     lxb_dom_node_remove(node_new);
     lxb_dom_node_insert_child(node, node_new);
-  }
-  else
-  {
+  } else {
     rb_raise(rb_eArgError, "Unsupported node type");
   }
   return Qnil;
@@ -758,12 +685,10 @@ nl_node_first_element_child(VALUE self)
   lxb_dom_node_t *parent = nl_rb_node_unwrap(self);
   lxb_dom_node_t *cur;
 
-  if (parent == NULL)
-  {
+  if (parent == NULL) {
     return Qnil;
   }
-  switch (parent->type)
-  {
+  switch (parent->type) {
   case LXB_DOM_NODE_TYPE_ELEMENT:
   case LXB_DOM_NODE_TYPE_ENTITY:
   case LXB_DOM_NODE_TYPE_DOCUMENT:
@@ -772,10 +697,8 @@ nl_node_first_element_child(VALUE self)
   default:
     return Qnil;
   }
-  while (cur != NULL)
-  {
-    if (cur->type == LXB_DOM_NODE_TYPE_ELEMENT)
-    {
+  while (cur != NULL) {
+    if (cur->type == LXB_DOM_NODE_TYPE_ELEMENT) {
       return nl_rb_node_create(cur, nl_rb_document_get(self));
     }
     cur = cur->next;
@@ -789,12 +712,10 @@ nl_node_last_element_child(VALUE self)
   lxb_dom_node_t *parent = nl_rb_node_unwrap(self);
   lxb_dom_node_t *cur;
 
-  if (parent == NULL)
-  {
+  if (parent == NULL) {
     return Qnil;
   }
-  switch (parent->type)
-  {
+  switch (parent->type) {
   case LXB_DOM_NODE_TYPE_ELEMENT:
   case LXB_DOM_NODE_TYPE_ENTITY:
   case LXB_DOM_NODE_TYPE_DOCUMENT:
@@ -803,10 +724,8 @@ nl_node_last_element_child(VALUE self)
   default:
     return Qnil;
   }
-  while (cur != NULL)
-  {
-    if (cur->type == LXB_DOM_NODE_TYPE_ELEMENT)
-    {
+  while (cur != NULL) {
+    if (cur->type == LXB_DOM_NODE_TYPE_ELEMENT) {
       return nl_rb_node_create(cur, nl_rb_document_get(self));
     }
     cur = cur->prev;

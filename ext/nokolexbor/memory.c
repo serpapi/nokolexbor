@@ -10,8 +10,8 @@
  * of more frequent GC.
  */
 
-#include <ruby.h>
 #include "lexbor/core/base.h"
+#include <ruby.h>
 
 // Disable using ruby memory functions when ASAN is enabled,
 // otherwise memory leak info will be all about ruby which
@@ -21,26 +21,26 @@
 void *
 lexbor_malloc(size_t size)
 {
-    return ruby_xmalloc(size);
+  return ruby_xmalloc(size);
 }
 
 void *
 lexbor_realloc(void *dst, size_t size)
 {
-    return ruby_xrealloc(dst, size);
+  return ruby_xrealloc(dst, size);
 }
 
 void *
 lexbor_calloc(size_t num, size_t size)
 {
-    return ruby_xcalloc(num, size);
+  return ruby_xcalloc(num, size);
 }
 
 void *
 lexbor_free(void *dst)
 {
-    ruby_xfree(dst);
-    return NULL;
+  ruby_xfree(dst);
+  return NULL;
 }
 
 #endif

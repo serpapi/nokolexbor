@@ -26,12 +26,9 @@ nl_document_parse(VALUE self, VALUE rb_string_or_io)
 {
   VALUE id_read = rb_intern("read");
   VALUE rb_html;
-  if (rb_respond_to(rb_string_or_io, id_read))
-  {
+  if (rb_respond_to(rb_string_or_io, id_read)) {
     rb_html = rb_funcall(rb_string_or_io, id_read, 0);
-  }
-  else
-  {
+  } else {
     rb_html = rb_string_or_io;
   }
   const char *html_c = StringValuePtr(rb_html);
@@ -40,14 +37,12 @@ nl_document_parse(VALUE self, VALUE rb_string_or_io)
   lxb_html_document_t *document;
 
   document = lxb_html_document_create();
-  if (document == NULL)
-  {
+  if (document == NULL) {
     rb_raise(rb_eRuntimeError, "Error creating document");
   }
 
   lxb_status_t status = lxb_html_document_parse(document, (const lxb_char_t *)html_c, html_len);
-  if (status != LXB_STATUS_OK)
-  {
+  if (status != LXB_STATUS_OK) {
     nl_raise_lexbor_error(status);
   }
 

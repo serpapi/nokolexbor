@@ -5,8 +5,7 @@ VALUE eLexborError;
 
 void nl_raise_lexbor_error(lxb_status_t error)
 {
-  switch (error)
-  {
+  switch (error) {
   case LXB_STATUS_ERROR:
     rb_raise(eLexborError, "LXB_STATUS_ERROR");
   case LXB_STATUS_ERROR_MEMORY_ALLOCATION:

@@ -3,8 +3,8 @@
 
 #include <ruby.h>
 
-#include <lexbor/html/html.h>
 #include <lexbor/css/css.h>
+#include <lexbor/html/html.h>
 #include <lexbor/selectors/selectors.h>
 
 extern VALUE cNokolexborDocument;
@@ -21,14 +21,13 @@ VALUE nl_rb_node_set_create_with_data(lexbor_array_t *array, VALUE rb_document);
 
 lxb_inline VALUE nl_rb_document_get(VALUE rb_node_or_doc)
 {
-    if (rb_obj_class(rb_node_or_doc) == cNokolexborDocument)
-    {
-        return rb_node_or_doc;
-    }
-    return rb_iv_get(rb_node_or_doc, "@document");
+  if (rb_obj_class(rb_node_or_doc) == cNokolexborDocument) {
+    return rb_node_or_doc;
+  }
+  return rb_iv_get(rb_node_or_doc, "@document");
 }
 
-lxb_dom_document_t * nl_rb_document_unwrap(VALUE rb_doc);
+lxb_dom_document_t *nl_rb_document_unwrap(VALUE rb_doc);
 
 const lxb_char_t *
 lxb_dom_node_name_qualified(lxb_dom_node_t *node, size_t *len);
