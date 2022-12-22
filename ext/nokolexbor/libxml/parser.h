@@ -132,7 +132,7 @@ typedef enum {
  * XML_DETECT_IDS:
  *
  * Bit in the loadsubset context field to tell to do ID/REFs lookups.
- * Use it to initialize xmlLoadExtDtdDefaultValue.
+ * Use it to initialize nl_xmlLoadExtDtdDefaultValue.
  */
 #define XML_DETECT_IDS		2
 
@@ -141,7 +141,7 @@ typedef enum {
  *
  * Bit in the loadsubset context field to tell to do complete the
  * elements attributes lists with the ones defaulted from the DTDs.
- * Use it to initialize xmlLoadExtDtdDefaultValue.
+ * Use it to initialize nl_xmlLoadExtDtdDefaultValue.
  */
 #define XML_COMPLETE_ATTRS	4
 
@@ -149,7 +149,7 @@ typedef enum {
  * XML_SKIP_IDS:
  *
  * Bit in the loadsubset context field to tell to not do ID/REFs registration.
- * Used to initialize xmlLoadExtDtdDefaultValue in some special cases.
+ * Used to initialize nl_xmlLoadExtDtdDefaultValue in some special cases.
  */
 #define XML_SKIP_IDS		8
 
@@ -482,7 +482,7 @@ typedef void (*unparsedEntityDeclSAXFunc)(void *ctx,
  * @ctx:  the user data (XML parser context)
  * @loc: A SAX Locator
  *
- * Receive the document locator at startup, actually xmlDefaultSAXLocator.
+ * Receive the document locator at startup, actually nl_xmlDefaultSAXLocator.
  * Everything is available on the context, so this is useless in our case.
  */
 typedef void (*setDocumentLocatorSAXFunc) (void *ctx,
@@ -822,7 +822,7 @@ extern "C" {
  * Init/Cleanup
  */
 XMLPUBFUN void XMLCALL
-		xmlInitParser		(void);
+		nl_xmlInitParser		(void);
 XMLPUBFUN void XMLCALL
 		xmlCleanupParser	(void);
 

@@ -48,14 +48,14 @@ void xmlMallocBreakpoint(void);
  ************************************************************************/
 
 #if !defined(LIBXML_THREAD_ENABLED) && !defined(LIBXML_THREAD_ALLOC_ENABLED)
-#ifdef xmlMalloc
-#undef xmlMalloc
+#ifdef nl_xmlMalloc
+#undef nl_xmlMalloc
 #endif
-#ifdef xmlRealloc
-#undef xmlRealloc
+#ifdef nl_xmlRealloc
+#undef nl_xmlRealloc
 #endif
-#ifdef xmlMemStrdup
-#undef xmlMemStrdup
+#ifdef nl_xmlMemStrdup
+#undef nl_xmlMemStrdup
 #endif
 #endif
 
@@ -119,13 +119,13 @@ static void debugmem_list_delete(MEMHDR *);
 #endif
 
 /**
- * xmlInitMemory:
+ * nl_xmlInitMemory:
  *
- * DEPRECATED: Alias for xmlInitParser.
+ * DEPRECATED: Alias for nl_xmlInitParser.
  */
 int
-xmlInitMemory(void) {
-    xmlInitParser();
+nl_xmlInitMemory(void) {
+    nl_xmlInitParser();
     return(0);
 }
 
@@ -140,8 +140,8 @@ void
 xmlInitMemoryInternal(void) {
      char *breakpoint;
 #ifdef DEBUG_MEMORY
-     xmlGenericError(xmlGenericErrorContext,
-	     "xmlInitMemory()\n");
+     nl_xmlGenericError(nl_xmlGenericErrorContext,
+	     "nl_xmlInitMemory()\n");
 #endif
      xmlInitMutex(&xmlMemMutex);
 
@@ -155,13 +155,13 @@ xmlInitMemoryInternal(void) {
      }
 
 #ifdef DEBUG_MEMORY
-     xmlGenericError(xmlGenericErrorContext,
-	     "xmlInitMemory() Ok\n");
+     nl_xmlGenericError(nl_xmlGenericErrorContext,
+	     "nl_xmlInitMemory() Ok\n");
 #endif
 }
 
 /**
- * xmlMemSetup:
+ * nl_xmlMemSetup:
  * @freeFunc: the free() function to use
  * @mallocFunc: the malloc() function to use
  * @reallocFunc: the realloc() function to use
@@ -176,11 +176,11 @@ xmlInitMemoryInternal(void) {
  * Returns 0 on success
  */
 int
-xmlMemSetup(xmlFreeFunc freeFunc, xmlMallocFunc mallocFunc,
+nl_xmlMemSetup(xmlFreeFunc freeFunc, xmlMallocFunc mallocFunc,
             xmlReallocFunc reallocFunc, xmlStrdupFunc strdupFunc) {
 #ifdef DEBUG_MEMORY
-     xmlGenericError(xmlGenericErrorContext,
-	     "xmlMemSetup()\n");
+     nl_xmlGenericError(nl_xmlGenericErrorContext,
+	     "nl_xmlMemSetup()\n");
 #endif
     if (freeFunc == NULL)
 	return(-1);
@@ -190,14 +190,14 @@ xmlMemSetup(xmlFreeFunc freeFunc, xmlMallocFunc mallocFunc,
 	return(-1);
     if (strdupFunc == NULL)
 	return(-1);
-    xmlFree = freeFunc;
-    xmlMalloc = mallocFunc;
-    xmlMallocAtomic = mallocFunc;
-    xmlRealloc = reallocFunc;
-    xmlMemStrdup = strdupFunc;
+    nl_xmlFree = freeFunc;
+    nl_xmlMalloc = mallocFunc;
+    nl_xmlMallocAtomic = mallocFunc;
+    nl_xmlRealloc = reallocFunc;
+    nl_xmlMemStrdup = strdupFunc;
 #ifdef DEBUG_MEMORY
-     xmlGenericError(xmlGenericErrorContext,
-	     "xmlMemSetup() Ok\n");
+     nl_xmlGenericError(nl_xmlGenericErrorContext,
+	     "nl_xmlMemSetup() Ok\n");
 #endif
     return(0);
 }

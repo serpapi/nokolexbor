@@ -37,45 +37,45 @@ typedef xmlRMutex *xmlRMutexPtr;
 extern "C" {
 #endif
 XMLPUBFUN xmlMutexPtr XMLCALL
-			xmlNewMutex	(void);
+			nl_xmlNewMutex	(void);
 XMLPUBFUN void XMLCALL
-			xmlMutexLock	(xmlMutexPtr tok);
+			nl_xmlMutexLock	(xmlMutexPtr tok);
 XMLPUBFUN void XMLCALL
-			xmlMutexUnlock	(xmlMutexPtr tok);
+			nl_xmlMutexUnlock	(xmlMutexPtr tok);
 XMLPUBFUN void XMLCALL
-			xmlFreeMutex	(xmlMutexPtr tok);
+			nl_xmlFreeMutex	(xmlMutexPtr tok);
 
 XMLPUBFUN xmlRMutexPtr XMLCALL
-			xmlNewRMutex	(void);
+			nl_xmlNewRMutex	(void);
 XMLPUBFUN void XMLCALL
-			xmlRMutexLock	(xmlRMutexPtr tok);
+			nl_xmlRMutexLock	(xmlRMutexPtr tok);
 XMLPUBFUN void XMLCALL
-			xmlRMutexUnlock	(xmlRMutexPtr tok);
+			nl_xmlRMutexUnlock	(xmlRMutexPtr tok);
 XMLPUBFUN void XMLCALL
-			xmlFreeRMutex	(xmlRMutexPtr tok);
+			nl_xmlFreeRMutex	(xmlRMutexPtr tok);
 
 /*
  * Library wide APIs.
  */
 XML_DEPRECATED
 XMLPUBFUN void XMLCALL
-			xmlInitThreads	(void);
+			nl_xmlInitThreads	(void);
 XMLPUBFUN void XMLCALL
-			xmlLockLibrary	(void);
+			nl_xmlLockLibrary	(void);
 XMLPUBFUN void XMLCALL
-			xmlUnlockLibrary(void);
+			nl_xmlUnlockLibrary(void);
 XML_DEPRECATED
 XMLPUBFUN int XMLCALL
-			xmlGetThreadId	(void);
+			nl_xmlGetThreadId	(void);
 XML_DEPRECATED
 XMLPUBFUN int XMLCALL
-			xmlIsMainThread	(void);
+			nl_xmlIsMainThread	(void);
 XML_DEPRECATED
 XMLPUBFUN void XMLCALL
-			xmlCleanupThreads(void);
+			nl_xmlCleanupThreads(void);
 XML_DEPRECATED
 XMLPUBFUN xmlGlobalStatePtr XMLCALL
-			xmlGetGlobalState(void);
+			nl_xmlGetGlobalState(void);
 
 /** DOC_DISABLE */
 #if defined(LIBXML_THREAD_ENABLED) && defined(_WIN32) && \

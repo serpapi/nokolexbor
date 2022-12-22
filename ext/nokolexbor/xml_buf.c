@@ -92,7 +92,7 @@ struct _xmlBuf {
 static void
 xmlBufMemoryError(xmlBufPtr buf, const char *extra)
 {
-    __xmlSimpleError(XML_FROM_BUFFER, XML_ERR_NO_MEMORY, NULL, NULL, extra);
+    __nl_xmlSimpleError(XML_FROM_BUFFER, XML_ERR_NO_MEMORY, NULL, NULL, extra);
     if ((buf) && (buf->error == 0))
         buf->error = XML_ERR_NO_MEMORY;
 }
@@ -107,7 +107,7 @@ xmlBufPtr
 xmlBufCreate(void) {
     xmlBufPtr ret;
 
-    ret = (xmlBufPtr) xmlMalloc(sizeof(xmlBuf));
+    ret = (xmlBufPtr) nl_xmlMalloc(sizeof(xmlBuf));
     if (ret == NULL) {
 	xmlBufMemoryError(NULL, "creating buffer");
         return(NULL);
@@ -115,13 +115,13 @@ xmlBufCreate(void) {
     ret->use = 0;
     ret->error = 0;
     ret->buffer = NULL;
-    ret->size = xmlDefaultBufferSize;
+    ret->size = nl_xmlDefaultBufferSize;
     UPDATE_COMPAT(ret);
-    ret->alloc = xmlBufferAllocScheme;
-    ret->content = (xmlChar *) xmlMallocAtomic(ret->size);
+    ret->alloc = nl_xmlBufferAllocScheme;
+    ret->content = (xmlChar *) nl_xmlMallocAtomic(ret->size);
     if (ret->content == NULL) {
 	xmlBufMemoryError(ret, "creating buffer");
-	xmlFree(ret);
+	nl_xmlFree(ret);
         return(NULL);
     }
     ret->content[0] = 0;
@@ -140,7 +140,7 @@ void
 xmlBufFree(xmlBufPtr buf) {
     if (buf == NULL) {
 #ifdef DEBUG_BUFFER
-        xmlGenericError(xmlGenericErrorContext,
+        nl_xmlGenericError(nl_xmlGenericErrorContext,
 		"xmlBufFree: buf == NULL\n");
 #endif
 	return;
@@ -148,15 +148,15 @@ xmlBufFree(xmlBufPtr buf) {
 
     if ((buf->alloc == XML_BUFFER_ALLOC_IO) &&
         (buf->contentIO != NULL)) {
-        xmlFree(buf->contentIO);
+        nl_xmlFree(buf->contentIO);
     } else if (buf->content != NULL) {
-        xmlFree(buf->content);
+        nl_xmlFree(buf->content);
     }
-    xmlFree(buf);
+    nl_xmlFree(buf);
 }
 
 /**
- * xmlBufContent:
+ * nl_xmlBufContent:
  * @buf:  the buffer
  *
  * Function to extract the content of a buffer
@@ -165,7 +165,7 @@ xmlBufFree(xmlBufPtr buf) {
  */
 
 xmlChar *
-xmlBufContent(const xmlBuf *buf)
+nl_xmlBufContent(const xmlBuf *buf)
 {
     if ((!buf) || (buf->error))
         return NULL;
@@ -258,7 +258,7 @@ xmlBufResize(xmlBufPtr buf, size_t size)
 	    buf->content[buf->use] = 0;
 	    buf->size += start_buf;
 	} else {
-	    rebuf = (xmlChar *) xmlRealloc(buf->contentIO, start_buf + newSize);
+	    rebuf = (xmlChar *) nl_xmlRealloc(buf->contentIO, start_buf + newSize);
 	    if (rebuf == NULL) {
 		xmlBufMemoryError(buf, "growing buffer");
 		return 0;
@@ -268,21 +268,21 @@ xmlBufResize(xmlBufPtr buf, size_t size)
 	}
     } else {
 	if (buf->content == NULL) {
-	    rebuf = (xmlChar *) xmlMallocAtomic(newSize);
+	    rebuf = (xmlChar *) nl_xmlMallocAtomic(newSize);
 	    buf->use = 0;
 	    rebuf[buf->use] = 0;
 	} else if (buf->size - buf->use < 100) {
-	    rebuf = (xmlChar *) xmlRealloc(buf->content, newSize);
+	    rebuf = (xmlChar *) nl_xmlRealloc(buf->content, newSize);
         } else {
 	    /*
 	     * if we are reallocating a buffer far from being full, it's
 	     * better to make a new allocation and copy only the used range
 	     * and free the old one.
 	     */
-	    rebuf = (xmlChar *) xmlMallocAtomic(newSize);
+	    rebuf = (xmlChar *) nl_xmlMallocAtomic(newSize);
 	    if (rebuf != NULL) {
 		memcpy(rebuf, buf->content, buf->use);
-		xmlFree(buf->content);
+		nl_xmlFree(buf->content);
 		rebuf[buf->use] = 0;
 	    }
 	}
@@ -320,7 +320,7 @@ xmlBufAdd(xmlBufPtr buf, const xmlChar *str, int len) {
 
     if (len < -1) {
 #ifdef DEBUG_BUFFER
-        xmlGenericError(xmlGenericErrorContext,
+        nl_xmlGenericError(nl_xmlGenericErrorContext,
 		"xmlBufAdd: len < 0\n");
 #endif
 	return -1;
@@ -328,7 +328,7 @@ xmlBufAdd(xmlBufPtr buf, const xmlChar *str, int len) {
     if (len == 0) return 0;
 
     if (len < 0)
-        len = xmlStrlen(str);
+        len = nl_xmlStrlen(str);
 
     if (len < 0) return -1;
     if (len == 0) return 0;

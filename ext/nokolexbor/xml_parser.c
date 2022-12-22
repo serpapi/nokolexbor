@@ -83,7 +83,7 @@
 static int xmlParserInitialized = 0;
 
 /**
- * xmlInitParser:
+ * nl_xmlInitParser:
  *
  * Initialization function for the XML parser.
  * This is not reentrant. Call once before processing in case of
@@ -91,7 +91,7 @@ static int xmlParserInitialized = 0;
  */
 
 void
-xmlInitParser(void) {
+nl_xmlInitParser(void) {
     /*
      * Note that the initialization code must not make memory allocations.
      */
@@ -103,7 +103,7 @@ xmlInitParser(void) {
     if (xmlParserInitialized == 0) {
 #endif
 #if defined(_WIN32) && (!defined(LIBXML_STATIC) || defined(LIBXML_STATIC_FOR_DLL))
-        if (xmlFree == free)
+        if (nl_xmlFree == free)
             atexit(xmlCleanupParser);
 #endif
 

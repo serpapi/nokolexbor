@@ -88,11 +88,11 @@ typedef char *(XMLCALL *xmlStrdupFunc)(const char *str);
 
 /*
  * The 4 interfaces used for all memory handling within libxml.
-LIBXML_DLL_IMPORT xmlFreeFunc xmlFree;
-LIBXML_DLL_IMPORT xmlMallocFunc xmlMalloc;
-LIBXML_DLL_IMPORT xmlMallocFunc xmlMallocAtomic;
-LIBXML_DLL_IMPORT xmlReallocFunc xmlRealloc;
-LIBXML_DLL_IMPORT xmlStrdupFunc xmlMemStrdup;
+LIBXML_DLL_IMPORT xmlFreeFunc nl_xmlFree;
+LIBXML_DLL_IMPORT xmlMallocFunc nl_xmlMalloc;
+LIBXML_DLL_IMPORT xmlMallocFunc nl_xmlMallocAtomic;
+LIBXML_DLL_IMPORT xmlReallocFunc nl_xmlRealloc;
+LIBXML_DLL_IMPORT xmlStrdupFunc nl_xmlMemStrdup;
  */
 
 /*
@@ -101,7 +101,7 @@ LIBXML_DLL_IMPORT xmlStrdupFunc xmlMemStrdup;
  * allocations useful for garbage collected memory allocators
  */
 XMLPUBFUN int XMLCALL
-	xmlMemSetup	(xmlFreeFunc freeFunc,
+	nl_xmlMemSetup	(xmlFreeFunc freeFunc,
 			 xmlMallocFunc mallocFunc,
 			 xmlReallocFunc reallocFunc,
 			 xmlStrdupFunc strdupFunc);
@@ -128,7 +128,7 @@ XMLPUBFUN int XMLCALL
  */
 XML_DEPRECATED
 XMLPUBFUN int XMLCALL
-	xmlInitMemory	(void);
+	nl_xmlInitMemory	(void);
 
 /*
  * Cleanup of the memory layer.
@@ -171,16 +171,16 @@ XMLPUBFUN char * XMLCALL
 
 #ifdef DEBUG_MEMORY_LOCATION
 /**
- * xmlMalloc:
+ * nl_xmlMalloc:
  * @size:  number of bytes to allocate
  *
  * Wrapper for the malloc() function used in the XML library.
  *
  * Returns the pointer to the allocated area or NULL in case of error.
  */
-#define xmlMalloc(size) xmlMallocLoc((size), __FILE__, __LINE__)
+#define nl_xmlMalloc(size) xmlMallocLoc((size), __FILE__, __LINE__)
 /**
- * xmlMallocAtomic:
+ * nl_xmlMallocAtomic:
  * @size:  number of bytes to allocate
  *
  * Wrapper for the malloc() function used in the XML library for allocation
@@ -188,9 +188,9 @@ XMLPUBFUN char * XMLCALL
  *
  * Returns the pointer to the allocated area or NULL in case of error.
  */
-#define xmlMallocAtomic(size) xmlMallocAtomicLoc((size), __FILE__, __LINE__)
+#define nl_xmlMallocAtomic(size) xmlMallocAtomicLoc((size), __FILE__, __LINE__)
 /**
- * xmlRealloc:
+ * nl_xmlRealloc:
  * @ptr:  pointer to the existing allocated area
  * @size:  number of bytes to allocate
  *
@@ -198,16 +198,16 @@ XMLPUBFUN char * XMLCALL
  *
  * Returns the pointer to the allocated area or NULL in case of error.
  */
-#define xmlRealloc(ptr, size) xmlReallocLoc((ptr), (size), __FILE__, __LINE__)
+#define nl_xmlRealloc(ptr, size) xmlReallocLoc((ptr), (size), __FILE__, __LINE__)
 /**
- * xmlMemStrdup:
+ * nl_xmlMemStrdup:
  * @str:  pointer to the existing string
  *
- * Wrapper for the strdup() function, xmlStrdup() is usually preferred.
+ * Wrapper for the strdup() function, nl_xmlStrdup() is usually preferred.
  *
  * Returns the pointer to the allocated area or NULL in case of error.
  */
-#define xmlMemStrdup(str) xmlMemStrdupLoc((str), __FILE__, __LINE__)
+#define nl_xmlMemStrdup(str) xmlMemStrdupLoc((str), __FILE__, __LINE__)
 
 #endif /* DEBUG_MEMORY_LOCATION */
 

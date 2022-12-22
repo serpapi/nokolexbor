@@ -288,7 +288,7 @@ XMLPUBVAR const xmlChar xmlStringComment[];
 /*
  * Function to finish the work of the macros where needed.
  */
-XMLPUBFUN int XMLCALL                   xmlIsLetter     (int c);
+XMLPUBFUN int XMLCALL                   nl_xmlIsLetter     (int c);
 
 /**
  * Parser context.
@@ -556,7 +556,7 @@ XMLPUBFUN int XMLCALL			namePush		(xmlParserCtxtPtr ctxt,
  * other commodities shared between parser.c and parserInternals.
  */
 XMLPUBFUN int XMLCALL			xmlSkipBlankChars	(xmlParserCtxtPtr ctxt);
-XMLPUBFUN int XMLCALL			xmlStringCurrentChar	(xmlParserCtxtPtr ctxt,
+XMLPUBFUN int XMLCALL			nl_xmlStringCurrentChar	(xmlParserCtxtPtr ctxt,
 						 const xmlChar *cur,
 						 int *len);
 XMLPUBFUN void XMLCALL			xmlParserHandlePEReference(xmlParserCtxtPtr ctxt);
@@ -567,9 +567,9 @@ XMLPUBFUN int XMLCALL			xmlCheckLanguageID	(const xmlChar *lang);
  */
 XMLPUBFUN int XMLCALL			xmlCurrentChar		(xmlParserCtxtPtr ctxt,
 						 int *len);
-XMLPUBFUN int XMLCALL		xmlCopyCharMultiByte	(xmlChar *out,
+XMLPUBFUN int XMLCALL		nl_xmlCopyCharMultiByte	(xmlChar *out,
 						 int val);
-XMLPUBFUN int XMLCALL			xmlCopyChar		(int len,
+XMLPUBFUN int XMLCALL			nl_xmlCopyChar		(int len,
 						 xmlChar *out,
 						 int val);
 XMLPUBFUN void XMLCALL			xmlNextChar		(xmlParserCtxtPtr ctxt);

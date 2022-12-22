@@ -9,7 +9,7 @@
     char      *larger;						\
     va_list   ap;						\
 								\
-    str = (char *) xmlMalloc(150);				\
+    str = (char *) nl_xmlMalloc(150);				\
     if (str != NULL) {						\
 								\
     size = 150;							\
@@ -29,7 +29,7 @@
 	    size += chars + 1;					\
 	else							\
 	    size += 100;					\
-	if ((larger = (char *) xmlRealloc(str, size)) == NULL) {\
+	if ((larger = (char *) nl_xmlRealloc(str, size)) == NULL) {\
 	    break;						\
 	}							\
 	str = larger;						\
@@ -37,7 +37,7 @@
 }
 
 /**
- * xmlGenericErrorDefaultFunc:
+ * nl_xmlGenericErrorDefaultFunc:
  * @ctx:  an error context
  * @msg:  the message to display/transmit
  * @...:  extra parameters for the message display
@@ -45,11 +45,11 @@
  * Default handler for out of context error messages.
  */
 void XMLCDECL
-xmlGenericErrorDefaultFunc(void *ctx ATTRIBUTE_UNUSED, const char *msg, ...) {
+nl_xmlGenericErrorDefaultFunc(void *ctx ATTRIBUTE_UNUSED, const char *msg, ...) {
 }
 
 /**
- * xmlCopyError:
+ * nl_xmlCopyError:
  * @from:  a source error
  * @to:  a target error
  *
@@ -58,28 +58,28 @@ xmlGenericErrorDefaultFunc(void *ctx ATTRIBUTE_UNUSED, const char *msg, ...) {
  * Returns 0 in case of success and -1 in case of error.
  */
 int
-xmlCopyError(xmlErrorPtr from, xmlErrorPtr to) {
+nl_xmlCopyError(xmlErrorPtr from, xmlErrorPtr to) {
     char *message, *file, *str1, *str2, *str3;
 
     if ((from == NULL) || (to == NULL))
         return(-1);
 
-    message = (char *) xmlStrdup((xmlChar *) from->message);
-    file = (char *) xmlStrdup ((xmlChar *) from->file);
-    str1 = (char *) xmlStrdup ((xmlChar *) from->str1);
-    str2 = (char *) xmlStrdup ((xmlChar *) from->str2);
-    str3 = (char *) xmlStrdup ((xmlChar *) from->str3);
+    message = (char *) nl_xmlStrdup((xmlChar *) from->message);
+    file = (char *) nl_xmlStrdup ((xmlChar *) from->file);
+    str1 = (char *) nl_xmlStrdup ((xmlChar *) from->str1);
+    str2 = (char *) nl_xmlStrdup ((xmlChar *) from->str2);
+    str3 = (char *) nl_xmlStrdup ((xmlChar *) from->str3);
 
     if (to->message != NULL)
-        xmlFree(to->message);
+        nl_xmlFree(to->message);
     if (to->file != NULL)
-        xmlFree(to->file);
+        nl_xmlFree(to->file);
     if (to->str1 != NULL)
-        xmlFree(to->str1);
+        nl_xmlFree(to->str1);
     if (to->str2 != NULL)
-        xmlFree(to->str2);
+        nl_xmlFree(to->str2);
     if (to->str3 != NULL)
-        xmlFree(to->str3);
+        nl_xmlFree(to->str3);
     to->domain = from->domain;
     to->code = from->code;
     to->level = from->level;
@@ -99,7 +99,7 @@ xmlCopyError(xmlErrorPtr from, xmlErrorPtr to) {
 }
 
 /**
- * __xmlRaiseError:
+ * __nl_xmlRaiseError:
  * @schannel: the structured callback channel
  * @channel: the old callback channel
  * @data: the callback data
@@ -123,7 +123,7 @@ xmlCopyError(xmlErrorPtr from, xmlErrorPtr to) {
  * error callback handler
  */
 void XMLCDECL
-__xmlRaiseError(xmlStructuredErrorFunc schannel,
+__nl_xmlRaiseError(xmlStructuredErrorFunc schannel,
                 xmlGenericErrorFunc channel, void *data, void *ctx,
                 void *nod, int domain, int code, xmlErrorLevel level,
                 const char *file, int line, const char *str1,
@@ -134,12 +134,12 @@ __xmlRaiseError(xmlStructuredErrorFunc schannel,
     lxb_dom_node_t_ptr node = (lxb_dom_node_t_ptr)nod;
     char *str = NULL;
     xmlParserInputPtr input = NULL;
-    xmlErrorPtr to = &xmlLastError;
+    xmlErrorPtr to = &nl_xmlLastError;
     lxb_dom_node_t_ptr baseptr = NULL;
 
     if (code == XML_ERR_OK)
         return;
-    if ((xmlGetWarningsDefaultValue == 0) && (level == XML_ERR_WARNING))
+    if ((nl_xmlGetWarningsDefaultValue == 0) && (level == XML_ERR_WARNING))
         return;
     if ((domain == XML_FROM_PARSER) || (domain == XML_FROM_HTML) ||
         (domain == XML_FROM_DTD) || (domain == XML_FROM_NAMESPACE) ||
@@ -159,19 +159,19 @@ __xmlRaiseError(xmlStructuredErrorFunc schannel,
      */
     if (schannel == NULL)
     {
-        schannel = xmlStructuredError;
+        schannel = nl_xmlStructuredError;
         /*
          * if user has defined handler, change data ptr to user's choice
          */
         if (schannel != NULL)
-            data = xmlStructuredErrorContext;
+            data = nl_xmlStructuredErrorContext;
     }
     /*
      * Formatting the message
      */
     if (msg == NULL)
     {
-        str = (char *)xmlStrdup(BAD_CAST "No error message provided");
+        str = (char *)nl_xmlStrdup(BAD_CAST "No error message provided");
     }
     else
     {
@@ -204,27 +204,27 @@ __xmlRaiseError(xmlStructuredErrorFunc schannel,
     /*
      * Save the information about the error
      */
-    xmlResetError(to);
+    nl_xmlResetError(to);
     to->domain = domain;
     to->code = code;
     to->message = str;
     to->level = level;
     if (file != NULL)
-        to->file = (char *)xmlStrdup((const xmlChar *)file);
+        to->file = (char *)nl_xmlStrdup((const xmlChar *)file);
     to->line = line;
     if (str1 != NULL)
-        to->str1 = (char *)xmlStrdup((const xmlChar *)str1);
+        to->str1 = (char *)nl_xmlStrdup((const xmlChar *)str1);
     if (str2 != NULL)
-        to->str2 = (char *)xmlStrdup((const xmlChar *)str2);
+        to->str2 = (char *)nl_xmlStrdup((const xmlChar *)str2);
     if (str3 != NULL)
-        to->str3 = (char *)xmlStrdup((const xmlChar *)str3);
+        to->str3 = (char *)nl_xmlStrdup((const xmlChar *)str3);
     to->int1 = int1;
     to->int2 = col;
     to->node = node;
     to->ctxt = ctx;
 
-    if (to != &xmlLastError)
-        xmlCopyError(to, &xmlLastError);
+    if (to != &nl_xmlLastError)
+        nl_xmlCopyError(to, &nl_xmlLastError);
 
     if (schannel != NULL)
     {
@@ -233,34 +233,34 @@ __xmlRaiseError(xmlStructuredErrorFunc schannel,
 }
 
 /**
- * xmlResetError:
+ * nl_xmlResetError:
  * @err: pointer to the error.
  *
  * Cleanup the error.
  */
 void
-xmlResetError(xmlErrorPtr err)
+nl_xmlResetError(xmlErrorPtr err)
 {
     if (err == NULL)
         return;
     if (err->code == XML_ERR_OK)
         return;
     if (err->message != NULL)
-        xmlFree(err->message);
+        nl_xmlFree(err->message);
     if (err->file != NULL)
-        xmlFree(err->file);
+        nl_xmlFree(err->file);
     if (err->str1 != NULL)
-        xmlFree(err->str1);
+        nl_xmlFree(err->str1);
     if (err->str2 != NULL)
-        xmlFree(err->str2);
+        nl_xmlFree(err->str2);
     if (err->str3 != NULL)
-        xmlFree(err->str3);
+        nl_xmlFree(err->str3);
     memset(err, 0, sizeof(xmlError));
     err->code = XML_ERR_OK;
 }
 
 /**
- * __xmlSimpleError:
+ * __nl_xmlSimpleError:
  * @domain: where the error comes from
  * @code: the error code
  * @node: the context node
@@ -269,29 +269,29 @@ xmlResetError(xmlErrorPtr err)
  * Handle an out of memory condition
  */
 void
-__xmlSimpleError(int domain, int code, lxb_dom_node_t_ptr node,
+__nl_xmlSimpleError(int domain, int code, lxb_dom_node_t_ptr node,
                  const char *msg, const char *extra)
 {
 
     if (code == XML_ERR_NO_MEMORY) {
 	if (extra)
-	    __xmlRaiseError(NULL, NULL, NULL, NULL, node, domain,
+	    __nl_xmlRaiseError(NULL, NULL, NULL, NULL, node, domain,
 			    XML_ERR_NO_MEMORY, XML_ERR_FATAL, NULL, 0, extra,
 			    NULL, NULL, 0, 0,
 			    "Memory allocation failed : %s\n", extra);
 	else
-	    __xmlRaiseError(NULL, NULL, NULL, NULL, node, domain,
+	    __nl_xmlRaiseError(NULL, NULL, NULL, NULL, node, domain,
 			    XML_ERR_NO_MEMORY, XML_ERR_FATAL, NULL, 0, NULL,
 			    NULL, NULL, 0, 0, "Memory allocation failed\n");
     } else {
-	__xmlRaiseError(NULL, NULL, NULL, NULL, node, domain,
+	__nl_xmlRaiseError(NULL, NULL, NULL, NULL, node, domain,
 			code, XML_ERR_ERROR, NULL, 0, extra,
 			NULL, NULL, 0, 0, msg, extra);
     }
 }
 
 /**
- * xmlSetGenericErrorFunc:
+ * nl_xmlSetGenericErrorFunc:
  * @ctx:  the new error handling context
  * @handler:  the new handler function
  *
@@ -305,16 +305,16 @@ __xmlSimpleError(int domain, int code, lxb_dom_node_t_ptr node,
  * For multi-threaded applications, this must be set separately for each thread.
  */
 void
-xmlSetGenericErrorFunc(void *ctx, xmlGenericErrorFunc handler) {
-    xmlGenericErrorContext = ctx;
+nl_xmlSetGenericErrorFunc(void *ctx, xmlGenericErrorFunc handler) {
+    nl_xmlGenericErrorContext = ctx;
     if (handler != NULL)
-	xmlGenericError = handler;
+	nl_xmlGenericError = handler;
     else
-	xmlGenericError = xmlGenericErrorDefaultFunc;
+	nl_xmlGenericError = nl_xmlGenericErrorDefaultFunc;
 }
 
 /**
- * xmlSetStructuredErrorFunc:
+ * nl_xmlSetStructuredErrorFunc:
  * @ctx:  the new error handling context
  * @handler:  the new handler function
  *
@@ -326,7 +326,7 @@ xmlSetGenericErrorFunc(void *ctx, xmlGenericErrorFunc handler) {
  * For multi-threaded applications, this must be set separately for each thread.
  */
 void
-xmlSetStructuredErrorFunc(void *ctx, xmlStructuredErrorFunc handler) {
-    xmlStructuredErrorContext = ctx;
-    xmlStructuredError = handler;
+nl_xmlSetStructuredErrorFunc(void *ctx, xmlStructuredErrorFunc handler) {
+    nl_xmlStructuredErrorContext = ctx;
+    nl_xmlStructuredError = handler;
 }

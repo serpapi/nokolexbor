@@ -22,7 +22,7 @@
  * allowed.
  *
  */
-const unsigned char xmlIsPubidChar_tab[256] = {
+const unsigned char nl_xmlIsPubidChar_tab[256] = {
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00,
     0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x01, 0x00, 0x01,
@@ -96,13 +96,13 @@ static const xmlChSRange xmlIsBaseChar_srng[] = { {0x100, 0x131},
     {0x1fd6, 0x1fdb}, {0x1fe0, 0x1fec}, {0x1ff2, 0x1ff4}, {0x1ff6, 0x1ffc},
     {0x2126, 0x2126}, {0x212a, 0x212b}, {0x212e, 0x212e}, {0x2180, 0x2182},
     {0x3041, 0x3094}, {0x30a1, 0x30fa}, {0x3105, 0x312c}, {0xac00, 0xd7a3}};
-const xmlChRangeGroup xmlIsBaseCharGroup =
+const xmlChRangeGroup nl_xmlIsBaseCharGroup =
 	{197, 0, xmlIsBaseChar_srng, (xmlChLRangePtr)0};
 
 static const xmlChSRange xmlIsChar_srng[] = { {0x100, 0xd7ff},
     {0xe000, 0xfffd}};
 static const xmlChLRange xmlIsChar_lrng[] = { {0x10000, 0x10ffff}};
-const xmlChRangeGroup xmlIsCharGroup =
+const xmlChRangeGroup nl_xmlIsCharGroup =
 	{2, 1, xmlIsChar_srng, xmlIsChar_lrng};
 
 static const xmlChSRange xmlIsCombining_srng[] = { {0x300, 0x345},
@@ -130,7 +130,7 @@ static const xmlChSRange xmlIsCombining_srng[] = { {0x300, 0x345},
     {0xf90, 0xf95}, {0xf97, 0xf97}, {0xf99, 0xfad}, {0xfb1, 0xfb7},
     {0xfb9, 0xfb9}, {0x20d0, 0x20dc}, {0x20e1, 0x20e1}, {0x302a, 0x302f},
     {0x3099, 0x3099}, {0x309a, 0x309a}};
-const xmlChRangeGroup xmlIsCombiningGroup =
+const xmlChRangeGroup nl_xmlIsCombiningGroup =
 	{95, 0, xmlIsCombining_srng, (xmlChLRangePtr)0};
 
 static const xmlChSRange xmlIsDigit_srng[] = { {0x660, 0x669},
@@ -138,24 +138,24 @@ static const xmlChSRange xmlIsDigit_srng[] = { {0x660, 0x669},
     {0xae6, 0xaef}, {0xb66, 0xb6f}, {0xbe7, 0xbef}, {0xc66, 0xc6f},
     {0xce6, 0xcef}, {0xd66, 0xd6f}, {0xe50, 0xe59}, {0xed0, 0xed9},
     {0xf20, 0xf29}};
-const xmlChRangeGroup xmlIsDigitGroup =
+const xmlChRangeGroup nl_xmlIsDigitGroup =
 	{14, 0, xmlIsDigit_srng, (xmlChLRangePtr)0};
 
 static const xmlChSRange xmlIsExtender_srng[] = { {0x2d0, 0x2d0},
     {0x2d1, 0x2d1}, {0x387, 0x387}, {0x640, 0x640}, {0xe46, 0xe46},
     {0xec6, 0xec6}, {0x3005, 0x3005}, {0x3031, 0x3035}, {0x309d, 0x309e},
     {0x30fc, 0x30fe}};
-const xmlChRangeGroup xmlIsExtenderGroup =
+const xmlChRangeGroup nl_xmlIsExtenderGroup =
 	{10, 0, xmlIsExtender_srng, (xmlChLRangePtr)0};
 
 static const xmlChSRange xmlIsIdeographic_srng[] = { {0x3007, 0x3007},
     {0x3021, 0x3029}, {0x4e00, 0x9fa5}};
-const xmlChRangeGroup xmlIsIdeographicGroup =
+const xmlChRangeGroup nl_xmlIsIdeographicGroup =
 	{3, 0, xmlIsIdeographic_srng, (xmlChLRangePtr)0};
 
 
 /**
- * xmlCharInRange:
+ * nl_xmlCharInRange:
  * @val: character to be validated
  * @rptr: pointer to range to be used to validate
  *
@@ -165,7 +165,7 @@ const xmlChRangeGroup xmlIsIdeographicGroup =
  * Returns: true if character valid, false otherwise
  */
 int
-xmlCharInRange (unsigned int val, const xmlChRangeGroup *rptr) {
+nl_xmlCharInRange (unsigned int val, const xmlChRangeGroup *rptr) {
     int low, high, mid;
     const xmlChSRange *sptr;
     const xmlChLRange *lptr;
@@ -214,7 +214,7 @@ xmlCharInRange (unsigned int val, const xmlChRangeGroup *rptr) {
 
 
 /**
- * xmlIsBaseChar:
+ * nl_xmlIsBaseChar:
  * @ch:  character to validate
  *
  * This function is DEPRECATED.
@@ -223,13 +223,13 @@ xmlCharInRange (unsigned int val, const xmlChRangeGroup *rptr) {
  * Returns true if argument valid, false otherwise
  */
 int
-xmlIsBaseChar(unsigned int ch) {
+nl_xmlIsBaseChar(unsigned int ch) {
     return(xmlIsBaseCharQ(ch));
 }
 
 
 /**
- * xmlIsBlank:
+ * nl_xmlIsBlank:
  * @ch:  character to validate
  *
  * This function is DEPRECATED.
@@ -238,13 +238,13 @@ xmlIsBaseChar(unsigned int ch) {
  * Returns true if argument valid, false otherwise
  */
 int
-xmlIsBlank(unsigned int ch) {
+nl_xmlIsBlank(unsigned int ch) {
     return(xmlIsBlankQ(ch));
 }
 
 
 /**
- * xmlIsChar:
+ * nl_xmlIsChar:
  * @ch:  character to validate
  *
  * This function is DEPRECATED.
@@ -253,13 +253,13 @@ xmlIsBlank(unsigned int ch) {
  * Returns true if argument valid, false otherwise
  */
 int
-xmlIsChar(unsigned int ch) {
+nl_xmlIsChar(unsigned int ch) {
     return(xmlIsCharQ(ch));
 }
 
 
 /**
- * xmlIsCombining:
+ * nl_xmlIsCombining:
  * @ch:  character to validate
  *
  * This function is DEPRECATED.
@@ -268,13 +268,13 @@ xmlIsChar(unsigned int ch) {
  * Returns true if argument valid, false otherwise
  */
 int
-xmlIsCombining(unsigned int ch) {
+nl_xmlIsCombining(unsigned int ch) {
     return(xmlIsCombiningQ(ch));
 }
 
 
 /**
- * xmlIsDigit:
+ * nl_xmlIsDigit:
  * @ch:  character to validate
  *
  * This function is DEPRECATED.
@@ -283,13 +283,13 @@ xmlIsCombining(unsigned int ch) {
  * Returns true if argument valid, false otherwise
  */
 int
-xmlIsDigit(unsigned int ch) {
+nl_xmlIsDigit(unsigned int ch) {
     return(xmlIsDigitQ(ch));
 }
 
 
 /**
- * xmlIsExtender:
+ * nl_xmlIsExtender:
  * @ch:  character to validate
  *
  * This function is DEPRECATED.
@@ -298,13 +298,13 @@ xmlIsDigit(unsigned int ch) {
  * Returns true if argument valid, false otherwise
  */
 int
-xmlIsExtender(unsigned int ch) {
+nl_xmlIsExtender(unsigned int ch) {
     return(xmlIsExtenderQ(ch));
 }
 
 
 /**
- * xmlIsIdeographic:
+ * nl_xmlIsIdeographic:
  * @ch:  character to validate
  *
  * This function is DEPRECATED.
@@ -313,13 +313,13 @@ xmlIsExtender(unsigned int ch) {
  * Returns true if argument valid, false otherwise
  */
 int
-xmlIsIdeographic(unsigned int ch) {
+nl_xmlIsIdeographic(unsigned int ch) {
     return(xmlIsIdeographicQ(ch));
 }
 
 
 /**
- * xmlIsPubidChar:
+ * nl_xmlIsPubidChar:
  * @ch:  character to validate
  *
  * This function is DEPRECATED.
@@ -328,7 +328,7 @@ xmlIsIdeographic(unsigned int ch) {
  * Returns true if argument valid, false otherwise
  */
 int
-xmlIsPubidChar(unsigned int ch) {
+nl_xmlIsPubidChar(unsigned int ch) {
     return(xmlIsPubidCharQ(ch));
 }
 

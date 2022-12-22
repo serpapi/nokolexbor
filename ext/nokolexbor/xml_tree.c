@@ -56,11 +56,11 @@ int __xmlRegisterCallbacks = 0;
 static void
 xmlTreeErrMemory(const char *extra)
 {
-    __xmlSimpleError(XML_FROM_TREE, XML_ERR_NO_MEMORY, NULL, NULL, extra);
+    __nl_xmlSimpleError(XML_FROM_TREE, XML_ERR_NO_MEMORY, NULL, NULL, extra);
 }
 
 /**
- * xmlBuildQName:
+ * nl_xmlBuildQName:
  * @ncname:  the Name
  * @prefix:  the prefix
  * @memory:  preallocated memory
@@ -74,7 +74,7 @@ xmlTreeErrMemory(const char *extra)
  *         @memory and @ncname or NULL in case of error
  */
 xmlChar *
-xmlBuildQName(const xmlChar *ncname, const xmlChar *prefix,
+nl_xmlBuildQName(const xmlChar *ncname, const xmlChar *prefix,
 	      xmlChar *memory, int len) {
     int lenn, lenp;
     xmlChar *ret;
@@ -86,7 +86,7 @@ xmlBuildQName(const xmlChar *ncname, const xmlChar *prefix,
     lenp = strlen((char *) prefix);
 
     if ((memory == NULL) || (len < lenn + lenp + 2)) {
-	ret = (xmlChar *) xmlMallocAtomic(lenn + lenp + 2);
+	ret = (xmlChar *) nl_xmlMallocAtomic(lenn + lenp + 2);
 	if (ret == NULL) {
 	    xmlTreeErrMemory("building QName");
 	    return(NULL);
@@ -102,7 +102,7 @@ xmlBuildQName(const xmlChar *ncname, const xmlChar *prefix,
 }
 
 /**
- * xmlNodeGetContent:
+ * nl_xmlNodeGetContent:
  * @cur:  the node being read
  *
  * Read the value of a node, this can be either the text carried
@@ -110,22 +110,22 @@ xmlBuildQName(const xmlChar *ncname, const xmlChar *prefix,
  * of the values carried by this node child's (TEXT and ENTITY_REF).
  * Entity references are substituted.
  * Returns a new #xmlChar * or NULL if no content is available.
- *     It's up to the caller to free the memory with xmlFree().
+ *     It's up to the caller to free the memory with nl_xmlFree().
  */
 xmlChar *
-xmlNodeGetContent(const lxb_dom_node_t *cur)
+nl_xmlNodeGetContent(const lxb_dom_node_t *cur)
 {
     size_t len;
     lxb_char_t *content = lxb_dom_node_text_content(cur, &len);
     if (content == NULL)
         return NULL;
-    xmlChar *content_dup = xmlStrndup(content, len);
+    xmlChar *content_dup = nl_xmlStrndup(content, len);
     lxb_dom_document_destroy_text(cur->owner_document, content);
     return content_dup;
 }
 
 /**
- * xmlDocGetRootElement:
+ * nl_xmlDocGetRootElement:
  * @doc:  the document
  *
  * Get the root element of the document (doc->children is a list
@@ -134,7 +134,7 @@ xmlNodeGetContent(const lxb_dom_node_t *cur)
  * Returns the #lxb_dom_node_t_ptr for the root or NULL
  */
 lxb_dom_node_t_ptr
-xmlDocGetRootElement(const lxb_dom_document_t *doc) {
+nl_xmlDocGetRootElement(const lxb_dom_document_t *doc) {
     lxb_dom_node_t_ptr ret;
 
     if (doc == NULL) return(NULL);
@@ -148,13 +148,13 @@ xmlDocGetRootElement(const lxb_dom_document_t *doc) {
 }
 
 /**
- * xmlFreeNodeList:
+ * nl_xmlFreeNodeList:
  * @cur:  the first node in the list
  *
  * Free a node and all its siblings, this is a recursive behaviour, all
  * the children are freed too.
  */
 void
-xmlFreeNodeList(lxb_dom_node_t_ptr cur) {
+nl_xmlFreeNodeList(lxb_dom_node_t_ptr cur) {
     // Should never be called
 }

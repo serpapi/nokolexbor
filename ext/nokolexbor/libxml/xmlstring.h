@@ -38,100 +38,100 @@ typedef unsigned char xmlChar;
  * xmlChar handling
  */
 XMLPUBFUN xmlChar * XMLCALL
-                xmlStrdup                (const xmlChar *cur);
+                nl_xmlStrdup                (const xmlChar *cur);
 XMLPUBFUN xmlChar * XMLCALL
-                xmlStrndup               (const xmlChar *cur,
+                nl_xmlStrndup               (const xmlChar *cur,
                                          int len);
 XMLPUBFUN xmlChar * XMLCALL
-                xmlCharStrndup           (const char *cur,
+                nl_xmlCharStrndup           (const char *cur,
                                          int len);
 XMLPUBFUN xmlChar * XMLCALL
-                xmlCharStrdup            (const char *cur);
+                nl_xmlCharStrdup            (const char *cur);
 XMLPUBFUN xmlChar * XMLCALL
-                xmlStrsub                (const xmlChar *str,
+                nl_xmlStrsub                (const xmlChar *str,
                                          int start,
                                          int len);
 XMLPUBFUN const xmlChar * XMLCALL
-                xmlStrchr                (const xmlChar *str,
+                nl_xmlStrchr                (const xmlChar *str,
                                          xmlChar val);
 XMLPUBFUN const xmlChar * XMLCALL
-                xmlStrstr                (const xmlChar *str,
+                nl_xmlStrstr                (const xmlChar *str,
                                          const xmlChar *val);
 XMLPUBFUN const xmlChar * XMLCALL
-                xmlStrcasestr            (const xmlChar *str,
+                nl_xmlStrcasestr            (const xmlChar *str,
                                          const xmlChar *val);
 XMLPUBFUN int XMLCALL
-                xmlStrcmp                (const xmlChar *str1,
+                nl_xmlStrcmp                (const xmlChar *str1,
                                          const xmlChar *str2);
 XMLPUBFUN int XMLCALL
-                xmlStrncmp               (const xmlChar *str1,
+                nl_xmlStrncmp               (const xmlChar *str1,
                                          const xmlChar *str2,
                                          int len);
 XMLPUBFUN int XMLCALL
-                xmlStrcasecmp            (const xmlChar *str1,
+                nl_xmlStrcasecmp            (const xmlChar *str1,
                                          const xmlChar *str2);
 XMLPUBFUN int XMLCALL
-                xmlStrncasecmp           (const xmlChar *str1,
+                nl_xmlStrncasecmp           (const xmlChar *str1,
                                          const xmlChar *str2,
                                          int len);
 XMLPUBFUN int XMLCALL
-                xmlStrEqual              (const xmlChar *str1,
+                nl_xmlStrEqual              (const xmlChar *str1,
                                          const xmlChar *str2);
 XMLPUBFUN int XMLCALL
-                xmlStrQEqual             (const xmlChar *pref,
+                nl_xmlStrQEqual             (const xmlChar *pref,
                                          const xmlChar *name,
                                          const xmlChar *str);
 XMLPUBFUN int XMLCALL
-                xmlStrlen                (const xmlChar *str);
+                nl_xmlStrlen                (const xmlChar *str);
 XMLPUBFUN xmlChar * XMLCALL
-                xmlStrcat                (xmlChar *cur,
+                nl_xmlStrcat                (xmlChar *cur,
                                          const xmlChar *add);
 XMLPUBFUN xmlChar * XMLCALL
-                xmlStrncat               (xmlChar *cur,
+                nl_xmlStrncat               (xmlChar *cur,
                                          const xmlChar *add,
                                          int len);
 XMLPUBFUN xmlChar * XMLCALL
-                xmlStrncatNew            (const xmlChar *str1,
+                nl_xmlStrncatNew            (const xmlChar *str1,
                                          const xmlChar *str2,
                                          int len);
 XMLPUBFUN int XMLCALL
-                xmlStrPrintf             (xmlChar *buf,
+                nl_xmlStrPrintf             (xmlChar *buf,
                                          int len,
                                          const char *msg,
                                          ...) LIBXML_ATTR_FORMAT(3,4);
 XMLPUBFUN int XMLCALL
-                xmlStrVPrintf                (xmlChar *buf,
+                nl_xmlStrVPrintf                (xmlChar *buf,
                                          int len,
                                          const char *msg,
                                          va_list ap) LIBXML_ATTR_FORMAT(3,0);
 
 XMLPUBFUN int XMLCALL
-        xmlGetUTF8Char                   (const unsigned char *utf,
+        nl_xmlGetUTF8Char                   (const unsigned char *utf,
                                          int *len);
 XMLPUBFUN int XMLCALL
-        xmlCheckUTF8                     (const unsigned char *utf);
+        nl_xmlCheckUTF8                     (const unsigned char *utf);
 XMLPUBFUN int XMLCALL
-        xmlUTF8Strsize                   (const xmlChar *utf,
+        nl_xmlUTF8Strsize                   (const xmlChar *utf,
                                          int len);
 XMLPUBFUN xmlChar * XMLCALL
-        xmlUTF8Strndup                   (const xmlChar *utf,
+        nl_xmlUTF8Strndup                   (const xmlChar *utf,
                                          int len);
 XMLPUBFUN const xmlChar * XMLCALL
-        xmlUTF8Strpos                    (const xmlChar *utf,
+        nl_xmlUTF8Strpos                    (const xmlChar *utf,
                                          int pos);
 XMLPUBFUN int XMLCALL
-        xmlUTF8Strloc                    (const xmlChar *utf,
+        nl_xmlUTF8Strloc                    (const xmlChar *utf,
                                          const xmlChar *utfchar);
 XMLPUBFUN xmlChar * XMLCALL
-        xmlUTF8Strsub                    (const xmlChar *utf,
+        nl_xmlUTF8Strsub                    (const xmlChar *utf,
                                          int start,
                                          int len);
 XMLPUBFUN int XMLCALL
-        xmlUTF8Strlen                    (const xmlChar *utf);
+        nl_xmlUTF8Strlen                    (const xmlChar *utf);
 XMLPUBFUN int XMLCALL
-        xmlUTF8Size                      (const xmlChar *utf);
+        nl_xmlUTF8Size                      (const xmlChar *utf);
 XMLPUBFUN int XMLCALL
-        xmlUTF8Charcmp                   (const xmlChar *utf1,
+        nl_xmlUTF8Charcmp                   (const xmlChar *utf1,
                                          const xmlChar *utf2);
 
 #ifdef __cplusplus

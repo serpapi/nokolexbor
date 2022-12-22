@@ -53,12 +53,12 @@ xmlErrMemory(xmlParserCtxtPtr ctxt, const char *extra)
         ctxt->disableSAX = 1;
     }
     if (extra)
-        __xmlRaiseError(NULL, NULL, NULL, ctxt, NULL, XML_FROM_PARSER,
+        __nl_xmlRaiseError(NULL, NULL, NULL, ctxt, NULL, XML_FROM_PARSER,
                         XML_ERR_NO_MEMORY, XML_ERR_FATAL, NULL, 0, extra,
                         NULL, NULL, 0, 0,
                         "Memory allocation failed : %s\n", extra);
     else
-        __xmlRaiseError(NULL, NULL, NULL, ctxt, NULL, XML_FROM_PARSER,
+        __nl_xmlRaiseError(NULL, NULL, NULL, ctxt, NULL, XML_FROM_PARSER,
                         XML_ERR_NO_MEMORY, XML_ERR_FATAL, NULL, 0, NULL,
                         NULL, NULL, 0, 0, "Memory allocation failed\n");
 }
@@ -82,7 +82,7 @@ __xmlErrEncoding(xmlParserCtxtPtr ctxt, xmlParserErrors xmlerr,
 	return;
     if (ctxt != NULL)
         ctxt->errNo = xmlerr;
-    __xmlRaiseError(NULL, NULL, NULL,
+    __nl_xmlRaiseError(NULL, NULL, NULL,
                     ctxt, NULL, XML_FROM_PARSER, xmlerr, XML_ERR_FATAL,
                     NULL, 0, (const char *) str1, (const char *) str2,
                     NULL, 0, 0, msg, str1, str2);
@@ -109,7 +109,7 @@ xmlErrInternal(xmlParserCtxtPtr ctxt, const char *msg, const xmlChar * str)
 	return;
     if (ctxt != NULL)
         ctxt->errNo = XML_ERR_INTERNAL_ERROR;
-    __xmlRaiseError(NULL, NULL, NULL,
+    __nl_xmlRaiseError(NULL, NULL, NULL,
                     ctxt, NULL, XML_FROM_PARSER, XML_ERR_INTERNAL_ERROR,
                     XML_ERR_FATAL, NULL, 0, (const char *) str, NULL, NULL,
                     0, 0, msg, str);
@@ -138,7 +138,7 @@ xmlErrEncodingInt(xmlParserCtxtPtr ctxt, xmlParserErrors error,
 	return;
     if (ctxt != NULL)
         ctxt->errNo = error;
-    __xmlRaiseError(NULL, NULL, NULL,
+    __nl_xmlRaiseError(NULL, NULL, NULL,
                     ctxt, NULL, XML_FROM_PARSER, error, XML_ERR_FATAL,
                     NULL, 0, NULL, NULL, NULL, val, 0, msg, val);
     if (ctxt != NULL) {
@@ -149,7 +149,7 @@ xmlErrEncodingInt(xmlParserCtxtPtr ctxt, xmlParserErrors error,
 }
 
 /**
- * xmlIsLetter:
+ * nl_xmlIsLetter:
  * @c:  an unicode character (int)
  *
  * Check whether the character is allowed by the production
@@ -158,12 +158,12 @@ xmlErrEncodingInt(xmlParserCtxtPtr ctxt, xmlParserErrors error,
  * Returns 0 if not, non-zero otherwise
  */
 int
-xmlIsLetter(int c) {
+nl_xmlIsLetter(int c) {
     return(IS_BASECHAR(c) || IS_IDEOGRAPHIC(c));
 }
 
 /**
- * xmlCopyCharMultiByte:
+ * nl_xmlCopyCharMultiByte:
  * @out:  pointer to an array of xmlChar
  * @val:  the char value
  *
@@ -172,7 +172,7 @@ xmlIsLetter(int c) {
  * Returns the number of xmlChar written
  */
 int
-xmlCopyCharMultiByte(xmlChar *out, int val) {
+nl_xmlCopyCharMultiByte(xmlChar *out, int val) {
     if ((out == NULL) || (val < 0)) return(0);
     /*
      * We are supposed to handle UTF8, check it's valid
@@ -191,7 +191,7 @@ xmlCopyCharMultiByte(xmlChar *out, int val) {
 	else if (val < 0x110000)  { *out++= (val >> 18) | 0xF0;  bits=  12; }
 	else {
 	    xmlErrEncodingInt(NULL, XML_ERR_INVALID_CHAR,
-		    "Internal error, xmlCopyCharMultiByte 0x%X out of bound\n",
+		    "Internal error, nl_xmlCopyCharMultiByte 0x%X out of bound\n",
 			      val);
 	    return(0);
 	}
@@ -204,7 +204,7 @@ xmlCopyCharMultiByte(xmlChar *out, int val) {
 }
 
 /**
- * xmlCopyChar:
+ * nl_xmlCopyChar:
  * @len:  Ignored, compatibility
  * @out:  pointer to an array of xmlChar
  * @val:  the char value
@@ -215,18 +215,18 @@ xmlCopyCharMultiByte(xmlChar *out, int val) {
  */
 
 int
-xmlCopyChar(int len ATTRIBUTE_UNUSED, xmlChar *out, int val) {
+nl_xmlCopyChar(int len ATTRIBUTE_UNUSED, xmlChar *out, int val) {
     if ((out == NULL) || (val < 0)) return(0);
     /* the len parameter is ignored */
     if  (val >= 0x80) {
-	return(xmlCopyCharMultiByte (out, val));
+	return(nl_xmlCopyCharMultiByte (out, val));
     }
     *out = val;
     return 1;
 }
 
 /**
- * xmlStringCurrentChar:
+ * nl_xmlStringCurrentChar:
  * @ctxt:  the XML parser context
  * @cur:  pointer to the beginning of the char
  * @len:  pointer to the length of the char read
@@ -238,7 +238,7 @@ xmlCopyChar(int len ATTRIBUTE_UNUSED, xmlChar *out, int val) {
  */
 
 int
-xmlStringCurrentChar(xmlParserCtxtPtr ctxt, const xmlChar * cur, int *len)
+nl_xmlStringCurrentChar(xmlParserCtxtPtr ctxt, const xmlChar * cur, int *len)
 {
     if ((len == NULL) || (cur == NULL)) return(0);
     if ((ctxt == NULL) || (ctxt->charset == XML_CHAR_ENCODING_UTF8)) {

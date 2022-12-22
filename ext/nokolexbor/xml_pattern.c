@@ -14,7 +14,7 @@
 /*
  * TODO:
  * - compilation flags to check for specific syntaxes
- *   using flags of xmlPatterncompile()
+ *   using flags of nl_xmlPatterncompile()
  * - making clear how pattern starting with / or . need to be handled,
  *   currently push(NULL, NULL) means a reset of the streaming context
  *   and indicating we are on / (the document node), probably need
@@ -81,10 +81,10 @@
 
 #define XML_PAT_COPY_NSNAME(c, r, nsname) \
     if ((c)->comp->dict) \
-	r = (xmlChar *) xmlDictLookup((c)->comp->dict, BAD_CAST nsname, -1); \
-    else r = xmlStrdup(BAD_CAST nsname);
+	r = (xmlChar *) nl_xmlDictLookup((c)->comp->dict, BAD_CAST nsname, -1); \
+    else r = nl_xmlStrdup(BAD_CAST nsname);
 
-#define XML_PAT_FREE_STRING(c, r) if ((c)->comp->dict == NULL) xmlFree(r);
+#define XML_PAT_FREE_STRING(c, r) if ((c)->comp->dict == NULL) nl_xmlFree(r);
 
 typedef struct _xmlStreamStep xmlStreamStep;
 typedef xmlStreamStep *xmlStreamStepPtr;
@@ -203,7 +203,7 @@ static xmlPatternPtr
 xmlNewPattern(void) {
     xmlPatternPtr cur;
 
-    cur = (xmlPatternPtr) xmlMalloc(sizeof(xmlPattern));
+    cur = (xmlPatternPtr) nl_xmlMalloc(sizeof(xmlPattern));
     if (cur == NULL) {
 	ERROR(NULL, NULL, NULL,
 		"xmlNewPattern : malloc failed\n");
@@ -211,9 +211,9 @@ xmlNewPattern(void) {
     }
     memset(cur, 0, sizeof(xmlPattern));
     cur->maxStep = 10;
-    cur->steps = (xmlStepOpPtr) xmlMalloc(cur->maxStep * sizeof(xmlStepOp));
+    cur->steps = (xmlStepOpPtr) nl_xmlMalloc(cur->maxStep * sizeof(xmlStepOp));
     if (cur->steps == NULL) {
-        xmlFree(cur);
+        nl_xmlFree(cur);
 	ERROR(NULL, NULL, NULL,
 		"xmlNewPattern : malloc failed\n");
 	return(NULL);
@@ -222,14 +222,14 @@ xmlNewPattern(void) {
 }
 
 /**
- * xmlFreePattern:
+ * nl_xmlFreePattern:
  * @comp:  an XSLT comp
  *
  * Free up the memory allocated by @comp
  */
 void
-xmlFreePattern(xmlPatternPtr comp) {
-    xmlFreePatternList(comp);
+nl_xmlFreePattern(xmlPatternPtr comp) {
+    nl_xmlFreePatternList(comp);
 }
 
 static void
@@ -242,34 +242,34 @@ xmlFreePatternInternal(xmlPatternPtr comp) {
     if (comp->stream != NULL)
         xmlFreeStreamComp(comp->stream);
     if (comp->pattern != NULL)
-	xmlFree((xmlChar *)comp->pattern);
+	nl_xmlFree((xmlChar *)comp->pattern);
     if (comp->steps != NULL) {
         if (comp->dict == NULL) {
 	    for (i = 0;i < comp->nbStep;i++) {
 		op = &comp->steps[i];
 		if (op->value != NULL)
-		    xmlFree((xmlChar *) op->value);
+		    nl_xmlFree((xmlChar *) op->value);
 		if (op->value2 != NULL)
-		    xmlFree((xmlChar *) op->value2);
+		    nl_xmlFree((xmlChar *) op->value2);
 	    }
 	}
-	xmlFree(comp->steps);
+	nl_xmlFree(comp->steps);
     }
     if (comp->dict != NULL)
-        xmlDictFree(comp->dict);
+        nl_xmlDictFree(comp->dict);
 
     memset(comp, -1, sizeof(xmlPattern));
-    xmlFree(comp);
+    nl_xmlFree(comp);
 }
 
 /**
- * xmlFreePatternList:
+ * nl_xmlFreePatternList:
  * @comp:  an XSLT comp list
  *
  * Free up the memory allocated by all the elements of @comp
  */
 void
-xmlFreePatternList(xmlPatternPtr comp) {
+nl_xmlFreePatternList(xmlPatternPtr comp) {
     xmlPatternPtr cur;
 
     while (comp != NULL) {
@@ -299,7 +299,7 @@ xmlNewPatParserContext(const xmlChar *pattern, xmlDictPtr dict,
     if (pattern == NULL)
         return(NULL);
 
-    cur = (xmlPatParserContextPtr) xmlMalloc(sizeof(xmlPatParserContext));
+    cur = (xmlPatParserContextPtr) nl_xmlMalloc(sizeof(xmlPatParserContext));
     if (cur == NULL) {
 	ERROR(NULL, NULL, NULL,
 		"xmlNewPatParserContext : malloc failed\n");
@@ -332,7 +332,7 @@ xmlFreePatParserContext(xmlPatParserContextPtr ctxt) {
     if (ctxt == NULL)
 	return;
     memset(ctxt, -1, sizeof(xmlPatParserContext));
-    xmlFree(ctxt);
+    nl_xmlFree(ctxt);
 }
 
 /**
@@ -353,7 +353,7 @@ xmlPatternAdd(xmlPatParserContextPtr ctxt ATTRIBUTE_UNUSED,
 {
     if (comp->nbStep >= comp->maxStep) {
         xmlStepOpPtr temp;
-	temp = (xmlStepOpPtr) xmlRealloc(comp->steps, comp->maxStep * 2 *
+	temp = (xmlStepOpPtr) nl_xmlRealloc(comp->steps, comp->maxStep * 2 *
 	                                 sizeof(xmlStepOp));
         if (temp == NULL) {
 	    ERROR(ctxt, NULL, NULL,
@@ -424,7 +424,7 @@ xmlReversePattern(xmlPatternPtr comp) {
     }
     if (comp->nbStep >= comp->maxStep) {
         xmlStepOpPtr temp;
-	temp = (xmlStepOpPtr) xmlRealloc(comp->steps, comp->maxStep * 2 *
+	temp = (xmlStepOpPtr) nl_xmlRealloc(comp->steps, comp->maxStep * 2 *
 	                                 sizeof(xmlStepOp));
         if (temp == NULL) {
 	    ERROR(ctxt, NULL, NULL,
@@ -468,12 +468,12 @@ xmlPatPushState(xmlStepStates *states, int step, lxb_dom_node_t_ptr node) {
     if ((states->states == NULL) || (states->maxstates <= 0)) {
         states->maxstates = 4;
 	states->nbstates = 0;
-	states->states = xmlMalloc(4 * sizeof(xmlStepState));
+	states->states = nl_xmlMalloc(4 * sizeof(xmlStepState));
     }
     else if (states->maxstates <= states->nbstates) {
         xmlStepState *tmp;
 
-	tmp = (xmlStepStatePtr) xmlRealloc(states->states,
+	tmp = (xmlStepStatePtr) nl_xmlRealloc(states->states,
 			       2 * states->maxstates * sizeof(xmlStepState));
 	if (tmp == NULL)
 	    return(-1);
@@ -495,7 +495,7 @@ xmlPatPushState(xmlStepStates *states, int step, lxb_dom_node_t_ptr node) {
  ************************************************************************/
 
 #define TODO								\
-    xmlGenericError(xmlGenericErrorContext,				\
+    nl_xmlGenericError(nl_xmlGenericErrorContext,				\
 	    "Unimplemented block at %s:%d\n",				\
             __FILE__, __LINE__);
 #define CUR (*ctxt->cur)
@@ -545,38 +545,38 @@ xmlPatScanLiteral(xmlPatParserContextPtr ctxt) {
     if (CUR == '"') {
         NEXT;
 	cur = q = CUR_PTR;
-	val = xmlStringCurrentChar(NULL, cur, &len);
+	val = nl_xmlStringCurrentChar(NULL, cur, &len);
 	while ((IS_CHAR(val)) && (val != '"')) {
 	    cur += len;
-	    val = xmlStringCurrentChar(NULL, cur, &len);
+	    val = nl_xmlStringCurrentChar(NULL, cur, &len);
 	}
 	if (!IS_CHAR(val)) {
 	    ctxt->error = 1;
 	    return(NULL);
 	} else {
 	    if (ctxt->dict)
-		ret = (xmlChar *) xmlDictLookup(ctxt->dict, q, cur - q);
+		ret = (xmlChar *) nl_xmlDictLookup(ctxt->dict, q, cur - q);
 	    else
-		ret = xmlStrndup(q, cur - q);
+		ret = nl_xmlStrndup(q, cur - q);
         }
 	cur += len;
 	CUR_PTR = cur;
     } else if (CUR == '\'') {
         NEXT;
 	cur = q = CUR_PTR;
-	val = xmlStringCurrentChar(NULL, cur, &len);
+	val = nl_xmlStringCurrentChar(NULL, cur, &len);
 	while ((IS_CHAR(val)) && (val != '\'')) {
 	    cur += len;
-	    val = xmlStringCurrentChar(NULL, cur, &len);
+	    val = nl_xmlStringCurrentChar(NULL, cur, &len);
 	}
 	if (!IS_CHAR(val)) {
 	    ctxt->error = 1;
 	    return(NULL);
 	} else {
 	    if (ctxt->dict)
-		ret = (xmlChar *) xmlDictLookup(ctxt->dict, q, cur - q);
+		ret = (xmlChar *) nl_xmlDictLookup(ctxt->dict, q, cur - q);
 	    else
-		ret = xmlStrndup(q, cur - q);
+		ret = nl_xmlStrndup(q, cur - q);
         }
 	cur += len;
 	CUR_PTR = cur;
@@ -612,7 +612,7 @@ xmlPatScanName(xmlPatParserContextPtr ctxt) {
     SKIP_BLANKS;
 
     cur = q = CUR_PTR;
-    val = xmlStringCurrentChar(NULL, cur, &len);
+    val = nl_xmlStringCurrentChar(NULL, cur, &len);
     if (!IS_LETTER(val) && (val != '_') && (val != ':'))
 	return(NULL);
 
@@ -622,12 +622,12 @@ xmlPatScanName(xmlPatParserContextPtr ctxt) {
 	   (IS_COMBINING(val)) ||
 	   (IS_EXTENDER(val))) {
 	cur += len;
-	val = xmlStringCurrentChar(NULL, cur, &len);
+	val = nl_xmlStringCurrentChar(NULL, cur, &len);
     }
     if (ctxt->dict)
-	ret = (xmlChar *) xmlDictLookup(ctxt->dict, q, cur - q);
+	ret = (xmlChar *) nl_xmlDictLookup(ctxt->dict, q, cur - q);
     else
-	ret = xmlStrndup(q, cur - q);
+	ret = nl_xmlStrndup(q, cur - q);
     CUR_PTR = cur;
     return(ret);
 }
@@ -650,7 +650,7 @@ xmlPatScanNCName(xmlPatParserContextPtr ctxt) {
     SKIP_BLANKS;
 
     cur = q = CUR_PTR;
-    val = xmlStringCurrentChar(NULL, cur, &len);
+    val = nl_xmlStringCurrentChar(NULL, cur, &len);
     if (!IS_LETTER(val) && (val != '_'))
 	return(NULL);
 
@@ -660,12 +660,12 @@ xmlPatScanNCName(xmlPatParserContextPtr ctxt) {
 	   (IS_COMBINING(val)) ||
 	   (IS_EXTENDER(val))) {
 	cur += len;
-	val = xmlStringCurrentChar(NULL, cur, &len);
+	val = nl_xmlStringCurrentChar(NULL, cur, &len);
     }
     if (ctxt->dict)
-	ret = (xmlChar *) xmlDictLookup(ctxt->dict, q, cur - q);
+	ret = (xmlChar *) nl_xmlDictLookup(ctxt->dict, q, cur - q);
     else
-	ret = xmlStrndup(q, cur - q);
+	ret = nl_xmlStrndup(q, cur - q);
     CUR_PTR = cur;
     return(ret);
 }
@@ -745,7 +745,7 @@ xmlCompileAttributeTest(xmlPatParserContextPtr ctxt) {
 	    XML_PAT_COPY_NSNAME(ctxt, URL, XML_XML_NAMESPACE);
 	} else {
 	    for (i = 0;i < ctxt->nb_namespaces;i++) {
-		if (xmlStrEqual(ctxt->namespaces[2 * i + 1], prefix)) {
+		if (nl_xmlStrEqual(ctxt->namespaces[2 * i + 1], prefix)) {
 		    XML_PAT_COPY_NSNAME(ctxt, URL, ctxt->namespaces[2 * i])
 		    break;
 		}
@@ -867,7 +867,7 @@ xmlCompileStepPattern(xmlPatParserContextPtr ctxt) {
 		XML_PAT_COPY_NSNAME(ctxt, URL, XML_XML_NAMESPACE)
 	    } else {
 		for (i = 0;i < ctxt->nb_namespaces;i++) {
-		    if (xmlStrEqual(ctxt->namespaces[2 * i + 1], prefix)) {
+		    if (nl_xmlStrEqual(ctxt->namespaces[2 * i + 1], prefix)) {
 			XML_PAT_COPY_NSNAME(ctxt, URL, ctxt->namespaces[2 * i])
 			break;
 		    }
@@ -897,7 +897,7 @@ xmlCompileStepPattern(xmlPatParserContextPtr ctxt) {
 	    }
 	} else {
 	    NEXT;
-	    if (xmlStrEqual(name, (const xmlChar *) "child")) {
+	    if (nl_xmlStrEqual(name, (const xmlChar *) "child")) {
 		XML_PAT_FREE_STRING(ctxt, name);
 		name = xmlPatScanName(ctxt);
 		if (name == NULL) {
@@ -934,7 +934,7 @@ xmlCompileStepPattern(xmlPatParserContextPtr ctxt) {
 			XML_PAT_COPY_NSNAME(ctxt, URL, XML_XML_NAMESPACE)
 		    } else {
 			for (i = 0;i < ctxt->nb_namespaces;i++) {
-			    if (xmlStrEqual(ctxt->namespaces[2 * i + 1], prefix)) {
+			    if (nl_xmlStrEqual(ctxt->namespaces[2 * i + 1], prefix)) {
 				XML_PAT_COPY_NSNAME(ctxt, URL, ctxt->namespaces[2 * i])
 				break;
 			    }
@@ -965,7 +965,7 @@ xmlCompileStepPattern(xmlPatParserContextPtr ctxt) {
 		} else
 		    PUSH(XML_OP_CHILD, name, NULL);
 		return;
-	    } else if (xmlStrEqual(name, (const xmlChar *) "attribute")) {
+	    } else if (nl_xmlStrEqual(name, (const xmlChar *) "attribute")) {
 		XML_PAT_FREE_STRING(ctxt, name)
 		name = NULL;
 		if (XML_STREAM_XS_IDC_SEL(ctxt->comp)) {
@@ -1280,16 +1280,16 @@ xmlNewStreamComp(int size) {
     if (size < 4)
         size  = 4;
 
-    cur = (xmlStreamCompPtr) xmlMalloc(sizeof(xmlStreamComp));
+    cur = (xmlStreamCompPtr) nl_xmlMalloc(sizeof(xmlStreamComp));
     if (cur == NULL) {
 	ERROR(NULL, NULL, NULL,
 		"xmlNewStreamComp: malloc failed\n");
 	return(NULL);
     }
     memset(cur, 0, sizeof(xmlStreamComp));
-    cur->steps = (xmlStreamStepPtr) xmlMalloc(size * sizeof(xmlStreamStep));
+    cur->steps = (xmlStreamStepPtr) nl_xmlMalloc(size * sizeof(xmlStreamStep));
     if (cur->steps == NULL) {
-	xmlFree(cur);
+	nl_xmlFree(cur);
 	ERROR(NULL, NULL, NULL,
 	      "xmlNewStreamComp: malloc failed\n");
 	return(NULL);
@@ -1309,10 +1309,10 @@ static void
 xmlFreeStreamComp(xmlStreamCompPtr comp) {
     if (comp != NULL) {
         if (comp->steps != NULL)
-	    xmlFree(comp->steps);
+	    nl_xmlFree(comp->steps);
 	if (comp->dict != NULL)
-	    xmlDictFree(comp->dict);
-        xmlFree(comp);
+	    nl_xmlDictFree(comp->dict);
+        nl_xmlFree(comp);
     }
 }
 
@@ -1333,7 +1333,7 @@ xmlStreamCompAddStep(xmlStreamCompPtr comp, const xmlChar *name,
     xmlStreamStepPtr cur;
 
     if (comp->nbStep >= comp->maxStep) {
-	cur = (xmlStreamStepPtr) xmlRealloc(comp->steps,
+	cur = (xmlStreamStepPtr) nl_xmlRealloc(comp->steps,
 				 comp->maxStep * 2 * sizeof(xmlStreamStep));
 	if (cur == NULL) {
 	    ERROR(NULL, NULL, NULL,
@@ -1388,7 +1388,7 @@ xmlStreamCompile(xmlPatternPtr comp) {
         return(-1);
     if (comp->dict != NULL) {
         stream->dict = comp->dict;
-	xmlDictReference(stream->dict);
+	nl_xmlDictReference(stream->dict);
     }
 
     i = 0;
@@ -1545,16 +1545,16 @@ static xmlStreamCtxtPtr
 xmlNewStreamCtxt(xmlStreamCompPtr stream) {
     xmlStreamCtxtPtr cur;
 
-    cur = (xmlStreamCtxtPtr) xmlMalloc(sizeof(xmlStreamCtxt));
+    cur = (xmlStreamCtxtPtr) nl_xmlMalloc(sizeof(xmlStreamCtxt));
     if (cur == NULL) {
 	ERROR(NULL, NULL, NULL,
 		"xmlNewStreamCtxt: malloc failed\n");
 	return(NULL);
     }
     memset(cur, 0, sizeof(xmlStreamCtxt));
-    cur->states = (int *) xmlMalloc(4 * 2 * sizeof(int));
+    cur->states = (int *) nl_xmlMalloc(4 * 2 * sizeof(int));
     if (cur->states == NULL) {
-	xmlFree(cur);
+	nl_xmlFree(cur);
 	ERROR(NULL, NULL, NULL,
 	      "xmlNewStreamCtxt: malloc failed\n");
 	return(NULL);
@@ -1568,20 +1568,20 @@ xmlNewStreamCtxt(xmlStreamCompPtr stream) {
 }
 
 /**
- * xmlFreeStreamCtxt:
+ * nl_xmlFreeStreamCtxt:
  * @stream: the stream context
  *
  * Free the stream context
  */
 void
-xmlFreeStreamCtxt(xmlStreamCtxtPtr stream) {
+nl_xmlFreeStreamCtxt(xmlStreamCtxtPtr stream) {
     xmlStreamCtxtPtr next;
 
     while (stream != NULL) {
         next = stream->next;
         if (stream->states != NULL)
-	    xmlFree(stream->states);
-        xmlFree(stream);
+	    nl_xmlFree(stream->states);
+        nl_xmlFree(stream);
 	stream = next;
     }
 }
@@ -1608,7 +1608,7 @@ xmlStreamCtxtAddState(xmlStreamCtxtPtr comp, int idx, int level) {
     if (comp->nbState >= comp->maxState) {
         int *cur;
 
-	cur = (int *) xmlRealloc(comp->states,
+	cur = (int *) nl_xmlRealloc(comp->states,
 				 comp->maxState * 4 * sizeof(int));
 	if (cur == NULL) {
 	    ERROR(NULL, NULL, NULL,
@@ -1630,7 +1630,7 @@ xmlStreamCtxtAddState(xmlStreamCtxtPtr comp, int idx, int level) {
  * @ns: the namespace name
  * @nodeType: the type of the node
  *
- * Push new data onto the stream. NOTE: if the call xmlPatterncompile()
+ * Push new data onto the stream. NOTE: if the call nl_xmlPatterncompile()
  * indicated a dictionary, then strings for name and ns will be expected
  * to come from the dictionary.
  * Both @name and @ns being NULL means the / i.e. the root of the document.
@@ -1806,12 +1806,12 @@ xmlStreamPushInternal(xmlStreamCtxtPtr stream,
 		    */
 		    match = 1;
 		} else if (ns != NULL)
-		    match = xmlStrEqual(step.ns, ns);
+		    match = nl_xmlStrEqual(step.ns, ns);
 	    } else if (((step.ns != NULL) == (ns != NULL)) &&
 		(name != NULL) &&
 		(step.name[0] == name[0]) &&
-		xmlStrEqual(step.name, name) &&
-		((step.ns == ns) || xmlStrEqual(step.ns, ns)))
+		nl_xmlStrEqual(step.name, name) &&
+		((step.ns == ns) || nl_xmlStrEqual(step.ns, ns)))
 	    {
 		match = 1;
 	    }
@@ -1938,12 +1938,12 @@ compare:
 		*/
 		match = 1;
 	    } else if (ns != NULL)
-		match = xmlStrEqual(step.ns, ns);
+		match = nl_xmlStrEqual(step.ns, ns);
 	} else if (((step.ns != NULL) == (ns != NULL)) &&
 	    (name != NULL) &&
 	    (step.name[0] == name[0]) &&
-	    xmlStrEqual(step.name, name) &&
-	    ((step.ns == ns) || xmlStrEqual(step.ns, ns)))
+	    nl_xmlStrEqual(step.name, name) &&
+	    ((step.ns == ns) || nl_xmlStrEqual(step.ns, ns)))
 	{
 	    match = 1;
 	}
@@ -1983,12 +1983,12 @@ stream_next:
 }
 
 /**
- * xmlStreamPush:
+ * nl_xmlStreamPush:
  * @stream: the stream context
  * @name: the current name
  * @ns: the namespace name
  *
- * Push new data onto the stream. NOTE: if the call xmlPatterncompile()
+ * Push new data onto the stream. NOTE: if the call nl_xmlPatterncompile()
  * indicated a dictionary, then strings for name and ns will be expected
  * to come from the dictionary.
  * Both @name and @ns being NULL means the / i.e. the root of the document.
@@ -1999,24 +1999,24 @@ stream_next:
  *    match and 0 otherwise.
  */
 int
-xmlStreamPush(xmlStreamCtxtPtr stream,
+nl_xmlStreamPush(xmlStreamCtxtPtr stream,
               const xmlChar *name, const xmlChar *ns) {
     return (xmlStreamPushInternal(stream, name, ns, XML_ELEMENT_NODE));
 }
 
 /**
- * xmlStreamPushNode:
+ * nl_xmlStreamPushNode:
  * @stream: the stream context
  * @name: the current name
  * @ns: the namespace name
  * @nodeType: the type of the node being pushed
  *
- * Push new data onto the stream. NOTE: if the call xmlPatterncompile()
+ * Push new data onto the stream. NOTE: if the call nl_xmlPatterncompile()
  * indicated a dictionary, then strings for name and ns will be expected
  * to come from the dictionary.
  * Both @name and @ns being NULL means the / i.e. the root of the document.
  * This can also act as a reset.
- * Different from xmlStreamPush() this function can be fed with nodes of type:
+ * Different from nl_xmlStreamPush() this function can be fed with nodes of type:
  * element-, attribute-, text-, cdata-section-, comment- and
  * processing-instruction-node.
  *
@@ -2024,7 +2024,7 @@ xmlStreamPush(xmlStreamCtxtPtr stream,
  *    match and 0 otherwise.
  */
 int
-xmlStreamPushNode(xmlStreamCtxtPtr stream,
+nl_xmlStreamPushNode(xmlStreamCtxtPtr stream,
 		  const xmlChar *name, const xmlChar *ns,
 		  int nodeType)
 {
@@ -2033,12 +2033,12 @@ xmlStreamPushNode(xmlStreamCtxtPtr stream,
 }
 
 /**
-* xmlStreamPushAttr:
+* nl_xmlStreamPushAttr:
 * @stream: the stream context
 * @name: the current name
 * @ns: the namespace name
 *
-* Push new attribute data onto the stream. NOTE: if the call xmlPatterncompile()
+* Push new attribute data onto the stream. NOTE: if the call nl_xmlPatterncompile()
 * indicated a dictionary, then strings for name and ns will be expected
 * to come from the dictionary.
 * Both @name and @ns being NULL means the / i.e. the root of the document.
@@ -2049,13 +2049,13 @@ xmlStreamPushNode(xmlStreamCtxtPtr stream,
 *    match and 0 otherwise.
 */
 int
-xmlStreamPushAttr(xmlStreamCtxtPtr stream,
+nl_xmlStreamPushAttr(xmlStreamCtxtPtr stream,
 		  const xmlChar *name, const xmlChar *ns) {
     return (xmlStreamPushInternal(stream, name, ns, XML_ATTRIBUTE_NODE));
 }
 
 /**
- * xmlStreamPop:
+ * nl_xmlStreamPop:
  * @stream: the stream context
  *
  * push one level from the stream.
@@ -2063,7 +2063,7 @@ xmlStreamPushAttr(xmlStreamCtxtPtr stream,
  * Returns: -1 in case of error, 0 otherwise.
  */
 int
-xmlStreamPop(xmlStreamCtxtPtr stream) {
+nl_xmlStreamPop(xmlStreamCtxtPtr stream) {
     int i, lev;
 
     if (stream == NULL)
@@ -2099,7 +2099,7 @@ xmlStreamPop(xmlStreamCtxtPtr stream) {
 }
 
 /**
- * xmlStreamWantsAnyNode:
+ * nl_xmlStreamWantsAnyNode:
  * @streamCtxt: the stream context
  *
  * Query if the streaming pattern additionally needs to be fed with
@@ -2111,7 +2111,7 @@ xmlStreamPop(xmlStreamCtxtPtr stream) {
  *          0 otherwise. -1 on API errors.
  */
 int
-xmlStreamWantsAnyNode(xmlStreamCtxtPtr streamCtxt)
+nl_xmlStreamWantsAnyNode(xmlStreamCtxtPtr streamCtxt)
 {
     if (streamCtxt == NULL)
 	return(-1);
@@ -2130,7 +2130,7 @@ xmlStreamWantsAnyNode(xmlStreamCtxtPtr streamCtxt)
  ************************************************************************/
 
 /**
- * xmlPatterncompile:
+ * nl_xmlPatterncompile:
  * @pattern: the pattern to compile
  * @dict: an optional dictionary for interned strings
  * @flags: compilation flags, see xmlPatternFlags
@@ -2141,7 +2141,7 @@ xmlStreamWantsAnyNode(xmlStreamCtxtPtr streamCtxt)
  * Returns the compiled form of the pattern or NULL in case of error
  */
 xmlPatternPtr
-xmlPatterncompile(const xmlChar *pattern, xmlDict *dict, int flags,
+nl_xmlPatterncompile(const xmlChar *pattern, xmlDict *dict, int flags,
                   const xmlChar **namespaces) {
     xmlPatternPtr ret = NULL, cur;
     xmlPatParserContextPtr ctxt = NULL;
@@ -2161,7 +2161,7 @@ xmlPatterncompile(const xmlChar *pattern, xmlDict *dict, int flags,
         if (*or == 0)
 	    ctxt = xmlNewPatParserContext(start, dict, namespaces);
 	else {
-	    tmp = xmlStrndup(start, or - start);
+	    tmp = nl_xmlStrndup(start, or - start);
 	    if (tmp != NULL) {
 		ctxt = xmlNewPatParserContext(tmp, dict, namespaces);
 	    }
@@ -2175,7 +2175,7 @@ xmlPatterncompile(const xmlChar *pattern, xmlDict *dict, int flags,
 	*/
 	if (dict) {
 	    cur->dict = dict;
-	    xmlDictReference(dict);
+	    nl_xmlDictReference(dict);
 	}
 	if (ret == NULL)
 	    ret = cur;
@@ -2212,7 +2212,7 @@ xmlPatterncompile(const xmlChar *pattern, xmlDict *dict, int flags,
 	if (xmlReversePattern(cur) < 0)
 	    goto error;
 	if (tmp != NULL) {
-	    xmlFree(tmp);
+	    nl_xmlFree(tmp);
 	    tmp = NULL;
 	}
 	start = or;
@@ -2231,22 +2231,22 @@ xmlPatterncompile(const xmlChar *pattern, xmlDict *dict, int flags,
     return(ret);
 error:
     if (ctxt != NULL) xmlFreePatParserContext(ctxt);
-    if (ret != NULL) xmlFreePattern(ret);
-    if (tmp != NULL) xmlFree(tmp);
+    if (ret != NULL) nl_xmlFreePattern(ret);
+    if (tmp != NULL) nl_xmlFree(tmp);
     return(NULL);
 }
 
 /**
- * xmlPatternGetStreamCtxt:
+ * nl_xmlPatternGetStreamCtxt:
  * @comp: the precompiled pattern
  *
  * Get a streaming context for that pattern
- * Use xmlFreeStreamCtxt to free the context.
+ * Use nl_xmlFreeStreamCtxt to free the context.
  *
  * Returns a pointer to the context or NULL in case of failure
  */
 xmlStreamCtxtPtr
-xmlPatternGetStreamCtxt(xmlPatternPtr comp)
+nl_xmlPatternGetStreamCtxt(xmlPatternPtr comp)
 {
     xmlStreamCtxtPtr ret = NULL, cur;
 
@@ -2270,21 +2270,21 @@ xmlPatternGetStreamCtxt(xmlPatternPtr comp)
     }
     return(ret);
 failed:
-    xmlFreeStreamCtxt(ret);
+    nl_xmlFreeStreamCtxt(ret);
     return(NULL);
 }
 
 /**
- * xmlPatternStreamable:
+ * nl_xmlPatternStreamable:
  * @comp: the precompiled pattern
  *
- * Check if the pattern is streamable i.e. xmlPatternGetStreamCtxt()
+ * Check if the pattern is streamable i.e. nl_xmlPatternGetStreamCtxt()
  * should work.
  *
  * Returns 1 if streamable, 0 if not and -1 in case of error.
  */
 int
-xmlPatternStreamable(xmlPatternPtr comp) {
+nl_xmlPatternStreamable(xmlPatternPtr comp) {
     if (comp == NULL)
         return(-1);
     while (comp != NULL) {
@@ -2296,7 +2296,7 @@ xmlPatternStreamable(xmlPatternPtr comp) {
 }
 
 /**
- * xmlPatternMaxDepth:
+ * nl_xmlPatternMaxDepth:
  * @comp: the precompiled pattern
  *
  * Check the maximum depth reachable by a pattern
@@ -2305,7 +2305,7 @@ xmlPatternStreamable(xmlPatternPtr comp) {
  *         and -1 in case of error
  */
 int
-xmlPatternMaxDepth(xmlPatternPtr comp) {
+nl_xmlPatternMaxDepth(xmlPatternPtr comp) {
     int ret = 0, i;
     if (comp == NULL)
         return(-1);
@@ -2323,7 +2323,7 @@ xmlPatternMaxDepth(xmlPatternPtr comp) {
 }
 
 /**
- * xmlPatternMinDepth:
+ * nl_xmlPatternMinDepth:
  * @comp: the precompiled pattern
  *
  * Check the minimum depth reachable by a pattern, 0 mean the / or . are
@@ -2333,7 +2333,7 @@ xmlPatternMaxDepth(xmlPatternPtr comp) {
  *
  */
 int
-xmlPatternMinDepth(xmlPatternPtr comp) {
+nl_xmlPatternMinDepth(xmlPatternPtr comp) {
     int ret = 12345678;
     if (comp == NULL)
         return(-1);
@@ -2350,7 +2350,7 @@ xmlPatternMinDepth(xmlPatternPtr comp) {
 }
 
 /**
- * xmlPatternFromRoot:
+ * nl_xmlPatternFromRoot:
  * @comp: the precompiled pattern
  *
  * Check if the pattern must be looked at from the root.
@@ -2358,7 +2358,7 @@ xmlPatternMinDepth(xmlPatternPtr comp) {
  * Returns 1 if true, 0 if false and -1 in case of error
  */
 int
-xmlPatternFromRoot(xmlPatternPtr comp) {
+nl_xmlPatternFromRoot(xmlPatternPtr comp) {
     if (comp == NULL)
         return(-1);
     while (comp != NULL) {

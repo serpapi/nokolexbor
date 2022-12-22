@@ -18,7 +18,7 @@ VALUE cNokolexborXpathSyntaxError;
 static void
 free_xml_xpath_context(xmlXPathContextPtr ctx)
 {
-  xmlXPathFreeContext(ctx);
+  nl_xmlXPathFreeContext(ctx);
 }
 
 /*
@@ -33,7 +33,7 @@ nl_xpath_context_register_ns(VALUE self, VALUE prefix, VALUE uri)
   xmlXPathContextPtr ctx;
   Data_Get_Struct(self, xmlXPathContext, ctx);
 
-  xmlXPathRegisterNs(ctx,
+  nl_xmlXPathRegisterNs(ctx,
                      (const xmlChar *)StringValueCStr(prefix),
                      (const xmlChar *)StringValueCStr(uri));
   return self;
@@ -52,9 +52,9 @@ nl_xpath_context_register_variable(VALUE self, VALUE name, VALUE value)
   xmlXPathObjectPtr xmlValue;
   Data_Get_Struct(self, xmlXPathContext, ctx);
 
-  xmlValue = xmlXPathNewCString(StringValueCStr(value));
+  xmlValue = nl_xmlXPathNewCString(StringValueCStr(value));
 
-  xmlXPathRegisterVariable(ctx,
+  nl_xmlXPathRegisterVariable(ctx,
                            (const xmlChar *)StringValueCStr(name),
                            xmlValue);
 
@@ -74,7 +74,7 @@ xpath2ruby(xmlXPathObjectPtr c_xpath_object, xmlXPathContextPtr ctx, VALUE rb_do
   {
   case XPATH_STRING:
     rb_retval = rb_utf8_str_new_cstr((const char *)c_xpath_object->stringval);
-    xmlFree(c_xpath_object->stringval);
+    nl_xmlFree(c_xpath_object->stringval);
     return rb_retval;
 
   case XPATH_NODESET:
@@ -192,20 +192,20 @@ nl_xpath_context_evaluate(int argc, VALUE *argv, VALUE self)
   // if (Qnil != xpath_handler) {
   //   /* FIXME: not sure if this is the correct place to shove private data. */
   //   ctx->userData = (void *)xpath_handler;
-  //   xmlXPathRegisterFuncLookup(ctx, handler_lookup, (void *)xpath_handler);
+  //   nl_xmlXPathRegisterFuncLookup(ctx, handler_lookup, (void *)xpath_handler);
   // }
 
-  xmlSetStructuredErrorFunc((void *)errors, nl_xpath_error_array_pusher);
-  xmlSetGenericErrorFunc((void *)errors, nl_xpath_generic_exception_pusher);
+  nl_xmlSetStructuredErrorFunc((void *)errors, nl_xpath_error_array_pusher);
+  nl_xmlSetGenericErrorFunc((void *)errors, nl_xpath_generic_exception_pusher);
 
-  xpath = xmlXPathEvalExpression(query, ctx);
+  xpath = nl_xmlXPathEvalExpression(query, ctx);
 
-  xmlSetStructuredErrorFunc(NULL, NULL);
-  xmlSetGenericErrorFunc(NULL, NULL);
+  nl_xmlSetStructuredErrorFunc(NULL, NULL);
+  nl_xmlSetGenericErrorFunc(NULL, NULL);
 
   if (xpath == NULL)
   {
-    xmlXPathFreeObject(xpath);
+    nl_xmlXPathFreeObject(xpath);
     rb_exc_raise(rb_ary_entry(errors, 0));
   }
 
@@ -215,7 +215,7 @@ nl_xpath_context_evaluate(int argc, VALUE *argv, VALUE self)
     retval = rb_funcall(cNokolexborNodeSet, rb_intern("new"), 1, rb_ary_new());
   }
 
-  xmlXPathFreeObject(xpath);
+  nl_xmlXPathFreeObject(xpath);
 
   return retval;
 }
@@ -234,7 +234,7 @@ nl_xpath_context_new(VALUE klass, VALUE rb_node)
 
   lxb_dom_node_t *node = nl_rb_node_unwrap(rb_node);
 
-  ctx = xmlXPathNewContext(node->owner_document);
+  ctx = nl_xmlXPathNewContext(node->owner_document);
   ctx->node = node;
 
   self = Data_Wrap_Struct(klass, 0, free_xml_xpath_context, ctx);
@@ -246,9 +246,9 @@ nl_xpath_context_new(VALUE klass, VALUE rb_node)
 void Init_nl_xpath_context(void)
 {
 #ifndef NOKOLEXBOR_ASAN
-  xmlMemSetup((xmlFreeFunc)ruby_xfree, (xmlMallocFunc)ruby_xmalloc, (xmlReallocFunc)ruby_xrealloc, ruby_strdup);
+  nl_xmlMemSetup((xmlFreeFunc)ruby_xfree, (xmlMallocFunc)ruby_xmalloc, (xmlReallocFunc)ruby_xrealloc, ruby_strdup);
 #else
-  xmlMemSetup((xmlFreeFunc)free, (xmlMallocFunc)malloc, (xmlReallocFunc)realloc, strdup);
+  nl_xmlMemSetup((xmlFreeFunc)free, (xmlMallocFunc)malloc, (xmlReallocFunc)realloc, strdup);
 #endif
 
   cNokolexborXpathContext = rb_define_class_under(mNokolexbor, "XPathContext", rb_cObject);

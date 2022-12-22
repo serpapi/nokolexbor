@@ -87,7 +87,7 @@ static int xmlLittleEndian = 1;
 static void
 xmlEncodingErrMemory(const char *extra)
 {
-    __xmlSimpleError(XML_FROM_I18N, XML_ERR_NO_MEMORY, NULL, NULL, extra);
+    __nl_xmlSimpleError(XML_FROM_I18N, XML_ERR_NO_MEMORY, NULL, NULL, extra);
 }
 
 /**
@@ -100,7 +100,7 @@ xmlEncodingErrMemory(const char *extra)
 static void LIBXML_ATTR_FORMAT(2,0)
 xmlEncodingErr(xmlParserErrors error, const char *msg, const char *val)
 {
-    __xmlRaiseError(NULL, NULL, NULL, NULL, NULL,
+    __nl_xmlRaiseError(NULL, NULL, NULL, NULL, NULL,
                     XML_FROM_I18N, error, XML_ERR_FATAL,
                     NULL, 0, val, NULL, NULL, 0, 0, msg, val);
 }

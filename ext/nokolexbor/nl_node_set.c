@@ -6,7 +6,7 @@ VALUE cNokolexborNodeSet;
 extern rb_data_type_t nl_document_type;
 
 lxb_status_t nl_node_find(VALUE self, VALUE selector, lxb_selectors_cb_f cb, void *ctx);
-void sort_nodes_if_necessary(VALUE selector, lxb_dom_document_t *doc, lexbor_array_t *array);
+void nl_sort_nodes_if_necessary(VALUE selector, lxb_dom_document_t *doc, lexbor_array_t *array);
 lxb_status_t nl_node_at_css_callback(lxb_dom_node_t *node, lxb_css_selector_specificity_t *spec, void *ctx);
 lxb_status_t nl_node_css_callback(lxb_dom_node_t *node, lxb_css_selector_specificity_t *spec, void *ctx);
 
@@ -353,7 +353,7 @@ nl_node_set_at_css(VALUE self, VALUE selector)
     return Qnil;
   }
 
-  sort_nodes_if_necessary(selector, doc, array);
+  nl_sort_nodes_if_necessary(selector, doc, array);
 
   VALUE ret = nl_rb_node_create(array->list[0], nl_rb_document_get(self));
 
@@ -375,7 +375,7 @@ nl_node_set_css(VALUE self, VALUE selector)
     nl_raise_lexbor_error(status);
   }
 
-  sort_nodes_if_necessary(selector, doc, array);
+  nl_sort_nodes_if_necessary(selector, doc, array);
 
   return nl_rb_node_set_create_with_data(array, nl_rb_document_get(self));
 }

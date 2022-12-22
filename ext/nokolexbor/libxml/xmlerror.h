@@ -859,17 +859,17 @@ typedef void (XMLCALL *xmlStructuredErrorFunc) (void *userData, xmlErrorPtr erro
 
 /*
  * Use the following function to reset the two global variables
- * xmlGenericError and xmlGenericErrorContext.
+ * nl_xmlGenericError and nl_xmlGenericErrorContext.
  */
 XMLPUBFUN void XMLCALL
-    xmlSetGenericErrorFunc	(void *ctx,
+    nl_xmlSetGenericErrorFunc	(void *ctx,
 				 xmlGenericErrorFunc handler);
 XML_DEPRECATED
 XMLPUBFUN void XMLCALL
     initGenericErrorDefaultFunc	(xmlGenericErrorFunc *handler);
 
 XMLPUBFUN void XMLCALL
-    xmlSetStructuredErrorFunc	(void *ctx,
+    nl_xmlSetStructuredErrorFunc	(void *ctx,
 				 xmlStructuredErrorFunc handler);
 /*
  * Default message routines used by SAX and Valid context for error
@@ -908,9 +908,9 @@ XMLPUBFUN xmlErrorPtr XMLCALL
 XMLPUBFUN void XMLCALL
     xmlCtxtResetLastError	(void *ctx);
 XMLPUBFUN void XMLCALL
-    xmlResetError		(xmlErrorPtr err);
+    nl_xmlResetError		(xmlErrorPtr err);
 XMLPUBFUN int XMLCALL
-    xmlCopyError		(xmlErrorPtr from,
+    nl_xmlCopyError		(xmlErrorPtr from,
 				 xmlErrorPtr to);
 
 #ifdef __cplusplus

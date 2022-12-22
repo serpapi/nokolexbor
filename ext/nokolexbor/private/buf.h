@@ -43,7 +43,7 @@ xmlBufIsEmpty(const xmlBufPtr buf);
 XML_HIDDEN int
 xmlBufAddLen(xmlBufPtr buf, size_t len);
 
-/* const xmlChar * xmlBufContent(const xmlBuf *buf); */
+/* const xmlChar * nl_xmlBufContent(const xmlBuf *buf); */
 /* const xmlChar * xmlBufEnd(xmlBufPtr buf); */
 
 XML_HIDDEN xmlChar *

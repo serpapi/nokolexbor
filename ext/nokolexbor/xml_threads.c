@@ -88,8 +88,8 @@ static int libxml_is_threaded = -1;
 #endif
 
 /*
- * TODO: this module still uses malloc/free and not xmlMalloc/xmlFree
- *       to avoid some craziness since xmlMalloc/xmlFree may actually
+ * TODO: this module still uses malloc/free and not nl_xmlMalloc/nl_xmlFree
+ *       to avoid some craziness since nl_xmlMalloc/nl_xmlFree may actually
  *       be hosted on allocated blocks needing them for the allocation ...
  */
 
@@ -152,15 +152,15 @@ xmlInitMutex(xmlMutexPtr mutex)
 }
 
 /**
- * xmlNewMutex:
+ * nl_xmlNewMutex:
  *
- * xmlNewMutex() is used to allocate a libxml2 token struct for use in
+ * nl_xmlNewMutex() is used to allocate a libxml2 token struct for use in
  * synchronizing access to data.
  *
  * Returns a new simple mutex pointer or NULL in case of error
  */
 xmlMutexPtr
-xmlNewMutex(void)
+nl_xmlNewMutex(void)
 {
     xmlMutexPtr tok;
 
@@ -189,13 +189,13 @@ xmlCleanupMutex(xmlMutexPtr mutex)
 }
 
 /**
- * xmlFreeMutex:
+ * nl_xmlFreeMutex:
  * @tok:  the simple mutex
  *
  * Free a mutex.
  */
 void
-xmlFreeMutex(xmlMutexPtr tok)
+nl_xmlFreeMutex(xmlMutexPtr tok)
 {
     if (tok == NULL)
         return;
@@ -205,13 +205,13 @@ xmlFreeMutex(xmlMutexPtr tok)
 }
 
 /**
- * xmlMutexLock:
+ * nl_xmlMutexLock:
  * @tok:  the simple mutex
  *
- * xmlMutexLock() is used to lock a libxml2 token.
+ * nl_xmlMutexLock() is used to lock a libxml2 token.
  */
 void
-xmlMutexLock(xmlMutexPtr tok)
+nl_xmlMutexLock(xmlMutexPtr tok)
 {
     if (tok == NULL)
         return;
@@ -229,13 +229,13 @@ xmlMutexLock(xmlMutexPtr tok)
 }
 
 /**
- * xmlMutexUnlock:
+ * nl_xmlMutexUnlock:
  * @tok:  the simple mutex
  *
- * xmlMutexUnlock() is used to unlock a libxml2 token.
+ * nl_xmlMutexUnlock() is used to unlock a libxml2 token.
  */
 void
-xmlMutexUnlock(xmlMutexPtr tok)
+nl_xmlMutexUnlock(xmlMutexPtr tok)
 {
     if (tok == NULL)
         return;
@@ -248,7 +248,7 @@ xmlMutexUnlock(xmlMutexPtr tok)
 }
 
 /**
- * xmlNewRMutex:
+ * nl_xmlNewRMutex:
  *
  * xmlRNewMutex() is used to allocate a reentrant mutex for use in
  * synchronizing access to data. token_r is a re-entrant lock and thus useful
@@ -258,7 +258,7 @@ xmlMutexUnlock(xmlMutexPtr tok)
  * Returns the new reentrant mutex pointer or NULL in case of error
  */
 xmlRMutexPtr
-xmlNewRMutex(void)
+nl_xmlNewRMutex(void)
 {
     xmlRMutexPtr tok;
 
@@ -276,14 +276,14 @@ xmlNewRMutex(void)
 }
 
 /**
- * xmlFreeRMutex:
+ * nl_xmlFreeRMutex:
  * @tok:  the reentrant mutex
  *
  * xmlRFreeMutex() is used to reclaim resources associated with a
  * reentrant mutex.
  */
 void
-xmlFreeRMutex(xmlRMutexPtr tok ATTRIBUTE_UNUSED)
+nl_xmlFreeRMutex(xmlRMutexPtr tok ATTRIBUTE_UNUSED)
 {
     if (tok == NULL)
         return;
@@ -297,13 +297,13 @@ xmlFreeRMutex(xmlRMutexPtr tok ATTRIBUTE_UNUSED)
 }
 
 /**
- * xmlRMutexLock:
+ * nl_xmlRMutexLock:
  * @tok:  the reentrant mutex
  *
- * xmlRMutexLock() is used to lock a libxml2 token_r.
+ * nl_xmlRMutexLock() is used to lock a libxml2 token_r.
  */
 void
-xmlRMutexLock(xmlRMutexPtr tok)
+nl_xmlRMutexLock(xmlRMutexPtr tok)
 {
     if (tok == NULL)
         return;
@@ -333,13 +333,13 @@ xmlRMutexLock(xmlRMutexPtr tok)
 }
 
 /**
- * xmlRMutexUnlock:
+ * nl_xmlRMutexUnlock:
  * @tok:  the reentrant mutex
  *
- * xmlRMutexUnlock() is used to unlock a libxml2 token_r.
+ * nl_xmlRMutexUnlock() is used to unlock a libxml2 token_r.
  */
 void
-xmlRMutexUnlock(xmlRMutexPtr tok ATTRIBUTE_UNUSED)
+nl_xmlRMutexUnlock(xmlRMutexPtr tok ATTRIBUTE_UNUSED)
 {
     if (tok == NULL)
         return;
@@ -387,7 +387,7 @@ __xmlGlobalInitMutexLock(void)
     if (global_init_lock == NULL) {
         cs = malloc(sizeof(CRITICAL_SECTION));
         if (cs == NULL) {
-            xmlGenericError(xmlGenericErrorContext,
+            nl_xmlGenericError(nl_xmlGenericErrorContext,
                             "xmlGlobalInitMutexLock: out of memory\n");
             return;
         }
@@ -461,8 +461,8 @@ __xmlGlobalInitMutexDestroy(void)
  ************************************************************************/
 
 #ifdef LIBXML_THREAD_ENABLED
-#ifdef xmlLastError
-#undef xmlLastError
+#ifdef nl_xmlLastError
+#undef nl_xmlLastError
 #endif
 
 /**
@@ -477,8 +477,8 @@ xmlFreeGlobalState(void *state)
 {
     xmlGlobalState *gs = (xmlGlobalState *) state;
 
-    /* free any memory allocated in the thread's xmlLastError */
-    xmlResetError(&(gs->xmlLastError));
+    /* free any memory allocated in the thread's nl_xmlLastError */
+    nl_xmlResetError(&(gs->nl_xmlLastError));
     free(state);
 }
 
@@ -498,13 +498,13 @@ xmlNewGlobalState(void)
 
     gs = malloc(sizeof(xmlGlobalState));
     if (gs == NULL) {
-	xmlGenericError(xmlGenericErrorContext,
-			"xmlGetGlobalState: out of memory\n");
+	nl_xmlGenericError(nl_xmlGenericErrorContext,
+			"nl_xmlGetGlobalState: out of memory\n");
         return (NULL);
     }
 
     memset(gs, 0, sizeof(xmlGlobalState));
-    xmlInitializeGlobalState(gs);
+    nl_xmlInitializeGlobalState(gs);
     return (gs);
 }
 #endif /* LIBXML_THREAD_ENABLED */
@@ -545,16 +545,16 @@ static CRITICAL_SECTION cleanup_helpers_cs;
 #endif /* HAVE_WIN32_THREADS */
 
 /**
- * xmlGetGlobalState:
+ * nl_xmlGetGlobalState:
  *
  * DEPRECATED: Internal function, do not use.
  *
- * xmlGetGlobalState() is called to retrieve the global state for a thread.
+ * nl_xmlGetGlobalState() is called to retrieve the global state for a thread.
  *
  * Returns the thread global state or NULL in case of error
  */
 xmlGlobalStatePtr
-xmlGetGlobalState(void)
+nl_xmlGetGlobalState(void)
 {
 #ifdef HAVE_POSIX_THREADS
     xmlGlobalState *globalval;
@@ -576,7 +576,7 @@ xmlGetGlobalState(void)
 #if defined(HAVE_COMPILER_TLS)
     if (!tlstate_inited) {
         tlstate_inited = 1;
-        xmlInitializeGlobalState(&tlstate);
+        nl_xmlInitializeGlobalState(&tlstate);
     }
     return &tlstate;
 #else /* HAVE_COMPILER_TLS */
@@ -596,8 +596,8 @@ xmlGetGlobalState(void)
         p = (xmlGlobalStateCleanupHelperParams *)
             malloc(sizeof(xmlGlobalStateCleanupHelperParams));
 	if (p == NULL) {
-            xmlGenericError(xmlGenericErrorContext,
-                            "xmlGetGlobalState: out of memory\n");
+            nl_xmlGenericError(nl_xmlGenericErrorContext,
+                            "nl_xmlGetGlobalState: out of memory\n");
             xmlFreeGlobalState(tsd);
 	    return(NULL);
 	}
@@ -636,18 +636,18 @@ xmlGetGlobalState(void)
  ************************************************************************/
 
 /**
- * xmlGetThreadId:
+ * nl_xmlGetThreadId:
  *
  * DEPRECATED: Internal function, do not use.
  *
- * xmlGetThreadId() find the current thread ID number
+ * nl_xmlGetThreadId() find the current thread ID number
  * Note that this is likely to be broken on some platforms using pthreads
  * as the specification doesn't mandate pthread_t to be an integer type
  *
  * Returns the current thread ID number
  */
 int
-xmlGetThreadId(void)
+nl_xmlGetThreadId(void)
 {
 #ifdef HAVE_POSIX_THREADS
     pthread_t id;
@@ -667,21 +667,21 @@ xmlGetThreadId(void)
 }
 
 /**
- * xmlIsMainThread:
+ * nl_xmlIsMainThread:
  *
  * DEPRECATED: Internal function, do not use.
  *
- * xmlIsMainThread() check whether the current thread is the main thread.
+ * nl_xmlIsMainThread() check whether the current thread is the main thread.
  *
  * Returns 1 if the current thread is the main thread, 0 otherwise
  */
 int
-xmlIsMainThread(void)
+nl_xmlIsMainThread(void)
 {
-    xmlInitParser();
+    nl_xmlInitParser();
 
 #ifdef DEBUG_THREADS
-    xmlGenericError(xmlGenericErrorContext, "xmlIsMainThread()\n");
+    nl_xmlGenericError(nl_xmlGenericErrorContext, "nl_xmlIsMainThread()\n");
 #endif
 #ifdef HAVE_POSIX_THREADS
     if (XML_IS_THREADED() == 0)
@@ -695,44 +695,44 @@ xmlIsMainThread(void)
 }
 
 /**
- * xmlLockLibrary:
+ * nl_xmlLockLibrary:
  *
- * xmlLockLibrary() is used to take out a re-entrant lock on the libxml2
+ * nl_xmlLockLibrary() is used to take out a re-entrant lock on the libxml2
  * library.
  */
 void
-xmlLockLibrary(void)
+nl_xmlLockLibrary(void)
 {
 #ifdef DEBUG_THREADS
-    xmlGenericError(xmlGenericErrorContext, "xmlLockLibrary()\n");
+    nl_xmlGenericError(nl_xmlGenericErrorContext, "nl_xmlLockLibrary()\n");
 #endif
-    xmlRMutexLock(xmlLibraryLock);
+    nl_xmlRMutexLock(xmlLibraryLock);
 }
 
 /**
- * xmlUnlockLibrary:
+ * nl_xmlUnlockLibrary:
  *
- * xmlUnlockLibrary() is used to release a re-entrant lock on the libxml2
+ * nl_xmlUnlockLibrary() is used to release a re-entrant lock on the libxml2
  * library.
  */
 void
-xmlUnlockLibrary(void)
+nl_xmlUnlockLibrary(void)
 {
 #ifdef DEBUG_THREADS
-    xmlGenericError(xmlGenericErrorContext, "xmlUnlockLibrary()\n");
+    nl_xmlGenericError(nl_xmlGenericErrorContext, "nl_xmlUnlockLibrary()\n");
 #endif
-    xmlRMutexUnlock(xmlLibraryLock);
+    nl_xmlRMutexUnlock(xmlLibraryLock);
 }
 
 /**
- * xmlInitThreads:
+ * nl_xmlInitThreads:
  *
- * DEPRECATED: Alias for xmlInitParser.
+ * DEPRECATED: Alias for nl_xmlInitParser.
  */
 void
-xmlInitThreads(void)
+nl_xmlInitThreads(void)
 {
-    xmlInitParser();
+    nl_xmlInitParser();
 }
 
 /**
@@ -767,7 +767,7 @@ xmlInitThreadsInternal(void)
 }
 
 /**
- * xmlCleanupThreads:
+ * nl_xmlCleanupThreads:
  *
  * DEPRECATED: This function is a no-op. Call xmlCleanupParser
  * to free global state but see the warnings there. xmlCleanupParser
@@ -775,7 +775,7 @@ xmlInitThreadsInternal(void)
  * have call cleanup functions at all.
  */
 void
-xmlCleanupThreads(void)
+nl_xmlCleanupThreads(void)
 {
 }
 

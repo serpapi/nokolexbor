@@ -28,52 +28,52 @@ typedef xmlDict *xmlDictPtr;
  * Initializer
  */
 XML_DEPRECATED
-XMLPUBFUN int XMLCALL  xmlInitializeDict(void);
+XMLPUBFUN int XMLCALL  nl_xmlInitializeDict(void);
 
 /*
  * Constructor and destructor.
  */
 XMLPUBFUN xmlDictPtr XMLCALL
-			xmlDictCreate	(void);
+			nl_xmlDictCreate	(void);
 XMLPUBFUN size_t XMLCALL
-			xmlDictSetLimit	(xmlDictPtr dict,
+			nl_xmlDictSetLimit	(xmlDictPtr dict,
                                          size_t limit);
 XMLPUBFUN size_t XMLCALL
-			xmlDictGetUsage (xmlDictPtr dict);
+			nl_xmlDictGetUsage (xmlDictPtr dict);
 XMLPUBFUN xmlDictPtr XMLCALL
-			xmlDictCreateSub(xmlDictPtr sub);
+			nl_xmlDictCreateSub(xmlDictPtr sub);
 XMLPUBFUN int XMLCALL
-			xmlDictReference(xmlDictPtr dict);
+			nl_xmlDictReference(xmlDictPtr dict);
 XMLPUBFUN void XMLCALL
-			xmlDictFree	(xmlDictPtr dict);
+			nl_xmlDictFree	(xmlDictPtr dict);
 
 /*
  * Lookup of entry in the dictionary.
  */
 XMLPUBFUN const xmlChar * XMLCALL
-			xmlDictLookup	(xmlDictPtr dict,
+			nl_xmlDictLookup	(xmlDictPtr dict,
 		                         const xmlChar *name,
 		                         int len);
 XMLPUBFUN const xmlChar * XMLCALL
-			xmlDictExists	(xmlDictPtr dict,
+			nl_xmlDictExists	(xmlDictPtr dict,
 		                         const xmlChar *name,
 		                         int len);
 XMLPUBFUN const xmlChar * XMLCALL
-			xmlDictQLookup	(xmlDictPtr dict,
+			nl_xmlDictQLookup	(xmlDictPtr dict,
 		                         const xmlChar *prefix,
 		                         const xmlChar *name);
 XMLPUBFUN int XMLCALL
-			xmlDictOwns	(xmlDictPtr dict,
+			nl_xmlDictOwns	(xmlDictPtr dict,
 					 const xmlChar *str);
 XMLPUBFUN int XMLCALL
-			xmlDictSize	(xmlDictPtr dict);
+			nl_xmlDictSize	(xmlDictPtr dict);
 
 /*
  * Cleanup function
  */
 XML_DEPRECATED
 XMLPUBFUN void XMLCALL
-                        xmlDictCleanup  (void);
+                        nl_xmlDictCleanup  (void);
 
 #ifdef __cplusplus
 }

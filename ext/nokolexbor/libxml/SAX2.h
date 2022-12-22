@@ -21,17 +21,17 @@
 extern "C" {
 #endif
 XMLPUBFUN const xmlChar * XMLCALL
-		xmlSAX2GetPublicId		(void *ctx);
+		nl_xmlSAX2GetPublicId		(void *ctx);
 XMLPUBFUN const xmlChar * XMLCALL
-		xmlSAX2GetSystemId		(void *ctx);
+		nl_xmlSAX2GetSystemId		(void *ctx);
 XMLPUBFUN void XMLCALL
 		xmlSAX2SetDocumentLocator	(void *ctx,
 						 xmlSAXLocatorPtr loc);
 
 XMLPUBFUN int XMLCALL
-		xmlSAX2GetLineNumber		(void *ctx);
+		nl_xmlSAX2GetLineNumber		(void *ctx);
 XMLPUBFUN int XMLCALL
-		xmlSAX2GetColumnNumber		(void *ctx);
+		nl_xmlSAX2GetColumnNumber		(void *ctx);
 
 XMLPUBFUN int XMLCALL
 		xmlSAX2IsStandalone		(void *ctx);

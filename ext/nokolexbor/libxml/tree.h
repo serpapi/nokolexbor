@@ -118,7 +118,7 @@ typedef xmlBuf *xmlBufPtr;
  * A few public routines for xmlBuf. As those are expected to be used
  * mostly internally the bulk of the routines are internal in buf.h
  */
-XMLPUBFUN xmlChar* XMLCALL       xmlBufContent	(const xmlBuf* buf);
+XMLPUBFUN xmlChar* XMLCALL       nl_xmlBufContent	(const xmlBuf* buf);
 XMLPUBFUN xmlChar* XMLCALL       xmlBufEnd      (xmlBufPtr buf);
 XMLPUBFUN size_t XMLCALL         xmlBufUse      (const xmlBufPtr buf);
 XMLPUBFUN size_t XMLCALL         xmlBufShrink	(xmlBufPtr buf, size_t len);
@@ -681,7 +681,7 @@ XMLPUBFUN int XMLCALL
 #endif
 
 XMLPUBFUN xmlChar * XMLCALL
-		xmlBuildQName		(const xmlChar *ncname,
+		nl_xmlBuildQName		(const xmlChar *ncname,
 					 const xmlChar *prefix,
 					 xmlChar *memory,
 					 int len);
@@ -921,7 +921,7 @@ XMLPUBFUN xmlChar * XMLCALL
 		xmlGetNodePath		(const xmlNode *node);
 #endif /* defined(LIBXML_TREE_ENABLED) || defined(LIBXML_DEBUG_ENABLED) */
 XMLPUBFUN lxb_dom_node_t_ptr XMLCALL
-		xmlDocGetRootElement	(const lxb_dom_document_t *doc);
+		nl_xmlDocGetRootElement	(const lxb_dom_document_t *doc);
 XMLPUBFUN lxb_dom_node_t_ptr XMLCALL
 		xmlGetLastChild		(const xmlNode *parent);
 XMLPUBFUN int XMLCALL
@@ -975,7 +975,7 @@ XMLPUBFUN int XMLCALL
 					 const xmlChar *content,
 					 int len);
 XMLPUBFUN void XMLCALL
-		xmlFreeNodeList		(lxb_dom_node_t_ptr cur);
+		nl_xmlFreeNodeList		(lxb_dom_node_t_ptr cur);
 XMLPUBFUN void XMLCALL
 		xmlFreeNode		(lxb_dom_node_t_ptr cur);
 XMLPUBFUN void XMLCALL
@@ -1077,7 +1077,7 @@ XMLPUBFUN void XMLCALL
 					 const xmlChar *content,
 					 int len);
 XMLPUBFUN xmlChar * XMLCALL
-		xmlNodeGetContent	(const lxb_dom_node_t *cur);
+		nl_xmlNodeGetContent	(const lxb_dom_node_t *cur);
 
 XMLPUBFUN int XMLCALL
 		xmlNodeBufGetContent	(xmlBufferPtr buffer,

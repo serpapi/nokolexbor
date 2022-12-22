@@ -1,6 +1,6 @@
 #include "nokolexbor.h"
 
-#define SORT_NAME css_result
+#define SORT_NAME nl_css_result
 #define SORT_TYPE lxb_dom_node_t *
 #define SORT_CMP(x, y) (x->user >= y->user ? (x->user == y->user ? 0 : 1) : -1)
 #include "timsort.h"
@@ -290,7 +290,7 @@ mark_node_orders(lxb_dom_node_t *root)
 }
 
 // Sort nodes in document traversal order (the same as Nokorigi)
-void sort_nodes_if_necessary(VALUE selector, lxb_dom_document_t *doc, lexbor_array_t *array)
+void nl_sort_nodes_if_necessary(VALUE selector, lxb_dom_document_t *doc, lexbor_array_t *array)
 {
   // No need to sort if there's only one selector, the results are natually in document traversal order
   if (strchr(RSTRING_PTR(selector), ',') != NULL)
@@ -310,7 +310,7 @@ void sort_nodes_if_necessary(VALUE selector, lxb_dom_document_t *doc, lexbor_arr
     {
       mark_node_orders(&doc->node);
     }
-    css_result_tim_sort((lxb_dom_node_t **)&array->list[0], array->length);
+    nl_css_result_tim_sort((lxb_dom_node_t **)&array->list[0], array->length);
   }
 }
 
@@ -334,7 +334,7 @@ nl_node_at_css(VALUE self, VALUE selector)
     return Qnil;
   }
 
-  sort_nodes_if_necessary(selector, node->owner_document, array);
+  nl_sort_nodes_if_necessary(selector, node->owner_document, array);
 
   VALUE ret = nl_rb_node_create(array->list[0], nl_rb_document_get(self));
 
@@ -356,7 +356,7 @@ nl_node_css(VALUE self, VALUE selector)
     nl_raise_lexbor_error(status);
   }
 
-  sort_nodes_if_necessary(selector, node->owner_document, array);
+  nl_sort_nodes_if_necessary(selector, node->owner_document, array);
 
   return nl_rb_node_set_create_with_data(array, nl_rb_document_get(self));
 }
