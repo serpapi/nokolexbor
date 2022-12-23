@@ -42,10 +42,20 @@ Rake::TestTask.new do |t|
 end
 
 namespace :test do
-  Rake::TestTask.new('gem') do |t|
+  Rake::TestTask.new('gem:run') do |t|
     t.libs << 'spec'
     t.libs.delete('lib')
     t.pattern = 'spec/**/*_spec.rb'
+  end
+
+  task :gem do
+    begin
+      ENV['NOKOLEXBOR_TEST_GEM'] = '1'
+      FileUtils.mv('lib', 'lib_tmp', force: true)
+      Rake::Task["test:gem:run"].invoke
+    ensure
+      FileUtils.mv('lib_tmp', 'lib', force: true)
+    end
   end
 
   ASanTestTask.new('asan') do |t|

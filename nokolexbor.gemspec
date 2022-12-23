@@ -1,11 +1,20 @@
 # frozen_string_literal: true
 
 $:.unshift File.expand_path("../lib", __FILE__)
-require 'nokolexbor/version'
+begin
+  require 'nokolexbor/version'
+  version = Nokolexbor::VERSION
+rescue LoadError => e
+  if ENV['NOKOLEXBOR_TEST_GEM']
+    version = '0.0.0'
+  else
+    raise e
+  end
+end
 
 Gem::Specification.new do |spec|
   spec.name          = 'nokolexbor'
-  spec.version       = Nokolexbor::VERSION
+  spec.version       = version
   spec.platform      = Gem::Platform::RUBY
   spec.date          = Time.now.strftime('%Y-%m-%d')
   spec.summary       = "High-performance HTML5 parser, with support for both CSS selectors and XPath."

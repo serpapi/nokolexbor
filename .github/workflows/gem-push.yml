@@ -6,13 +6,12 @@ on:
       - v**
 
 jobs:
-  build:
-    name: Build + Publish
+  build-ruby:
+    name: ruby
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
-
     steps:
     - uses: actions/checkout@v3
       with:
@@ -21,7 +20,6 @@ jobs:
       uses: ruby/setup-ruby@v1
       with:
         ruby-version: '2.6'
-
     - name: Publish to RubyGems
       run: |
         mkdir -p $HOME/.gem
@@ -32,3 +30,25 @@ jobs:
         gem push *.gem
       env:
         GEM_HOST_API_KEY: "${{secrets.RUBYGEMS_API_KEY}}"
+
+  build-native:
+    strategy:
+      matrix:
+        platform: ['x86-mingw32', 'x64-mingw-ucrt', 'x64-mingw32', 'x86-linux', 'x86_64-linux', 'aarch64-linux', 'x86_64-darwin', 'arm64-darwin']
+    name: "${{ matrix.platform }}"
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    container:
+      image: "larskanis/rake-compiler-dock-mri-${{ matrix.platform }}:1.2.1"
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: true
+    - run: bundle install && bundle exec rake cross native gem
+    - uses: actions/upload-artifact@v2
+      with:
+        name: native-gem
+        path: gems
+        retention-days: 1

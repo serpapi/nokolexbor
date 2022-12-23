@@ -6,11 +6,16 @@ def native_gemspec
   eval(File.read 'nokolexbor.gemspec').tap do |spec|
     spec.extensions = []
     spec.files = Dir.glob("lib/**/*.rb")
+    spec.metadata.delete('msys2_mingw_dependencies')
   end
 end
 
+ENV['RUBY_CC_VERSION'] = %w{2.6.0 2.7.0 3.0.0 3.1.0}.join(':')
+
 Rake::ExtensionTask.new('nokolexbor', native_gemspec) do |ext|
   ext.lib_dir = "lib/nokolexbor"
+  ext.cross_compile = true
+  ext.cross_platform = %w[x86-mingw32 x64-mingw-ucrt x64-mingw32 x86-linux x86_64-linux aarch64-linux x86_64-darwin arm64-darwin]
 end
 
 namespace :clean do
