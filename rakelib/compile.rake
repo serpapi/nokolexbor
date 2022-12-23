@@ -2,7 +2,14 @@
 
 require 'rake/extensiontask'
 
-Rake::ExtensionTask.new('nokolexbor') do |ext|
+def native_gemspec
+  eval(File.read 'nokolexbor.gemspec').tap do |spec|
+    spec.extensions = []
+    spec.files = Dir.glob("lib/**/*.rb")
+  end
+end
+
+Rake::ExtensionTask.new('nokolexbor', native_gemspec) do |ext|
   ext.lib_dir = "lib/nokolexbor"
 end
 

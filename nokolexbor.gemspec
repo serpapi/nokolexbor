@@ -1,19 +1,21 @@
 # frozen_string_literal: true
 
-require_relative 'lib/nokolexbor/version'
+$:.unshift File.expand_path("../lib", __FILE__)
+require 'nokolexbor/version'
 
 Gem::Specification.new do |spec|
   spec.name          = 'nokolexbor'
   spec.version       = Nokolexbor::VERSION
+  spec.platform      = Gem::Platform::RUBY
   spec.date          = Time.now.strftime('%Y-%m-%d')
-  spec.summary       = "High performance HTML5 parser, with support for both CSS selectors and XPath."
+  spec.summary       = "High-performance HTML5 parser, with support for both CSS selectors and XPath."
   spec.homepage      = "https://github.com/serpapi/nokolexbor"
   spec.authors       = ['Yicheng Zhou']
   spec.email         = "zyc9012@gmail.com"
   spec.license       = "MIT"
   spec.extensions    = ['ext/nokolexbor/extconf.rb']
   spec.require_paths = ['lib']
-  spec.description   = "Nokolexbor is a high performance HTML5 parser, with support for both CSS selectors and XPath. It's API is designed to be compatible with Nokogiri."
+  spec.description   = "Nokolexbor is a high-performance HTML5 parser, with support for both CSS selectors and XPath. It's API is designed to be compatible with Nokogiri."
   spec.files         += Dir.glob("lib/**/*.rb")
   spec.files         += Dir.glob("ext/**/*.[ch]")
   spec.files         += Dir.glob("ext/**/*.in")
