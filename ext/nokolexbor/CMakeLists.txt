@@ -1,8 +1,11 @@
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 2.8.12)
 
-set(VERSION "2.11.0")
-
-project(libxml2 VERSION ${VERSION} LANGUAGES C)
+IF(CMAKE_VERSION VERSION_LESS "3.0")
+	project(libxml2)
+ELSE()
+	cmake_policy(SET CMP0048 NEW)
+	project(libxml2 VERSION "2.11.0")
+ENDIF()
 
 include(CheckFunctionExists)
 include(CheckIncludeFiles)
