@@ -7,22 +7,15 @@
 
 extern VALUE mNokolexbor;
 extern VALUE cNokolexborDocument;
+extern VALUE cNokolexborText;
+extern VALUE cNokolexborComment;
 extern VALUE cNokolexborNodeSet;
 extern VALUE eLexborError;
 VALUE cNokolexborNode;
+VALUE cNokolexborElement;
+VALUE cNokolexborCharacterData;
 
 extern rb_data_type_t nl_document_type;
-
-static const rb_data_type_t nl_node_type = {
-    "Nokolexbor::Node",
-    {
-        0,
-        0,
-    },
-    0,
-    0,
-    RUBY_TYPED_FREE_IMMEDIATELY,
-};
 
 VALUE
 nl_rb_node_create(lxb_dom_node_t *node, VALUE rb_document)
@@ -31,7 +24,41 @@ nl_rb_node_create(lxb_dom_node_t *node, VALUE rb_document)
     rb_raise(rb_eArgError, "Cannot create Nokolexbor::Node with null pointer");
   }
 
-  VALUE ret = TypedData_Wrap_Struct(cNokolexborNode, &nl_node_type, node);
+  VALUE rb_class;
+  switch (node->type) {
+  case LXB_DOM_NODE_TYPE_ELEMENT:
+    rb_class = cNokolexborElement;
+    break;
+  // case LXB_DOM_NODE_TYPE_ATTRIBUTE:
+  //   break;
+  case LXB_DOM_NODE_TYPE_TEXT:
+    rb_class = cNokolexborText;
+    break;
+  case LXB_DOM_NODE_TYPE_CDATA_SECTION:
+    rb_class = cNokolexborCharacterData;
+    break;
+  // case LXB_DOM_NODE_TYPE_ENTITY_REFERENCE:
+  //   break;
+  // case LXB_DOM_NODE_TYPE_ENTITY:
+  //   break;
+  // case LXB_DOM_NODE_TYPE_PROCESSING_INSTRUCTION:
+  //   break;
+  case LXB_DOM_NODE_TYPE_COMMENT:
+    rb_class = cNokolexborComment;
+    break;
+  // case LXB_DOM_NODE_TYPE_DOCUMENT:
+  //   break;
+  // case LXB_DOM_NODE_TYPE_DOCUMENT_TYPE:
+  //   break;
+  // case LXB_DOM_NODE_TYPE_DOCUMENT_FRAGMENT:
+  //   break;
+  // case LXB_DOM_NODE_TYPE_NOTATION:
+  //   break;
+  default:
+    rb_class = cNokolexborNode;
+  }
+
+  VALUE ret = Data_Wrap_Struct(rb_class, NULL, NULL, node);
   rb_iv_set(ret, "@document", rb_document);
   return ret;
 }
@@ -40,10 +67,10 @@ inline lxb_dom_node_t *
 nl_rb_node_unwrap(VALUE rb_node)
 {
   lxb_dom_node_t *node;
-  if (rb_obj_class(rb_node) == cNokolexborDocument) {
+  if (rb_obj_is_kind_of(rb_node, cNokolexborDocument)) {
     TypedData_Get_Struct(rb_node, lxb_dom_node_t, &nl_document_type, node);
   } else {
-    TypedData_Get_Struct(rb_node, lxb_dom_node_t, &nl_node_type, node);
+    Data_Get_Struct(rb_node, lxb_dom_node_t, node);
   }
   return node;
 }
@@ -638,7 +665,7 @@ nl_node_add_sibling(VALUE self, VALUE next_or_previous, VALUE new)
       insert_after ? lxb_dom_node_insert_after(node, child) : lxb_dom_node_insert_before(node, child);
     }
     lxb_dom_node_destroy(frag_root);
-  } else if (rb_obj_class(new) == cNokolexborNode) {
+  } else if (rb_obj_is_kind_of(new, cNokolexborNode)) {
     lxb_dom_node_t *node_new = nl_rb_node_unwrap(new);
     lxb_dom_node_remove(node_new);
     insert_after ? lxb_dom_node_insert_after(node, node_new) : lxb_dom_node_insert_before(node, node_new);
@@ -663,7 +690,7 @@ nl_node_add_child(VALUE self, VALUE new)
       lxb_dom_node_insert_child(node, child);
     }
     lxb_dom_node_destroy(frag_root);
-  } else if (rb_obj_class(new) == cNokolexborNode) {
+  } else if (rb_obj_is_kind_of(new, cNokolexborNode)) {
     lxb_dom_node_t *node_new = nl_rb_node_unwrap(new);
     lxb_dom_node_remove(node_new);
     lxb_dom_node_insert_child(node, node_new);
@@ -745,6 +772,9 @@ void Init_nl_node(void)
 {
   cNokolexborNode = rb_define_class_under(mNokolexbor, "Node", rb_cObject);
   rb_undef_alloc_func(cNokolexborNode);
+
+  cNokolexborElement = rb_define_class_under(mNokolexbor, "Element", cNokolexborNode);
+  cNokolexborCharacterData = rb_define_class_under(mNokolexbor, "CharacterData", cNokolexborNode);
 
   rb_define_singleton_method(cNokolexborNode, "new", nl_node_new, -1);
   rb_define_method(cNokolexborNode, "content", nl_node_content, 0);

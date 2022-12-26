@@ -4,7 +4,7 @@ describe Nokolexbor::Node do
   it 'new' do
     doc = Nokolexbor::HTML('')
     node = Nokolexbor::Node.new('div', doc)
-    _(node).must_be_instance_of Nokolexbor::Node
+    _(node).must_be_instance_of Nokolexbor::Element
     _(node.name).must_equal 'div'
   end
 
@@ -279,8 +279,8 @@ describe Nokolexbor::Node do
       @frag = @doc.fragment('<div></div><span></span>')
     end
 
-    it 'returns Nokolexbor::Node' do
-      _(@frag).must_be_instance_of Nokolexbor::Node
+    it 'returns a kind of Nokolexbor::Node' do
+      _(@frag).must_be_kind_of Nokolexbor::Node
     end
 
     it 'to_html works' do
@@ -568,6 +568,69 @@ describe Nokolexbor::Node do
 
     it 'raises if expression is invalid' do
       _{ @root.xpath('.//text1()') }.must_raise Nokolexbor::XPath::SyntaxError
+    end
+  end
+
+  describe "Element" do
+    it "can be newed directly" do
+      node = Nokolexbor::Element.new('div', Nokolexbor::HTML(''))
+      _(node).must_be_instance_of Nokolexbor::Element
+      _(node.element?).must_equal true
+      _(node.to_html).must_equal '<div></div>'
+    end
+
+    it 'can be added to html' do
+      doc = Nokolexbor::HTML('')
+      node = Nokolexbor::Element.new('div', doc)
+      doc.at_css('body').add_child node
+      _(doc.at_css('body').inner_html).must_equal '<div></div>'
+    end
+
+    it 'selection be of correct type' do
+      doc = Nokolexbor::HTML('<div></div>')
+      _(doc.at_css('div')).must_be_instance_of Nokolexbor::Element
+    end
+  end
+
+  describe "Text" do
+    it "can be newed directly" do
+      node = Nokolexbor::Text.new('this is a text', Nokolexbor::HTML(''))
+      _(node).must_be_instance_of Nokolexbor::Text
+      _(node.text?).must_equal true
+      _(node.to_html).must_equal 'this is a text'
+    end
+
+    it 'can be added to html' do
+      doc = Nokolexbor::HTML('')
+      node = Nokolexbor::Text.new('this is a text', doc)
+      doc.at_css('body').add_child node
+      _(doc.at_css('body').inner_html).must_equal 'this is a text'
+    end
+
+    it 'selection be of correct type' do
+      doc = Nokolexbor::HTML('<div>this is a text</div>')
+      _(doc.at_css('div ::text')).must_be_instance_of Nokolexbor::Text
+    end
+  end
+
+  describe "Comment" do
+    it "can be newed directly" do
+      node = Nokolexbor::Comment.new('this is a comment', Nokolexbor::HTML(''))
+      _(node).must_be_instance_of Nokolexbor::Comment
+      _(node.comment?).must_equal true
+      _(node.to_html).must_equal '<!--this is a comment-->'
+    end
+
+    it 'can be added to html' do
+      doc = Nokolexbor::HTML('')
+      node = Nokolexbor::Comment.new('this is a comment', doc)
+      doc.at_css('body').add_child node
+      _(doc.at_css('body').inner_html).must_equal '<!--this is a comment-->'
+    end
+
+    it 'selection be of correct type' do
+      doc = Nokolexbor::HTML('<div><!-- this is a comment --></div>')
+      _(doc.at_css('div').child).must_be_instance_of Nokolexbor::Comment
     end
   end
 end

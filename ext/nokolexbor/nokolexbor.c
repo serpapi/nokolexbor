@@ -57,6 +57,9 @@ void Init_nokolexbor(void)
   eLexborError = rb_define_class_under(mNokolexbor, "LexborError", rb_eStandardError);
   Init_nl_node();
   Init_nl_document();
+  Init_nl_text();
+  Init_nl_comment();
+  Init_nl_cdata();
   Init_nl_node_set();
   Init_nl_xpath_context();
 }

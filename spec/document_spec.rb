@@ -38,7 +38,7 @@ describe Nokolexbor::Document do
 
   it 'works with at_css' do
     node = @doc.at_css('li')
-    _(node).must_be_instance_of Nokolexbor::Node
+    _(node).must_be_instance_of Nokolexbor::Element
     _(node.to_html).must_equal @first_li_html
   end
 
@@ -57,13 +57,13 @@ describe Nokolexbor::Document do
 
   it 'works with at_xpath' do
     node = @doc.at_xpath('//li')
-    _(node).must_be_instance_of Nokolexbor::Node
+    _(node).must_be_instance_of Nokolexbor::Element
     _(node.to_html).must_equal @first_li_html
   end
 
   it 'works with xpath' do
     nodes = @doc.xpath('//li')
-    _(nodes).must_be_instance_of Nokolexbor::NodeSet
+    _(nodes).must_be_kind_of Nokolexbor::NodeSet
     _(nodes.size).must_equal 3
     _(nodes.first.to_html).must_equal @first_li_html
   end
