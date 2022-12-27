@@ -809,8 +809,12 @@ void Init_nl_node(void)
   rb_define_method(cNokolexborNode, "clone", nl_node_clone, 0);
 
   rb_define_alias(cNokolexborNode, "attr", "[]");
+  rb_define_alias(cNokolexborNode, "get_attribute", "[]");
   rb_define_alias(cNokolexborNode, "set_attr", "[]=");
+  rb_define_alias(cNokolexborNode, "set_attribute", "[]=");
+  rb_define_alias(cNokolexborNode, "has_attribute?", "key?");
   rb_define_alias(cNokolexborNode, "delete", "remove_attr");
+  rb_define_alias(cNokolexborNode, "remove_attribute", "remove_attr");
   rb_define_alias(cNokolexborNode, "text", "content");
   rb_define_alias(cNokolexborNode, "inner_text", "content");
   rb_define_alias(cNokolexborNode, "to_str", "content");
