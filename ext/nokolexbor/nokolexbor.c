@@ -2,6 +2,7 @@
 
 VALUE mNokolexbor;
 VALUE eLexborError;
+VALUE eLexborSyntaxError;
 
 void nl_raise_lexbor_error(lxb_status_t error)
 {
@@ -29,7 +30,7 @@ void nl_raise_lexbor_error(lxb_status_t error)
   case LXB_STATUS_ERROR_UNEXPECTED_RESULT:
     rb_raise(eLexborError, "LXB_STATUS_ERROR_UNEXPECTED_RESULT");
   case LXB_STATUS_ERROR_UNEXPECTED_DATA:
-    rb_raise(eLexborError, "LXB_STATUS_ERROR_UNEXPECTED_DATA");
+    rb_raise(eLexborSyntaxError, "LXB_STATUS_ERROR_UNEXPECTED_DATA");
   case LXB_STATUS_ERROR_OVERFLOW:
     rb_raise(eLexborError, "LXB_STATUS_ERROR_OVERFLOW");
   case LXB_STATUS_CONTINUE:
@@ -55,6 +56,7 @@ void Init_nokolexbor(void)
 {
   mNokolexbor = rb_define_module("Nokolexbor");
   eLexborError = rb_define_class_under(mNokolexbor, "LexborError", rb_eStandardError);
+  eLexborSyntaxError = rb_define_class_under(mNokolexbor, "LexborSyntaxError", eLexborError);
   Init_nl_node();
   Init_nl_document();
   Init_nl_text();
