@@ -67,4 +67,31 @@ describe Nokolexbor::Document do
     _(nodes.size).must_equal 3
     _(nodes.first.to_html).must_equal @first_li_html
   end
+
+  describe 'title get' do
+    it 'when <title> does not exist' do
+      doc = Nokolexbor::HTML('')
+      _(doc.title).must_equal ''
+    end
+
+    it 'when <title> exist' do
+      doc = Nokolexbor::HTML('<html><head><title>This is a title</title></head></html>')
+      _(doc.title).must_equal 'This is a title'
+    end
+  end
+
+  describe 'title set' do
+    it 'when <title> does not exist' do
+      doc = Nokolexbor::HTML('')
+      doc.title = 'This is a title'
+      _(doc.at_css('title').to_html).must_equal '<title>This is a title</title>'
+    end
+
+    it 'when <title> exist' do
+      doc = Nokolexbor::HTML('<html><head><title>This is a title</title></head></html>')
+      doc.title = 'This is another title'
+      _(doc.css('title').size).must_equal 1
+      _(doc.at_css('title').to_html).must_equal '<title>This is another title</title>'
+    end
+  end
 end

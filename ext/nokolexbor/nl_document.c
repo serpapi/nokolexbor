@@ -63,9 +63,28 @@ nl_rb_document_unwrap(VALUE rb_doc)
   return doc;
 }
 
+VALUE
+nl_document_get_title(VALUE rb_doc)
+{
+  size_t len;
+  lxb_char_t *str = lxb_html_document_title(nl_rb_document_unwrap(rb_doc), &len);
+  return str == NULL ? rb_str_new("", 0) : rb_utf8_str_new(str, len);
+}
+
+VALUE
+nl_document_set_title(VALUE rb_doc, VALUE rb_title)
+{
+  const char *c_title = StringValuePtr(rb_title);
+  size_t len = RSTRING_LEN(rb_title);
+  lxb_char_t *str = lxb_html_document_title_set(nl_rb_document_unwrap(rb_doc), (const lxb_char_t *)c_title, len);
+  return Qnil;
+}
+
 void Init_nl_document(void)
 {
   cNokolexborDocument = rb_define_class_under(mNokolexbor, "Document", cNokolexborNode);
   rb_define_singleton_method(cNokolexborDocument, "new", nl_document_new, 0);
   rb_define_singleton_method(cNokolexborDocument, "parse", nl_document_parse, 1);
+  rb_define_method(cNokolexborDocument, "title", nl_document_get_title, 0);
+  rb_define_method(cNokolexborDocument, "title=", nl_document_set_title, 1);
 }
