@@ -94,4 +94,13 @@ describe Nokolexbor::Document do
       _(doc.at_css('title').to_html).must_equal '<title>This is another title</title>'
     end
   end
+
+  it 'work with utf-8 chars' do
+    doc = Nokolexbor::HTML('<div 属性1="值1"><span>文本1</span></div>')
+    node = doc.at_css('div')
+    _(node['属性1']).must_equal '值1'
+    _(node.text).must_equal '文本1'
+    _(node.inner_html).must_equal '<span>文本1</span>'
+    _(node.at_css('::text').text).must_equal '文本1'
+  end
 end
