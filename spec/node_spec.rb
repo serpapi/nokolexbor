@@ -22,6 +22,13 @@ describe Nokolexbor::Node do
     end
   end
 
+  it 'content=' do
+    doc = Nokolexbor::HTML('<div></div>')
+    node = doc.at_css('div')
+    node.content = '123<span></span>'
+    _(node.inner_html).must_equal '123&lt;span&gt;&lt;/span&gt;'
+  end
+
   describe 'attr' do
     before do
       @doc = Nokolexbor::HTML('<div class="a" checked></div>')
@@ -187,6 +194,30 @@ describe Nokolexbor::Node do
     _(node.parent.parent.parent.parent).must_be_nil
   end
 
+  it 'parent=' do
+    doc = Nokolexbor::HTML('<div></div>')
+    parent = Nokolexbor::Node.new('span', doc)
+    doc.at_css('div').parent = parent
+    _(doc.to_html).must_equal '<html><head></head><body></body></html>'
+    doc.at_css('body') << parent
+    _(doc.to_html).must_equal '<html><head></head><body><span><div></div></span></body></html>'
+  end
+
+  it 'traverse' do
+    doc = Nokolexbor::HTML('<div>123<span></span><a><b></b></a>456</div>')
+    nodes = []
+    doc.at_css('div').traverse do |node|
+      nodes << node
+    end
+    _(nodes.size).must_equal 6
+    _(nodes[0].name).must_equal '#text'
+    _(nodes[1].name).must_equal 'span'
+    _(nodes[2].name).must_equal 'b'
+    _(nodes[3].name).must_equal 'a'
+    _(nodes[4].name).must_equal '#text'
+    _(nodes[5].name).must_equal 'div'
+  end
+
   describe "previous and next" do
     before do
       @doc = Nokolexbor::HTML <<-HTML
@@ -349,18 +380,53 @@ describe Nokolexbor::Node do
     end
 
     it 'with String' do
-      @node.add_child('<span class="a"></span>')
+      ret = @node.add_child('<span class="a"></span>')
       _(@node.inner_html).must_equal '<span></span><span class="a"></span>'
+      _(ret).must_be_instance_of Nokolexbor::NodeSet
     end
 
     it 'with fragment' do
-      @node.add_child(@node.fragment('<span class="a"></span>').child)
+      ret = @node.add_child(@node.fragment('<span class="a"></span>').child)
       _(@node.inner_html).must_equal '<span></span><span class="a"></span>'
+      _(ret).must_be_kind_of Nokolexbor::Node
     end
 
     it 'with existing node' do
-      @node.add_child(@doc.at_css('a'))
+      ret = @node.add_child(@doc.at_css('a'))
       _(@doc.at_css('body').inner_html).must_equal '<div><span></span><a></a></div>'
+      _(ret).must_be_kind_of Nokolexbor::Node
+    end
+  end
+
+  describe 'prepend_child' do
+    before do
+      @doc = Nokolexbor::HTML('<div><span></span></div><a></a>')
+      @node = @doc.at_css('div')
+    end
+
+    it 'with String' do
+      ret = @node.prepend_child('<span class="a"></span>')
+      _(@node.inner_html).must_equal '<span class="a"></span><span></span>'
+      _(ret).must_be_instance_of Nokolexbor::NodeSet
+    end
+
+    it 'with fragment' do
+      ret = @node.prepend_child(@node.fragment('<span class="a"></span>').child)
+      _(@node.inner_html).must_equal '<span class="a"></span><span></span>'
+      _(ret).must_be_kind_of Nokolexbor::Node
+    end
+
+    it 'with existing node' do
+      ret = @node.prepend_child(@doc.at_css('a'))
+      _(@doc.at_css('body').inner_html).must_equal '<div><a></a><span></span></div>'
+      _(ret).must_be_kind_of Nokolexbor::Node
+    end
+
+    it 'when node has empty children' do
+      node = @doc.at_css('span')
+      ret = node.prepend_child('<b />')
+      _(node.inner_html).must_equal '<b></b>'
+      _(ret).must_be_instance_of Nokolexbor::NodeSet
     end
   end
 

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Nokolexbor
-  class NodeSet < Node
+  class NodeSet < Nokolexbor::Node
     include Enumerable
 
     def self.new(document, list = [])

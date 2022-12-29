@@ -122,6 +122,20 @@ nl_node_content(VALUE self)
 }
 
 static VALUE
+nl_node_content_set(VALUE self, VALUE content)
+{
+  lxb_dom_node_t *node = nl_rb_node_unwrap(self);
+
+  const char *c_content = StringValuePtr(content);
+  size_t c_content_len = RSTRING_LEN(content);
+  lxb_status_t status = lxb_dom_node_text_content_set(node, (const lxb_char_t *)c_content, c_content_len);
+  if (status != LXB_STATUS_OK) {
+    nl_raise_lexbor_error(status);
+  }
+  return content;
+}
+
+static VALUE
 nl_node_get_attr(VALUE self, VALUE rb_attr)
 {
   lxb_dom_node_t *node = nl_rb_node_unwrap(self);
@@ -658,17 +672,23 @@ nl_node_add_sibling(VALUE self, VALUE next_or_previous, VALUE new)
 
   if (TYPE(new) == T_STRING) {
     lxb_dom_node_t *frag_root = nl_node_parse_fragment(doc, (lxb_char_t *)RSTRING_PTR(new), RSTRING_LEN(new));
+    lexbor_array_t *array = lexbor_array_create();
 
     while (frag_root->first_child != NULL) {
       lxb_dom_node_t *child = frag_root->first_child;
       lxb_dom_node_remove(child);
       insert_after ? lxb_dom_node_insert_after(node, child) : lxb_dom_node_insert_before(node, child);
+      lexbor_array_push(array, child);
     }
     lxb_dom_node_destroy(frag_root);
+    return nl_rb_node_set_create_with_data(array, nl_rb_document_get(self));
+
   } else if (rb_obj_is_kind_of(new, cNokolexborNode)) {
     lxb_dom_node_t *node_new = nl_rb_node_unwrap(new);
     lxb_dom_node_remove(node_new);
     insert_after ? lxb_dom_node_insert_after(node, node_new) : lxb_dom_node_insert_before(node, node_new);
+    return new;
+
   } else {
     rb_raise(rb_eArgError, "Unsupported node type");
   }
@@ -683,17 +703,23 @@ nl_node_add_child(VALUE self, VALUE new)
 
   if (TYPE(new) == T_STRING) {
     lxb_dom_node_t *frag_root = nl_node_parse_fragment(doc, (lxb_char_t *)RSTRING_PTR(new), RSTRING_LEN(new));
+    lexbor_array_t *array = lexbor_array_create();
 
     while (frag_root->first_child != NULL) {
       lxb_dom_node_t *child = frag_root->first_child;
       lxb_dom_node_remove(child);
       lxb_dom_node_insert_child(node, child);
+      lexbor_array_push(array, child);
     }
     lxb_dom_node_destroy(frag_root);
+    return nl_rb_node_set_create_with_data(array, nl_rb_document_get(self));
+
   } else if (rb_obj_is_kind_of(new, cNokolexborNode)) {
     lxb_dom_node_t *node_new = nl_rb_node_unwrap(new);
     lxb_dom_node_remove(node_new);
     lxb_dom_node_insert_child(node, node_new);
+    return new;
+
   } else {
     rb_raise(rb_eArgError, "Unsupported node type");
   }
@@ -778,6 +804,7 @@ void Init_nl_node(void)
 
   rb_define_singleton_method(cNokolexborNode, "new", nl_node_new, -1);
   rb_define_method(cNokolexborNode, "content", nl_node_content, 0);
+  rb_define_method(cNokolexborNode, "content=", nl_node_content_set, 1);
   rb_define_method(cNokolexborNode, "[]", nl_node_get_attr, 1);
   rb_define_method(cNokolexborNode, "[]=", nl_node_set_attr, 2);
   rb_define_method(cNokolexborNode, "remove_attr", nl_node_remove_attr, 1);

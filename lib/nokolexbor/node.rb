@@ -45,6 +45,10 @@ module Nokolexbor
       type == ELEMENT_NODE
     end
 
+    def document?
+      is_a?(Nokolexbor::Document)
+    end
+
     def ancestors(selector = nil)
       return NodeSet.new(@document) unless respond_to?(:parent)
       return NodeSet.new(@document) unless parent
@@ -87,6 +91,56 @@ module Nokolexbor
       self
     end
 
+    def add_previous_sibling(node_or_tags)
+      raise ArgumentError,
+        "A document may not have multiple root nodes." if parent&.document? && !(node_or_tags.comment? || node_or_tags.processing_instruction?)
+
+      add_sibling(:previous, node_or_tags)
+    end
+
+    def add_next_sibling(node_or_tags)
+      raise ArgumentError,
+        "A document may not have multiple root nodes." if parent&.document? && !(node_or_tags.comment? || node_or_tags.processing_instruction?)
+
+      add_sibling(:next, node_or_tags)
+    end
+
+    def before(node_or_tags)
+      add_previous_sibling(node_or_tags)
+      self
+    end
+
+    def after(node_or_tags)
+      add_next_sibling(node_or_tags)
+      self
+    end
+
+    alias_method :next_sibling, :next
+    alias_method :previous_sibling, :previous
+    alias_method :next=, :add_next_sibling
+    alias_method :previous=, :add_previous_sibling
+
+    def <<(node_or_tags)
+      add_child(node_or_tags)
+      self
+    end
+
+    def prepend_child(node)
+      if (first = children.first)
+        # Mimic the error add_child would raise.
+        raise "Document already has a root node" if document? && !(node.comment? || node.processing_instruction?)
+
+        first.add_sibling(:previous, node)
+      else
+        add_child(node)
+      end
+    end
+
+    def traverse(&block)
+      children.each { |j| j.traverse(&block) }
+      yield(self)
+    end
+
     def matches?(selector)
       ancestors.last.css(selector).any? { |node| node == self }
     end
@@ -116,6 +170,10 @@ module Nokolexbor
       else
         add_child(node)
       end
+    end
+
+    def parent=(parent_node)
+      parent_node.add_child(self)
     end
 
     def each

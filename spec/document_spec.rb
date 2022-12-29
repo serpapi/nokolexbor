@@ -103,4 +103,81 @@ describe Nokolexbor::Document do
     _(node.inner_html).must_equal '<span>文本1</span>'
     _(node.at_css('::text').text).must_equal '文本1'
   end
+
+  describe 'create_elemnt' do
+    before do
+      @doc = Nokolexbor::HTML('')
+    end
+
+    it 'Hash attr' do
+      node = @doc.create_element('span', {'attr1' => 'value1', 'attr2' => 'value2'}, {'attr3' => 'value3'})
+      _(node.to_html).must_equal '<span attr1="value1" attr2="value2" attr3="value3"></span>'
+      _(node.document).must_equal @doc
+    end
+
+    it 'String attr' do
+      node = @doc.create_element('span', "This is content")
+      _(node.to_html).must_equal '<span>This is content</span>'
+      _(node.document).must_equal @doc
+    end
+
+    it 'Other attr' do
+      _{ @doc.create_element('span', 1) }.must_raise TypeError
+    end
+  end
+
+  it 'create_text_node' do
+    doc = Nokolexbor::HTML('')
+    node = doc.create_text_node('This is text')
+    _(node.text?).must_equal true
+    _(node.to_html).must_equal 'This is text'
+    _(node.document).must_equal doc
+  end
+
+  it 'create_cdata' do
+    doc = Nokolexbor::HTML('')
+    node = doc.create_cdata('This is cdata')
+    _(node.cdata?).must_equal true
+    _(node.document).must_equal doc
+  end
+
+  it 'create_comment' do
+    doc = Nokolexbor::HTML('')
+    node = doc.create_comment('This is comment')
+    _(node.comment?).must_equal true
+    _(node.to_html).must_equal '<!--This is comment-->'
+    _(node.document).must_equal doc
+  end
+
+  describe 'meta_encoding' do
+    it 'charset' do
+      doc = Nokolexbor::HTML('<html><head><meta charset="utf-8"></head></html>')
+      _(doc.meta_encoding).must_equal 'utf-8'
+    end
+
+    it 'http-equiv' do
+      doc = Nokolexbor::HTML('<html><head><meta http-equiv="content-type" content="text/html; charset=utf-8"></head></html>')
+      _(doc.meta_encoding).must_equal 'utf-8'
+    end
+  end
+
+  describe 'meta_encoding=' do
+    it 'charset' do
+      doc = Nokolexbor::HTML('<html><head><meta charset="utf-8"></head></html>')
+      doc.meta_encoding = 'aaa'
+      _(doc.at_css('head').inner_html).must_equal '<meta charset="aaa">'
+    end
+
+    it 'http-equiv' do
+      doc = Nokolexbor::HTML('<html><head><meta http-equiv="content-type" content="text/html; charset=utf-8"></head></html>')
+      doc.meta_encoding = 'aaa'
+      _(doc.at_css('head').inner_html).must_equal '<meta http-equiv="content-type" content="text/html; charset=aaa">'
+    end
+
+    it 'no meta tag' do
+      doc = Nokolexbor::HTML('')
+      doc.meta_encoding = 'aaa'
+      _(doc.at_css('head').inner_html).must_equal '<meta charset="aaa">'
+    end
+  end
 end
