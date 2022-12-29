@@ -1,21 +1,60 @@
 require 'mkmf'
 require 'timeout'
 
+if ENV["CC"]
+  RbConfig::CONFIG["CC"] = RbConfig::MAKEFILE_CONFIG["CC"] = ENV["CC"]
+end
+
+# From: https://stackoverflow.com/questions/2108727
+# Cross-platform way of finding an executable in the $PATH.
+#
+#   which('ruby') #=> /usr/bin/ruby
+def which(cmd)
+  exts = ENV['PATHEXT'] ? ENV['PATHEXT'].split(';') : ['']
+  ENV['PATH'].split(File::PATH_SEPARATOR).each do |path|
+    exts.each { |ext|
+      exe = File.join(path, "#{cmd}#{ext}")
+      return exe if File.executable? exe
+    }
+  end
+  return nil
+end
+
 cmake_flags = [ ENV["CMAKE_FLAGS"] ]
-cmake_flags << "-DLEXBOR_BUILD_TESTS_CPP=OFF"
-cmake_flags << "-DLEXBOR_BUILD_SHARED=OFF"
-cmake_flags << "-DLEXBOR_BUILD_STATIC=ON"
+cmake_flags << "-DCMAKE_TRY_COMPILE_TARGET_TYPE=STATIC_LIBRARY"
+# Set system name explicitly when cross-compiling
+cmake_flags << "-DCMAKE_SYSTEM_NAME=Windows -DWIN32=1" if Gem.win_platform?
+# On Windows, Ruby-DevKit is MSYS-based, so ensure to use MSYS Makefiles.
+cmake_flags << "-G \"MSYS Makefiles\"" if Gem.win_platform? && !ENV['NOKOLEXBOR_CROSS_COMPILE']
+
+if ENV['NOKOLEXBOR_CROSS_COMPILE']
+  # use the same toolchain for cross-compiling lexbor
+  ['CC', 'CXX'].each do |env|
+    if RbConfig::CONFIG[env]
+      ENV[env] = RbConfig::CONFIG[env]
+    end
+  end
+  {'RANLIB' => 'RANLIB', 'AR' => 'AR', 'LD' => 'LINKER'}.each do |env, cmake_opt|
+    if RbConfig::CONFIG[env]
+      cmake_flags << "-DCMAKE_#{cmake_opt}=#{which(RbConfig::CONFIG[env])}"
+    end
+  end
+end
+
+lexbor_cmake_flags = cmake_flags + ["-DLEXBOR_BUILD_TESTS_CPP=OFF"]
+lexbor_cmake_flags << "-DLEXBOR_BUILD_SHARED=OFF"
+lexbor_cmake_flags << "-DLEXBOR_BUILD_STATIC=ON"
 
 if ENV['NOKOLEXBOR_DEBUG'] || ENV['NOKOLEXBOR_ASAN']
   CONFIG["optflags"] = "-O0"
   CONFIG["debugflags"] = "-ggdb3"
-  cmake_flags << "-DLEXBOR_OPTIMIZATION_LEVEL='-O0 -g'"
+  lexbor_cmake_flags << "-DLEXBOR_OPTIMIZATION_LEVEL='-O0 -g'"
 end
 
 if ENV['NOKOLEXBOR_ASAN']
   $LDFLAGS << " -fsanitize=address"
   $CFLAGS << " -fsanitize=address -DNOKOLEXBOR_ASAN"
-  cmake_flags << "-DLEXBOR_BUILD_WITH_ASAN=ON"
+  lexbor_cmake_flags << "-DLEXBOR_BUILD_WITH_ASAN=ON"
 end
 
 append_cflags("-DLEXBOR_STATIC")
@@ -35,7 +74,7 @@ end
 
 def self.run_cmake(timeout, args)
   # Set to process group so we can kill it and its children
-  pgroup = Gem.win_platform? ? :new_pgroup : :pgroup
+  pgroup = (Gem.win_platform? && !ENV['NOKOLEXBOR_CROSS_COMPILE']) ? :new_pgroup : :pgroup
   pid = Process.spawn("cmake #{args}", pgroup => true)
 
   Timeout.timeout(timeout) do
@@ -48,21 +87,6 @@ rescue Timeout::Error
   Process.kill(-9, pid)
   Process.detach(pid)
   raise CMakeTimeout.new("cmake has exceeded its timeout of #{timeout}s")
-end
-
-# From: https://stackoverflow.com/questions/2108727
-# Cross-platform way of finding an executable in the $PATH.
-#
-#   which('ruby') #=> /usr/bin/ruby
-def which(cmd)
-  exts = ENV['PATHEXT'] ? ENV['PATHEXT'].split(';') : ['']
-  ENV['PATH'].split(File::PATH_SEPARATOR).each do |path|
-    exts.each { |ext|
-      exe = File.join(path, "#{cmd}#{ext}")
-      return exe if File.executable? exe
-    }
-  end
-  return nil
 end
 
 # From: https://github.com/flavorjones/mini_portile/blob/main/lib/mini_portile2/mini_portile.rb#L94
@@ -109,9 +133,7 @@ Dir.chdir(LEXBOR_DIR) do
   Dir.mkdir("build") if !Dir.exist?("build")
 
   Dir.chdir("build") do
-    # On Windows, Ruby-DevKit is MSYS-based, so ensure to use MSYS Makefiles.
-    generator = "-G \"MSYS Makefiles\"" if Gem.win_platform?
-    run_cmake(10 * 60, ".. -DCMAKE_INSTALL_PREFIX:PATH=#{INSTALL_DIR} #{cmake_flags.join(' ')} #{generator}")
+    run_cmake(10 * 60, ".. -DCMAKE_INSTALL_PREFIX:PATH=#{INSTALL_DIR} #{lexbor_cmake_flags.join(' ')}")
     sys("#{MAKE} install")
   end
 end
@@ -121,7 +143,7 @@ Dir.chdir(EXT_DIR) do
   Dir.mkdir("build") if !Dir.exist?("build")
 
   Dir.chdir("build") do
-    run_cmake(10 * 60, "..#{Gem.win_platform? ? " -DLIBXML2_WITH_THREADS=OFF" : ""}")
+    run_cmake(10 * 60, ".. #{cmake_flags.join(' ')} #{Gem.win_platform? ? "-DLIBXML2_WITH_THREADS=OFF" : ""}")
   end
 end
 

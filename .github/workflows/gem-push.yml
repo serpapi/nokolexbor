@@ -1,9 +1,6 @@
 name: Publish Gem
 
-on:
-  push:
-    tags:
-      - v**
+on: push
 
 jobs:
   build-ruby:
@@ -20,35 +17,45 @@ jobs:
       uses: ruby/setup-ruby@v1
       with:
         ruby-version: '2.6'
-    - name: Publish to RubyGems
+    - name: Build gem
+      run: gem build *.gemspec
+    - name: Run tests
       run: |
-        mkdir -p $HOME/.gem
-        touch $HOME/.gem/credentials
-        chmod 0600 $HOME/.gem/credentials
-        printf -- "---\n:rubygems_api_key: ${GEM_HOST_API_KEY}\n" > $HOME/.gem/credentials
-        gem build *.gemspec
-        gem push *.gem
-      env:
-        GEM_HOST_API_KEY: "${{secrets.RUBYGEMS_API_KEY}}"
+        gem install *.gem
+        bundle install
+        rake test:gem
+    # - name: Publish to RubyGems
+    #   run: |
+    #     mkdir -p $HOME/.gem
+    #     touch $HOME/.gem/credentials
+    #     chmod 0600 $HOME/.gem/credentials
+    #     printf -- "---\n:rubygems_api_key: ${GEM_HOST_API_KEY}\n" > $HOME/.gem/credentials
+    #     gem push *.gem
+    #   env:
+    #     GEM_HOST_API_KEY: "${{secrets.RUBYGEMS_API_KEY}}"
 
   build-native:
     strategy:
       matrix:
-        platform: ['x86-mingw32', 'x64-mingw-ucrt', 'x64-mingw32', 'x86-linux', 'x86_64-linux', 'aarch64-linux', 'x86_64-darwin', 'arm64-darwin']
+        platform: ['x86-mingw32', 'x64-mingw-ucrt', 'x64-mingw32', 'x86_64-linux', 'aarch64-linux', 'x86_64-darwin', 'arm64-darwin']
     name: "${{ matrix.platform }}"
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
     container:
-      image: "larskanis/rake-compiler-dock-mri-${{ matrix.platform }}:1.2.1"
+      image: "larskanis/rake-compiler-dock-mri-${{ matrix.platform }}:1.2.2"
     steps:
     - uses: actions/checkout@v3
       with:
         submodules: true
-    - run: bundle install && bundle exec rake cross native gem
-    - uses: actions/upload-artifact@v2
+    - name: Build native gem
+      shell: bash
+      run: |
+        bundle install
+        bundle exec rake gem:${{ matrix.platform }}:build
+    - uses: actions/upload-artifact@v3
       with:
-        name: native-gem
-        path: gems
+        name: "${{ matrix.platform }}-gem"
+        path: pkg/*.gem
         retention-days: 1

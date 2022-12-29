@@ -52,7 +52,7 @@ jobs:
       run: bundle exec rake compile
       env:
         NOKOLEXBOR_ASAN: '1'
-    - name: Run test
+    - name: Run tests
       run: bundle exec rake test:asan
 
   install-gem-and-test:
