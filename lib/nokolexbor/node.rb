@@ -291,6 +291,12 @@ module Nokolexbor
       end
     end
 
+    def write_to(io, *options)
+      io.write(to_html(*options))
+    end
+
+    alias_method :write_html_to, :write_to
+
     private
 
     def xpath_internal(node, paths, handler, ns, binds)

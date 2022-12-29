@@ -1,4 +1,5 @@
 require 'spec_helper'
+require 'stringio'
 
 describe Nokolexbor::Node do
   it 'new' do
@@ -146,7 +147,12 @@ describe Nokolexbor::Node do
   describe 'inner_html' do
     it 'with indent' do
       doc = Nokolexbor::HTML('<span><div><div class="a"></div></div></span>')
-      _(doc.at_css('span').inner_html(indent: 2)).must_equal "<div>\n  <div class=\"a\">\n  </div>\n</div>\n"
+      _(doc.at_css('span').inner_html(indent: 2)).must_equal <<-HTML
+<div>
+  <div class="a">
+  </div>
+</div>
+HTML
     end
 
     it 'without indent' do
@@ -726,6 +732,29 @@ describe Nokolexbor::Node do
 
     it 'raises TypeError if name is not String' do
       _{ Nokolexbor::Comment.new(1, Nokolexbor::HTML('')) }.must_raise TypeError
+    end
+  end
+
+  describe 'write_to' do
+    it 'with indent' do
+      io = StringIO.new
+      doc = Nokolexbor::HTML('')
+      doc.write_to(io, indent: 2)
+      _(io.string).must_equal <<-HTML
+<html>
+  <head>
+  </head>
+  <body>
+  </body>
+</html>
+HTML
+    end
+
+    it 'without indent' do
+      io = StringIO.new
+      doc = Nokolexbor::HTML('')
+      doc.write_to(io)
+      _(io.string).must_equal '<html><head></head><body></body></html>'
     end
   end
 end
