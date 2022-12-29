@@ -374,11 +374,26 @@ nl_node_css(VALUE self, VALUE selector)
 }
 
 static VALUE
-nl_node_inner_html(VALUE self)
+nl_node_inner_html(int argc, VALUE *argv, VALUE self)
 {
   lxb_dom_node_t *node = nl_rb_node_unwrap(self);
   lexbor_str_t str = {0};
-  lxb_status_t status = lxb_html_serialize_deep_str(node, &str);
+  VALUE options;
+  lxb_status_t status;
+  size_t indent = 0;
+  rb_scan_args(argc, argv, "01", &options);
+
+  if (TYPE(options) == T_HASH) {
+    VALUE rb_indent = rb_hash_aref(options, ID2SYM(rb_intern("indent")));
+    if (!NIL_P(rb_indent)) {
+      indent = NUM2INT(rb_indent);
+    }
+  }
+  if (indent > 0) {
+    status = lxb_html_serialize_pretty_deep_str(node, 0, 0, &str);
+  } else {
+    status = lxb_html_serialize_deep_str(node, &str);
+  }
   if (status != LXB_STATUS_OK) {
     if (str.data != NULL) {
       lexbor_str_destroy(&str, node->owner_document->text, false);
@@ -396,11 +411,26 @@ nl_node_inner_html(VALUE self)
 }
 
 static VALUE
-nl_node_outer_html(VALUE self)
+nl_node_outer_html(int argc, VALUE *argv, VALUE self)
 {
   lxb_dom_node_t *node = nl_rb_node_unwrap(self);
   lexbor_str_t str = {0};
-  lxb_status_t status = lxb_html_serialize_tree_str(node, &str);
+  VALUE options;
+  lxb_status_t status;
+  size_t indent = 0;
+  rb_scan_args(argc, argv, "01", &options);
+
+  if (TYPE(options) == T_HASH) {
+    VALUE rb_indent = rb_hash_aref(options, ID2SYM(rb_intern("indent")));
+    if (!NIL_P(rb_indent)) {
+      indent = NUM2INT(rb_indent);
+    }
+  }
+  if (indent > 0) {
+    status = lxb_html_serialize_pretty_tree_str(node, 0, 0, &str);
+  } else {
+    status = lxb_html_serialize_tree_str(node, &str);
+  }
   if (status != LXB_STATUS_OK) {
     if (str.data != NULL) {
       lexbor_str_destroy(&str, node->owner_document->text, false);
@@ -813,8 +843,8 @@ void Init_nl_node(void)
   rb_define_method(cNokolexborNode, "==", nl_node_equals, 1);
   rb_define_method(cNokolexborNode, "css_impl", nl_node_css, 1);
   rb_define_method(cNokolexborNode, "at_css_impl", nl_node_at_css, 1);
-  rb_define_method(cNokolexborNode, "inner_html", nl_node_inner_html, 0);
-  rb_define_method(cNokolexborNode, "outer_html", nl_node_outer_html, 0);
+  rb_define_method(cNokolexborNode, "inner_html", nl_node_inner_html, -1);
+  rb_define_method(cNokolexborNode, "outer_html", nl_node_outer_html, -1);
   rb_define_method(cNokolexborNode, "key?", nl_node_has_key, 1);
   rb_define_method(cNokolexborNode, "keys", nl_node_keys, 0);
   rb_define_method(cNokolexborNode, "values", nl_node_values, 0);
@@ -848,6 +878,7 @@ void Init_nl_node(void)
   rb_define_alias(cNokolexborNode, "inner_text", "content");
   rb_define_alias(cNokolexborNode, "to_str", "content");
   rb_define_alias(cNokolexborNode, "to_html", "outer_html");
+  rb_define_alias(cNokolexborNode, "serialize", "outer_html");
   rb_define_alias(cNokolexborNode, "to_s", "outer_html");
   rb_define_alias(cNokolexborNode, "unlink", "remove");
   rb_define_alias(cNokolexborNode, "type", "node_type");

@@ -143,15 +143,31 @@ describe Nokolexbor::Node do
     end
   end
 
-  it 'inner_html' do
-    doc = Nokolexbor::HTML('<div><div class="a"></div></div>')
-    _(doc.at_css('div').inner_html).must_equal '<div class="a"></div>'
+  describe 'inner_html' do
+    it 'with indent' do
+      doc = Nokolexbor::HTML('<span><div><div class="a"></div></div></span>')
+      _(doc.at_css('span').inner_html(indent: 2)).must_equal "<div>\n  <div class=\"a\">\n  </div>\n</div>\n"
+    end
+
+    it 'without indent' do
+      doc = Nokolexbor::HTML('<span><div><div class="a"></div></div></span>')
+      _(doc.at_css('span').inner_html).must_equal '<div><div class="a"></div></div>'
+    end
   end
 
-  it 'outer_html' do
-    doc = Nokolexbor::HTML('<div><div class="a"></div></div>')
-    [:outer_html, :to_html, :to_s].each do |method|
-      _(doc.at_css('div').send(method)).must_equal '<div><div class="a"></div></div>'
+  describe 'outer_html' do
+    it 'with indent' do
+      doc = Nokolexbor::HTML('<div><div class="a"></div></div>')
+      [:outer_html, :to_html, :to_s].each do |method|
+        _(doc.at_css('div').send(method, indent: 2)).must_equal "<div>\n  <div class=\"a\">\n  </div>\n</div>\n"
+      end
+    end
+
+    it 'without indent' do
+      doc = Nokolexbor::HTML('<div><div class="a"></div></div>')
+      [:outer_html, :to_html, :to_s, :serialize].each do |method|
+        _(doc.at_css('div').send(method)).must_equal '<div><div class="a"></div></div>'
+      end
     end
   end
 

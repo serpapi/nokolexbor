@@ -115,13 +115,57 @@ describe Nokolexbor::NodeSet do
     end
   end
 
-  it 'inner_html' do
-    _(@nodes.inner_html).must_equal '<span>A</span>BCDEF'
+  describe 'inner_html' do
+    it 'with indent' do
+      _(@nodes.inner_html(indent: 2)).must_equal <<-HTML
+<span>
+  "A"
+</span>
+"B"
+"C"
+"D"
+"E"
+"F"
+HTML
+    end
+
+    it 'without indent' do
+      _(@nodes.inner_html).must_equal '<span>A</span>BCDEF'
+    end
   end
 
-  it 'outer_html' do
-    [:outer_html, :to_s, :to_html].each do |method|
-      _(@nodes.send(method)).must_equal '<div class="a"><span>A</span></div><div class="b">B</div><div class="c">C</div><div class="d">D</div><div class="e">E</div><div class="f">F</div>'
+  describe 'outer_html' do
+    it 'without indent' do
+      [:outer_html, :to_s, :to_html, :serialize].each do |method|
+        _(@nodes.send(method, indent: 2)).must_equal <<-HTML
+<div class="a">
+  <span>
+    "A"
+  </span>
+</div>
+<div class="b">
+  "B"
+</div>
+<div class="c">
+  "C"
+</div>
+<div class="d">
+  "D"
+</div>
+<div class="e">
+  "E"
+</div>
+<div class="f">
+  "F"
+</div>
+HTML
+      end
+    end
+
+    it 'without indent' do
+      [:outer_html, :to_s, :to_html, :serialize].each do |method|
+        _(@nodes.send(method)).must_equal '<div class="a"><span>A</span></div><div class="b">B</div><div class="c">C</div><div class="d">D</div><div class="e">E</div><div class="f">F</div>'
+      end
     end
   end
 

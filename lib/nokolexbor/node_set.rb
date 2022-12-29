@@ -54,16 +54,17 @@ module Nokolexbor
     alias_method :inner_text, :content
     alias_method :to_str, :content
 
-    def inner_html
-      self.map(&:inner_html).join
+    def inner_html(*args)
+      self.map { |n| n.inner_html(*args) }.join
     end
 
-    def outer_html
-      self.map(&:outer_html).join
+    def outer_html(*args)
+      self.map { |n| n.outer_html(*args) }.join
     end
 
     alias_method :to_s, :outer_html
     alias_method :to_html, :outer_html
+    alias_method :serialize, :outer_html
 
     def remove
       self.each(&:remove)
