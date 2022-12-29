@@ -27,6 +27,7 @@ describe Nokolexbor::Node do
     node = doc.at_css('div')
     node.content = '123<span></span>'
     _(node.inner_html).must_equal '123&lt;span&gt;&lt;/span&gt;'
+    _{ node.content = 1 }.must_raise TypeError
   end
 
   describe 'attr' do
@@ -656,6 +657,10 @@ describe Nokolexbor::Node do
       doc = Nokolexbor::HTML('<div></div>')
       _(doc.at_css('div')).must_be_instance_of Nokolexbor::Element
     end
+
+    it 'raises TypeError if name is not String' do
+      _{ Nokolexbor::Element.new(1, Nokolexbor::HTML('')) }.must_raise TypeError
+    end
   end
 
   describe "Text" do
@@ -677,6 +682,10 @@ describe Nokolexbor::Node do
       doc = Nokolexbor::HTML('<div>this is a text</div>')
       _(doc.at_css('div ::text')).must_be_instance_of Nokolexbor::Text
     end
+
+    it 'raises TypeError if name is not String' do
+      _{ Nokolexbor::Text.new(1, Nokolexbor::HTML('')) }.must_raise TypeError
+    end
   end
 
   describe "Comment" do
@@ -697,6 +706,10 @@ describe Nokolexbor::Node do
     it 'selection be of correct type' do
       doc = Nokolexbor::HTML('<div><!-- this is a comment --></div>')
       _(doc.at_css('div').child).must_be_instance_of Nokolexbor::Comment
+    end
+
+    it 'raises TypeError if name is not String' do
+      _{ Nokolexbor::Comment.new(1, Nokolexbor::HTML('')) }.must_raise TypeError
     end
   end
 end

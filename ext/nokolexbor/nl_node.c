@@ -91,7 +91,9 @@ nl_node_new(int argc, VALUE *argv, VALUE klass)
 
   document = nl_rb_document_unwrap(rb_document);
 
-  lxb_dom_element_t *element = lxb_dom_document_create_element(document, (const lxb_char_t *)StringValueCStr(rb_name), RSTRING_LEN(rb_name), NULL);
+  const char* c_name = StringValuePtr(rb_name);
+  size_t name_len = RSTRING_LEN(rb_name);
+  lxb_dom_element_t *element = lxb_dom_document_create_element(document, (const lxb_char_t *)c_name, name_len, NULL);
   if (element == NULL) {
     rb_raise(rb_eRuntimeError, "Error creating element");
   }
@@ -127,8 +129,8 @@ nl_node_content_set(VALUE self, VALUE content)
   lxb_dom_node_t *node = nl_rb_node_unwrap(self);
 
   const char *c_content = StringValuePtr(content);
-  size_t c_content_len = RSTRING_LEN(content);
-  lxb_status_t status = lxb_dom_node_text_content_set(node, (const lxb_char_t *)c_content, c_content_len);
+  size_t content_len = RSTRING_LEN(content);
+  lxb_status_t status = lxb_dom_node_text_content_set(node, (const lxb_char_t *)c_content, content_len);
   if (status != LXB_STATUS_OK) {
     nl_raise_lexbor_error(status);
   }

@@ -20,7 +20,9 @@ nl_comment_new(int argc, VALUE *argv, VALUE klass)
 
   document = nl_rb_document_unwrap(rb_document);
 
-  lxb_dom_comment_t *element = lxb_dom_document_create_comment(document, (const lxb_char_t *)StringValueCStr(rb_content), RSTRING_LEN(rb_content));
+  const char* c_content = StringValuePtr(rb_content);
+  size_t content_len = RSTRING_LEN(rb_content);
+  lxb_dom_comment_t *element = lxb_dom_document_create_comment(document, (const lxb_char_t *)c_content, content_len);
   if (element == NULL) {
     rb_raise(rb_eRuntimeError, "Error creating comment");
   }
