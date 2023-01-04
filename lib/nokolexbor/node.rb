@@ -192,6 +192,16 @@ module Nokolexbor
       at_css_impl(args.join(', '))
     end
 
+    def nokogiri_css(*args)
+      rules, handler, ns, _ = extract_params(args)
+
+      nokogiri_css_internal(self, rules, handler, ns)
+    end
+
+    def nokogiri_at_css(*args)
+      nokogiri_css(*args).first
+    end
+
     def xpath(*args)
       paths, handler, ns, binds = extract_params(args)
 
@@ -299,6 +309,10 @@ module Nokolexbor
 
     private
 
+    def nokogiri_css_internal(node, rules, handler, ns)
+      xpath_internal(node, css_rules_to_xpath(rules, ns), handler, ns, nil)
+    end
+
     def xpath_internal(node, paths, handler, ns, binds)
       # document = node.document
       # return NodeSet.new(document) unless document
@@ -326,6 +340,30 @@ module Nokolexbor
       ctx.evaluate(path, handler)
     end
 
+    def css_rules_to_xpath(rules, ns)
+      rules.map { |rule| xpath_query_from_css_rule(rule, ns) }
+    end
+
+    def ensure_nokogiri
+      unless defined?(Nokogiri) && defined?(Nokogiri::CSS)
+        require 'nokogiri'
+      end
+    rescue LoadError
+      fail('nokogiri_css and nokogiri_at_css require Nokogiri to be installed')
+    end
+
+    def xpath_query_from_css_rule(rule, ns)
+      ensure_nokogiri
+      visitor = Nokogiri::CSS::XPathVisitor.new(
+        builtins: Nokogiri::CSS::XPathVisitor::BuiltinsConfig::OPTIMAL,
+        doctype: :html4,
+      )
+      self.class::IMPLIED_XPATH_CONTEXTS.map do |implied_xpath_context|
+        Nokogiri::CSS.xpath_for(rule.to_s, { prefix: implied_xpath_context, ns: ns,
+                                   visitor: visitor, })
+      end.join(" | ")
+    end
+
     def extract_params(params)
       handler = params.find do |param|
         ![Hash, String, Symbol].include?(param.class)
@@ -344,5 +382,7 @@ module Nokolexbor
 
       [params, handler, ns, binds]
     end
+
+    IMPLIED_XPATH_CONTEXTS = [".//"].freeze
   end
 end

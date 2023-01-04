@@ -2897,6 +2897,10 @@ valuePop(xmlXPathParserContextPtr ctxt)
     ctxt->valueTab[ctxt->valueNr] = NULL;
     return (ret);
 }
+
+xmlXPathObjectPtr
+nl_xmlXPathValuePop(xmlXPathParserContextPtr ctxt) { return valuePop(ctxt); }
+
 /**
  * valuePush:
  * @ctxt:  an XPath evaluation context
@@ -2940,6 +2944,9 @@ valuePush(xmlXPathParserContextPtr ctxt, xmlXPathObjectPtr value)
     ctxt->value = value;
     return (ctxt->valueNr++);
 }
+
+int
+nl_xmlXPathValuePush(xmlXPathParserContextPtr ctxt, xmlXPathObjectPtr value) { return valuePush(ctxt, value); }
 
 /**
  * nl_xmlXPathPopBoolean:

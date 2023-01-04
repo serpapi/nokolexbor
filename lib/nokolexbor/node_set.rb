@@ -126,6 +126,23 @@ module Nokolexbor
         end
       end
     end
+
+    def nokogiri_css(*args)
+      rules, handler, ns, _ = extract_params(args)
+      paths = css_rules_to_xpath(rules, ns)
+
+      NodeSet.new(@document) do |set|
+        each do |node|
+          node.send(:xpath_internal, node, paths, handler, ns, nil).each do |inner_node|
+            set << inner_node
+          end
+        end
+      end
+    end
+
+    private
+
+    IMPLIED_XPATH_CONTEXTS = [".//", "self::"].freeze # :nodoc:
       
   end
 end

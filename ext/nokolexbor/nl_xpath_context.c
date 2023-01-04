@@ -15,10 +15,108 @@ VALUE cNokolexborXpathContext;
 VALUE mNokolexborXpath;
 VALUE cNokolexborXpathSyntaxError;
 
+static const xmlChar *NOKOGIRI_PREFIX = (const xmlChar *)"nokogiri";
+static const xmlChar *NOKOGIRI_URI = (const xmlChar *)"http://www.nokogiri.org/default_ns/ruby/extensions_functions";
+static const xmlChar *NOKOGIRI_BUILTIN_PREFIX = (const xmlChar *)"nokogiri-builtin";
+static const xmlChar *NOKOGIRI_BUILTIN_URI = (const xmlChar *)"https://www.nokogiri.org/default_ns/ruby/builtins";
+
 static void
 free_xml_xpath_context(xmlXPathContextPtr ctx)
 {
   nl_xmlXPathFreeContext(ctx);
+}
+
+/* find a CSS class in an HTML element's `class` attribute */
+static const xmlChar *
+builtin_css_class(const xmlChar *str, const xmlChar *val)
+{
+  int val_len;
+
+  if (str == NULL) {
+    return (NULL);
+  }
+  if (val == NULL) {
+    return (NULL);
+  }
+
+  val_len = nl_xmlStrlen(val);
+  if (val_len == 0) {
+    return (str);
+  }
+
+  while (*str != 0) {
+    if ((*str == *val) && !nl_xmlStrncmp(str, val, val_len)) {
+      const xmlChar *next_byte = str + val_len;
+
+      /* only match if the next byte is whitespace or end of string */
+      if ((*next_byte == 0) || (IS_BLANK_CH(*next_byte))) {
+        return ((const xmlChar *)str);
+      }
+    }
+
+    /* advance str to whitespace */
+    while ((*str != 0) && !IS_BLANK_CH(*str)) {
+      str++;
+    }
+
+    /* advance str to start of next word or end of string */
+    while ((*str != 0) && IS_BLANK_CH(*str)) {
+      str++;
+    }
+  }
+
+  return (NULL);
+}
+
+/* xmlXPathFunction to wrap builtin_css_class() */
+static void
+xpath_builtin_css_class(xmlXPathParserContextPtr ctxt, int nargs)
+{
+  xmlXPathObjectPtr hay, needle;
+
+  CHECK_ARITY(2);
+
+  CAST_TO_STRING;
+  needle = nl_xmlXPathValuePop(ctxt);
+  if ((needle == NULL) || (needle->type != XPATH_STRING)) {
+    nl_xmlXPathFreeObject(needle);
+    XP_ERROR(XPATH_INVALID_TYPE);
+  }
+
+  CAST_TO_STRING;
+  hay = nl_xmlXPathValuePop(ctxt);
+  if ((hay == NULL) || (hay->type != XPATH_STRING)) {
+    nl_xmlXPathFreeObject(hay);
+    nl_xmlXPathFreeObject(needle);
+    XP_ERROR(XPATH_INVALID_TYPE);
+  }
+
+  if (builtin_css_class(hay->stringval, needle->stringval)) {
+    nl_xmlXPathValuePush(ctxt, nl_xmlXPathNewBoolean(1));
+  } else {
+    nl_xmlXPathValuePush(ctxt, nl_xmlXPathNewBoolean(0));
+  }
+
+  nl_xmlXPathFreeObject(hay);
+  nl_xmlXPathFreeObject(needle);
+}
+
+/* xmlXPathFunction to select nodes whose local name matches, for HTML5 CSS queries that should ignore namespaces */
+static void
+xpath_builtin_local_name_is(xmlXPathParserContextPtr ctxt, int nargs)
+{
+  xmlXPathObjectPtr element_name;
+  size_t tmp_len;
+
+  CHECK_ARITY(1);
+  CAST_TO_STRING;
+  CHECK_TYPE(XPATH_STRING);
+  element_name = nl_xmlXPathValuePop(ctxt);
+
+  const lxb_char_t *node_name = lxb_dom_node_name_qualified(ctxt->context->node, &tmp_len);
+  nl_xmlXPathValuePush(ctxt, nl_xmlXPathNewBoolean(nl_xmlStrEqual((xmlChar *)node_name, element_name->stringval)));
+
+  nl_xmlXPathFreeObject(element_name);
 }
 
 /*
@@ -227,6 +325,13 @@ nl_xpath_context_new(VALUE klass, VALUE rb_node)
 
   ctx = nl_xmlXPathNewContext(node->owner_document);
   ctx->node = node;
+
+  nl_xmlXPathRegisterNs(ctx, NOKOGIRI_PREFIX, NOKOGIRI_URI);
+  nl_xmlXPathRegisterNs(ctx, NOKOGIRI_BUILTIN_PREFIX, NOKOGIRI_BUILTIN_URI);
+  nl_xmlXPathRegisterFuncNS(ctx, (const xmlChar *)"css-class", NOKOGIRI_BUILTIN_URI,
+                         xpath_builtin_css_class);
+  nl_xmlXPathRegisterFuncNS(ctx, (const xmlChar *)"local-name-is", NOKOGIRI_BUILTIN_URI,
+                         xpath_builtin_local_name_is);
 
   self = Data_Wrap_Struct(klass, 0, free_xml_xpath_context, ctx);
   rb_iv_set(self, "@document", nl_rb_document_get(rb_node));

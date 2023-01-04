@@ -93,5 +93,9 @@ module Nokolexbor
         head.prepend_child(element)
       end
     end
+
+    private
+
+    IMPLIED_XPATH_CONTEXTS = ["//"].freeze # :nodoc:
   end
 end

@@ -477,11 +477,10 @@ XMLPUBFUN xmlXPathParserContextPtr XMLCALL
 XMLPUBFUN void XMLCALL
 		nl_xmlXPathFreeParserContext	(xmlXPathParserContextPtr ctxt);
 
-/* TODO: remap to xmlXPathValuePop and Push. */
-static xmlXPathObjectPtr XMLCALL
-		valuePop			(xmlXPathParserContextPtr ctxt);
-static int XMLCALL
-		valuePush			(xmlXPathParserContextPtr ctxt,
+XMLPUBFUN xmlXPathObjectPtr XMLCALL
+		nl_xmlXPathValuePop		(xmlXPathParserContextPtr ctxt);
+XMLPUBFUN int XMLCALL
+		nl_xmlXPathValuePush		(xmlXPathParserContextPtr ctxt,
 						 xmlXPathObjectPtr value);
 
 XMLPUBFUN xmlXPathObjectPtr XMLCALL
