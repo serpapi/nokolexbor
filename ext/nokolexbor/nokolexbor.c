@@ -54,6 +54,9 @@ void nl_raise_lexbor_error(lxb_status_t error)
 
 void Init_nokolexbor(void)
 {
+#ifndef NOKOLEXBOR_ASAN
+  lexbor_memory_setup(ruby_xmalloc, ruby_xrealloc, ruby_xcalloc, ruby_xfree);
+#endif
   mNokolexbor = rb_define_module("Nokolexbor");
   eLexborError = rb_define_class_under(mNokolexbor, "LexborError", rb_eStandardError);
   eLexborSyntaxError = rb_define_class_under(mNokolexbor, "LexborSyntaxError", eLexborError);
