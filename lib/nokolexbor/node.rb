@@ -354,10 +354,14 @@ module Nokolexbor
 
     def xpath_query_from_css_rule(rule, ns)
       ensure_nokogiri
-      visitor = Nokogiri::CSS::XPathVisitor.new(
-        builtins: Nokogiri::CSS::XPathVisitor::BuiltinsConfig::OPTIMAL,
-        doctype: :html4,
-      )
+      if defined? Nokogiri::CSS::XPathVisitor::BuiltinsConfig
+        visitor = Nokogiri::CSS::XPathVisitor.new(
+          builtins: Nokogiri::CSS::XPathVisitor::BuiltinsConfig::OPTIMAL,
+          doctype: :html4,
+        )
+      else
+        visitor = Nokogiri::CSS::XPathVisitorOptimallyUseBuiltins.new
+      end
       self.class::IMPLIED_XPATH_CONTEXTS.map do |implied_xpath_context|
         Nokogiri::CSS.xpath_for(rule.to_s, { prefix: implied_xpath_context, ns: ns,
                                    visitor: visitor, })
