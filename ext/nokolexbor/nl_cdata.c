@@ -20,7 +20,7 @@ nl_cdata_new(int argc, VALUE *argv, VALUE klass)
 
   document = nl_rb_document_unwrap(rb_document);
 
-  const char* c_content = StringValuePtr(rb_content);
+  const char *c_content = StringValuePtr(rb_content);
   size_t content_len = RSTRING_LEN(rb_content);
   lxb_dom_cdata_section_t *element = lxb_dom_document_create_cdata_section(document, (const lxb_char_t *)c_content, content_len);
   if (element == NULL) {

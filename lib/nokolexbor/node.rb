@@ -182,6 +182,10 @@ module Nokolexbor
       end
     end
 
+    def fragment(tags)
+      Nokolexbor::DocumentFragment.new(document, tags, self)
+    end
+
     alias_method :inner_html=, :children=
 
     def css(*args)

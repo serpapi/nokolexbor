@@ -20,7 +20,7 @@ nl_text_new(int argc, VALUE *argv, VALUE klass)
 
   document = nl_rb_document_unwrap(rb_document);
 
-  const char* c_text = StringValuePtr(rb_text);
+  const char *c_text = StringValuePtr(rb_text);
   size_t text_len = RSTRING_LEN(rb_text);
   lxb_dom_text_t *element = lxb_dom_document_create_text_node(document, (const lxb_char_t *)c_text, text_len);
   if (element == NULL) {

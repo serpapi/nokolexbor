@@ -21,11 +21,11 @@ nl_processing_instruction_new(int argc, VALUE *argv, VALUE klass)
 
   document = nl_rb_document_unwrap(rb_document);
 
-  const char* c_name = StringValuePtr(rb_name);
+  const char *c_name = StringValuePtr(rb_name);
   size_t name_len = RSTRING_LEN(rb_name);
-  const char* c_content = StringValuePtr(rb_content);
+  const char *c_content = StringValuePtr(rb_content);
   size_t content_len = RSTRING_LEN(rb_content);
-  lxb_dom_processing_instruction_t * node = lxb_dom_document_create_processing_instruction(document, (const lxb_char_t *)c_name, name_len, (const lxb_char_t *)c_content, content_len);
+  lxb_dom_processing_instruction_t *node = lxb_dom_document_create_processing_instruction(document, (const lxb_char_t *)c_name, name_len, (const lxb_char_t *)c_content, content_len);
   if (node == NULL) {
     rb_raise(rb_eRuntimeError, "Error creating processing instruction");
   }

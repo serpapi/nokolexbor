@@ -333,12 +333,12 @@ HTML
       @frag = @doc.fragment('<div></div><span></span>')
     end
 
-    it 'returns a kind of Nokolexbor::Node' do
-      _(@frag).must_be_kind_of Nokolexbor::Node
+    it 'returns Nokolexbor::DocumentFragment' do
+      _(@frag).must_be_kind_of Nokolexbor::DocumentFragment
     end
 
     it 'to_html works' do
-      _(@frag.children.to_html).must_equal '<div></div><span></span>'
+      _(@frag.to_html).must_equal '<div></div><span></span>'
     end
 
     it 'can be inserted to doc' do

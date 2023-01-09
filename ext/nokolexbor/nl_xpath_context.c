@@ -329,9 +329,9 @@ nl_xpath_context_new(VALUE klass, VALUE rb_node)
   nl_xmlXPathRegisterNs(ctx, NOKOGIRI_PREFIX, NOKOGIRI_URI);
   nl_xmlXPathRegisterNs(ctx, NOKOGIRI_BUILTIN_PREFIX, NOKOGIRI_BUILTIN_URI);
   nl_xmlXPathRegisterFuncNS(ctx, (const xmlChar *)"css-class", NOKOGIRI_BUILTIN_URI,
-                         xpath_builtin_css_class);
+                            xpath_builtin_css_class);
   nl_xmlXPathRegisterFuncNS(ctx, (const xmlChar *)"local-name-is", NOKOGIRI_BUILTIN_URI,
-                         xpath_builtin_local_name_is);
+                            xpath_builtin_local_name_is);
 
   self = Data_Wrap_Struct(klass, 0, free_xml_xpath_context, ctx);
   rb_iv_set(self, "@document", nl_rb_document_get(rb_node));

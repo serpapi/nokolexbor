@@ -11,6 +11,7 @@ extern VALUE cNokolexborText;
 extern VALUE cNokolexborComment;
 extern VALUE cNokolexborProcessingInstruction;
 extern VALUE cNokolexborNodeSet;
+extern VALUE cNokolexborDocumentFragment;
 extern VALUE eLexborError;
 VALUE cNokolexborNode;
 VALUE cNokolexborElement;
@@ -52,8 +53,9 @@ nl_rb_node_create(lxb_dom_node_t *node, VALUE rb_document)
   //   break;
   // case LXB_DOM_NODE_TYPE_DOCUMENT_TYPE:
   //   break;
-  // case LXB_DOM_NODE_TYPE_DOCUMENT_FRAGMENT:
-  //   break;
+  case LXB_DOM_NODE_TYPE_DOCUMENT_FRAGMENT:
+    rb_class = cNokolexborDocumentFragment;
+    break;
   // case LXB_DOM_NODE_TYPE_NOTATION:
   //   break;
   default:
@@ -93,7 +95,7 @@ nl_node_new(int argc, VALUE *argv, VALUE klass)
 
   document = nl_rb_document_unwrap(rb_document);
 
-  const char* c_name = StringValuePtr(rb_name);
+  const char *c_name = StringValuePtr(rb_name);
   size_t name_len = RSTRING_LEN(rb_name);
   lxb_dom_element_t *element = lxb_dom_document_create_element(document, (const lxb_char_t *)c_name, name_len, NULL);
   if (element == NULL) {
@@ -659,17 +661,19 @@ nl_node_name(VALUE self)
 }
 
 static lxb_dom_node_t *
-nl_node_parse_fragment(lxb_dom_document_t *doc, lxb_char_t *html, size_t size)
+nl_node_parse_fragment(lxb_dom_document_t *doc, lxb_dom_element_t *element, lxb_char_t *html, size_t size)
 {
   size_t tag_name_len;
   lxb_html_document_t *html_doc = lxb_html_interface_document(doc);
-  const lxb_char_t *tag_name = lxb_tag_name_by_id(lxb_html_document_tags(html_doc), LXB_TAG__UNDEF, &tag_name_len);
-  if (tag_name == NULL) {
-    rb_raise(rb_eRuntimeError, "Error getting tag name");
-  }
-  lxb_dom_element_t *element = lxb_dom_document_create_element(doc, tag_name, tag_name_len, NULL);
   if (element == NULL) {
-    rb_raise(rb_eRuntimeError, "Error creating element");
+    const lxb_char_t *tag_name = lxb_tag_name_by_id(lxb_html_document_tags(html_doc), LXB_TAG__UNDEF, &tag_name_len);
+    if (tag_name == NULL) {
+      rb_raise(rb_eRuntimeError, "Error getting tag name");
+    }
+    element = lxb_dom_document_create_element(doc, tag_name, tag_name_len, NULL);
+    if (element == NULL) {
+      rb_raise(rb_eRuntimeError, "Error creating element");
+    }
   }
   lxb_dom_node_t *frag_root = lxb_html_document_parse_fragment(html_doc, element, html, size);
   if (frag_root == NULL) {
@@ -679,14 +683,22 @@ nl_node_parse_fragment(lxb_dom_document_t *doc, lxb_char_t *html, size_t size)
 }
 
 static VALUE
-nl_node_fragment(VALUE self, VALUE html)
+nl_node_parse(VALUE self, VALUE html)
 {
   Check_Type(html, T_STRING);
   lxb_dom_node_t *node = nl_rb_node_unwrap(self);
   lxb_dom_document_t *doc = node->owner_document;
 
-  lxb_dom_node_t *frag_root = nl_node_parse_fragment(doc, (lxb_char_t *)RSTRING_PTR(html), RSTRING_LEN(html));
-  return nl_rb_node_create(frag_root, nl_rb_document_get(self));
+  lxb_dom_node_t *frag_root = nl_node_parse_fragment(doc, lxb_dom_interface_element(node), (lxb_char_t *)RSTRING_PTR(html), RSTRING_LEN(html));
+  lexbor_array_t *array = lexbor_array_create();
+
+  while (frag_root->first_child != NULL) {
+    lxb_dom_node_t *child = frag_root->first_child;
+    lxb_dom_node_remove(child);
+    lexbor_array_push(array, child);
+  }
+  lxb_dom_node_destroy(frag_root);
+  return nl_rb_node_set_create_with_data(array, nl_rb_document_get(self));
 }
 
 static VALUE
@@ -705,7 +717,7 @@ nl_node_add_sibling(VALUE self, VALUE next_or_previous, VALUE new)
   }
 
   if (TYPE(new) == T_STRING) {
-    lxb_dom_node_t *frag_root = nl_node_parse_fragment(doc, (lxb_char_t *)RSTRING_PTR(new), RSTRING_LEN(new));
+    lxb_dom_node_t *frag_root = nl_node_parse_fragment(doc, NULL, (lxb_char_t *)RSTRING_PTR(new), RSTRING_LEN(new));
     lexbor_array_t *array = lexbor_array_create();
 
     while (frag_root->first_child != NULL) {
@@ -736,7 +748,7 @@ nl_node_add_child(VALUE self, VALUE new)
   lxb_dom_document_t *doc = node->owner_document;
 
   if (TYPE(new) == T_STRING) {
-    lxb_dom_node_t *frag_root = nl_node_parse_fragment(doc, (lxb_char_t *)RSTRING_PTR(new), RSTRING_LEN(new));
+    lxb_dom_node_t *frag_root = nl_node_parse_fragment(doc, NULL, (lxb_char_t *)RSTRING_PTR(new), RSTRING_LEN(new));
     lexbor_array_t *array = lexbor_array_create();
 
     while (frag_root->first_child != NULL) {
@@ -861,7 +873,7 @@ void Init_nl_node(void)
   rb_define_method(cNokolexborNode, "destroy", nl_node_destroy, 0);
   rb_define_method(cNokolexborNode, "attrs", nl_node_attrs, 0);
   rb_define_method(cNokolexborNode, "name", nl_node_name, 0);
-  rb_define_method(cNokolexborNode, "fragment", nl_node_fragment, 1);
+  rb_define_method(cNokolexborNode, "parse", nl_node_parse, 1);
   rb_define_method(cNokolexborNode, "add_sibling", nl_node_add_sibling, 2);
   rb_define_method(cNokolexborNode, "add_child", nl_node_add_child, 1);
   rb_define_method(cNokolexborNode, "node_type", nl_node_get_type, 0);

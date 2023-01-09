@@ -67,5 +67,6 @@ void Init_nokolexbor(void)
   Init_nl_cdata();
   Init_nl_processing_instruction();
   Init_nl_node_set();
+  Init_nl_document_fragment();
   Init_nl_xpath_context();
 }
