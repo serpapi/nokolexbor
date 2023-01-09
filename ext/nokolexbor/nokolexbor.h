@@ -9,6 +9,7 @@
 
 extern VALUE cNokolexborDocument;
 
+void Init_nl_error(void);
 void Init_nl_document(void);
 void Init_nl_node(void);
 void Init_nl_text(void);

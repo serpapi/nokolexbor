@@ -112,7 +112,7 @@ describe Nokolexbor::Node do
     end
 
     it 'raises if selector is invalid' do
-      _{ @root.css('::text1') }.must_raise Nokolexbor::LexborSyntaxError
+      _{ @root.css('::text1') }.must_raise Nokolexbor::LexborUnexpectedDataError
     end
   end
 
