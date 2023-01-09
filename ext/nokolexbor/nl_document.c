@@ -41,6 +41,8 @@ nl_document_parse(VALUE self, VALUE rb_string_or_io)
     rb_raise(rb_eRuntimeError, "Error creating document");
   }
 
+  lxb_dom_document_scripting_set(lxb_dom_interface_document(document), true);
+
   lxb_status_t status = lxb_html_document_parse(document, (const lxb_char_t *)html_c, html_len);
   if (status != LXB_STATUS_OK) {
     nl_raise_lexbor_error(status);

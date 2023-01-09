@@ -180,4 +180,16 @@ describe Nokolexbor::Document do
       _(doc.at_css('head').inner_html).must_equal '<meta charset="aaa">'
     end
   end
+
+  describe 'scripting is turned on' do
+    it 'when noscript tag is in head' do
+      doc = Nokolexbor::HTML('<html><head><noscript><div>No</div></noscript></head></html>')
+      _(doc.to_html).must_equal '<html><head><noscript><div>No</div></noscript></head><body></body></html>'
+    end
+
+    it 'when noscript tag is in body' do
+      doc = Nokolexbor::HTML('<html><body><noscript><div>No</div></noscript></body></html>')
+      _(doc.to_html).must_equal '<html><head></head><body><noscript><div>No</div></noscript></body></html>'
+    end
+  end
 end
