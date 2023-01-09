@@ -735,6 +735,26 @@ HTML
     end
   end
 
+  describe "ProcessingInstruction" do
+    it "can be newed directly" do
+      node = Nokolexbor::ProcessingInstruction.new('pi_name', 'pi_content', Nokolexbor::HTML(''))
+      _(node).must_be_instance_of Nokolexbor::ProcessingInstruction
+      _(node.processing_instruction?).must_equal true
+      _(node.to_html).must_equal '<?pi_name pi_content>'
+    end
+
+    it 'can be added to html' do
+      doc = Nokolexbor::HTML('')
+      node = Nokolexbor::ProcessingInstruction.new('pi_name', 'pi_content', Nokolexbor::HTML(''))
+      doc.at_css('body').add_child node
+      _(doc.at_css('body').inner_html).must_equal '<?pi_name pi_content>'
+    end
+
+    it 'raises TypeError if name is not String' do
+      _{ Nokolexbor::ProcessingInstruction.new(1, 2, Nokolexbor::HTML('')) }.must_raise TypeError
+    end
+  end
+
   describe 'write_to' do
     it 'with indent' do
       io = StringIO.new

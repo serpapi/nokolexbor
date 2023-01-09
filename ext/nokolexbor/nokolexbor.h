@@ -11,10 +11,11 @@ extern VALUE cNokolexborDocument;
 
 void Init_nl_document(void);
 void Init_nl_node(void);
-void Init_nl_node_set(void);
 void Init_nl_text(void);
 void Init_nl_comment(void);
 void Init_nl_cdata(void);
+void Init_nl_processing_instruction(void);
+void Init_nl_node_set(void);
 void Init_nl_xpath_context(void);
 
 void nl_raise_lexbor_error(lxb_status_t error);

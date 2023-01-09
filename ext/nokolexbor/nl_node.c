@@ -9,6 +9,7 @@ extern VALUE mNokolexbor;
 extern VALUE cNokolexborDocument;
 extern VALUE cNokolexborText;
 extern VALUE cNokolexborComment;
+extern VALUE cNokolexborProcessingInstruction;
 extern VALUE cNokolexborNodeSet;
 extern VALUE eLexborError;
 VALUE cNokolexborNode;
@@ -41,8 +42,9 @@ nl_rb_node_create(lxb_dom_node_t *node, VALUE rb_document)
   //   break;
   // case LXB_DOM_NODE_TYPE_ENTITY:
   //   break;
-  // case LXB_DOM_NODE_TYPE_PROCESSING_INSTRUCTION:
-  //   break;
+  case LXB_DOM_NODE_TYPE_PROCESSING_INSTRUCTION:
+    rb_class = cNokolexborProcessingInstruction;
+    break;
   case LXB_DOM_NODE_TYPE_COMMENT:
     rb_class = cNokolexborComment;
     break;
