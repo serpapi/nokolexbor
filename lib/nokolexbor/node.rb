@@ -145,13 +145,10 @@ module Nokolexbor
       ancestors.last.css(selector).any? { |node| node == self }
     end
 
-    def attribute(name)
-      return nil unless key?(name)
-      Attribute.new(name, attr(name))
-    end
-
     def attributes
-      attrs.map { |k, v| [k, Attribute.new(k, v)] }.to_h
+      attribute_nodes.each_with_object({}) do |node, hash|
+        hash[node.name] = node
+      end
     end
 
     def replace(node)

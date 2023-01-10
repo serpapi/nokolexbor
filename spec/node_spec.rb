@@ -556,12 +556,30 @@ HTML
     _(node.matches?('span.a:has(div)')).must_equal true
   end
 
-  it 'attribute' do
-    doc = Nokolexbor::HTML('<div attr1="1" attr2="2" attr3="3"></div>')
-    a = doc.at_css('div').attribute('attr1')
-    _(a).must_be_instance_of Nokolexbor::Attribute
-    _(a.name).must_equal 'attr1'
-    _(a.value).must_equal '1'
+  describe 'attribute' do
+    before do
+      @doc = Nokolexbor::HTML('<div attr1="1" attr2="2" attr3="3">Text 1</div>')
+    end
+    it 'on Element' do
+      a = @doc.at_css('div').attribute('attr1')
+      _(a).must_be_instance_of Nokolexbor::Attribute
+      _(a.name).must_equal 'attr1'
+      _(a.value).must_equal '1'
+    end
+
+    it 'on Document' do
+      _(@doc.attribute('attr1')).must_be_nil
+    end
+
+    it 'on Text' do
+      _(@doc.at_css('div').child.attribute('attr1')).must_be_nil
+    end
+
+    it 'changes reflect to doc' do
+      a = @doc.at_css('div').attribute('attr1')
+      a.value = 'new1'
+      _(@doc.at_css('div').to_html).must_equal '<div attr1="new1" attr2="2" attr3="3">Text 1</div>'
+    end
   end
 
   it 'attributes' do
@@ -569,6 +587,9 @@ HTML
     attrs = doc.at_css('div').attributes
     _(attrs).must_be_instance_of Hash
     _(attrs.values.size).must_equal 3
+    attrs.each do |k, v|
+      _(v).must_be_instance_of Nokolexbor::Attribute
+    end
   end
 
   describe 'replace' do

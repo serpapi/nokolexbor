@@ -26,7 +26,6 @@ require 'nokolexbor/node'
 require 'nokolexbor/document'
 require 'nokolexbor/node_set'
 require 'nokolexbor/document_fragment'
-require 'nokolexbor/attribute'
 require 'nokolexbor/xpath'
 require 'nokolexbor/xpath_context'
 

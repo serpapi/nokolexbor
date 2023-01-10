@@ -12,6 +12,7 @@ extern VALUE cNokolexborComment;
 extern VALUE cNokolexborProcessingInstruction;
 extern VALUE cNokolexborNodeSet;
 extern VALUE cNokolexborDocumentFragment;
+extern VALUE cNokolexborAttribute;
 extern VALUE eLexborError;
 VALUE cNokolexborNode;
 VALUE cNokolexborElement;
@@ -31,8 +32,9 @@ nl_rb_node_create(lxb_dom_node_t *node, VALUE rb_document)
   case LXB_DOM_NODE_TYPE_ELEMENT:
     rb_class = cNokolexborElement;
     break;
-  // case LXB_DOM_NODE_TYPE_ATTRIBUTE:
-  //   break;
+  case LXB_DOM_NODE_TYPE_ATTRIBUTE:
+    rb_class = cNokolexborAttribute;
+    break;
   case LXB_DOM_NODE_TYPE_TEXT:
     rb_class = cNokolexborText;
     break;
@@ -109,6 +111,49 @@ nl_node_new(int argc, VALUE *argv, VALUE klass)
   }
 
   return rb_node;
+}
+
+static VALUE
+nl_node_attribute(VALUE self, VALUE rb_name)
+{
+  lxb_dom_node_t *node = nl_rb_node_unwrap(self);
+
+  const char *c_name = StringValuePtr(rb_name);
+  size_t name_len = RSTRING_LEN(rb_name);
+
+  if (node->type != LXB_DOM_NODE_TYPE_ELEMENT) {
+    return Qnil;
+  }
+
+  lxb_dom_attr_t *attr = lxb_dom_element_attr_by_name(lxb_dom_interface_element(node), (const lxb_char_t *)c_name, name_len);
+  if (attr == NULL) {
+    return Qnil;
+  }
+  return nl_rb_node_create(attr, nl_rb_document_get(self));
+}
+
+static VALUE
+nl_node_attribute_nodes(VALUE self)
+{
+  lxb_dom_node_t *node = nl_rb_node_unwrap(self);
+  VALUE ary = rb_ary_new();
+  if (node->type != LXB_DOM_NODE_TYPE_ELEMENT) {
+    return ary;
+  }
+
+  lxb_dom_attr_t *attr = lxb_dom_element_first_attribute(lxb_dom_interface_element(node));
+
+  if (attr == NULL) {
+    return ary;
+  }
+
+  VALUE rb_doc = nl_rb_document_get(self);
+  while (attr != NULL) {
+    rb_ary_push(ary, nl_rb_node_create(attr, rb_doc));
+    attr = attr->next;
+  }
+
+  return ary;
 }
 
 static VALUE
@@ -849,6 +894,8 @@ void Init_nl_node(void)
   cNokolexborCharacterData = rb_define_class_under(mNokolexbor, "CharacterData", cNokolexborNode);
 
   rb_define_singleton_method(cNokolexborNode, "new", nl_node_new, -1);
+  rb_define_method(cNokolexborNode, "attribute", nl_node_attribute, 1);
+  rb_define_method(cNokolexborNode, "attribute_nodes", nl_node_attribute_nodes, 0);
   rb_define_method(cNokolexborNode, "content", nl_node_content, 0);
   rb_define_method(cNokolexborNode, "content=", nl_node_content_set, 1);
   rb_define_method(cNokolexborNode, "[]", nl_node_get_attr, 1);
