@@ -96,6 +96,42 @@ nl_attribute_set_value(VALUE self, VALUE rb_content)
   return rb_content;
 }
 
+static VALUE
+nl_attribute_parent(VALUE self)
+{
+  lxb_dom_node_t *node = nl_rb_node_unwrap(self);
+  lxb_dom_attr_t *attr = lxb_dom_interface_attr(node);
+
+  if (attr->owner == NULL) {
+    return Qnil;
+  }
+  return nl_rb_node_create(attr->owner, nl_rb_document_get(self));
+}
+
+static VALUE
+nl_attribute_previous(VALUE self)
+{
+  lxb_dom_node_t *node = nl_rb_node_unwrap(self);
+  lxb_dom_attr_t *attr = lxb_dom_interface_attr(node);
+
+  if (attr->prev == NULL) {
+    return Qnil;
+  }
+  return nl_rb_node_create(attr->prev, nl_rb_document_get(self));
+}
+
+static VALUE
+nl_attribute_next(VALUE self)
+{
+  lxb_dom_node_t *node = nl_rb_node_unwrap(self);
+  lxb_dom_attr_t *attr = lxb_dom_interface_attr(node);
+
+  if (attr->next == NULL) {
+    return Qnil;
+  }
+  return nl_rb_node_create(attr->next, nl_rb_document_get(self));
+}
+
 void Init_nl_attribute(void)
 {
   cNokolexborAttribute = rb_define_class_under(mNokolexbor, "Attribute", cNokolexborNode);
@@ -106,6 +142,9 @@ void Init_nl_attribute(void)
   rb_define_method(cNokolexborAttribute, "name=", nl_attribute_set_name, 1);
   rb_define_method(cNokolexborAttribute, "value", nl_attribute_value, 0);
   rb_define_method(cNokolexborAttribute, "value=", nl_attribute_set_value, 1);
+  rb_define_method(cNokolexborAttribute, "parent", nl_attribute_parent, 0);
+  rb_define_method(cNokolexborAttribute, "previous", nl_attribute_previous, 0);
+  rb_define_method(cNokolexborAttribute, "next", nl_attribute_next, 0);
 
   rb_define_alias(cNokolexborAttribute, "node_name", "name");
   rb_define_alias(cNokolexborAttribute, "node_name=", "name=");

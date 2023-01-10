@@ -38,4 +38,23 @@ describe Nokolexbor::Attribute do
     _(@node.to_html).must_equal '<div attr1="new1" attr2="2" attr3="3"></div>'
   end
 
+  it 'clone' do
+    a_clone = @node.attribute('attr1').clone
+    _(a_clone.name).must_equal 'attr1'
+  end
+
+  it 'parent' do
+    _(@node.attribute('attr1').parent).must_equal @node
+  end
+
+  it 'previous' do
+    _(@node.attribute('attr1').previous).must_be_nil
+    _(@node.attribute('attr2').previous.name).must_equal 'attr1'
+  end
+
+  it 'next' do
+    _(@node.attribute('attr1').next.name).must_equal 'attr2'
+    _(@node.attribute('attr3').next).must_be_nil
+  end
+
 end

@@ -129,6 +129,9 @@ nl_node_attribute(VALUE self, VALUE rb_name)
   if (attr == NULL) {
     return Qnil;
   }
+  if (attr->owner == NULL) {
+    attr->owner = node;
+  }
   return nl_rb_node_create(attr, nl_rb_document_get(self));
 }
 
@@ -149,6 +152,9 @@ nl_node_attribute_nodes(VALUE self)
 
   VALUE rb_doc = nl_rb_document_get(self);
   while (attr != NULL) {
+    if (attr->owner == NULL) {
+      attr->owner = node;
+    }
     rb_ary_push(ary, nl_rb_node_create(attr, rb_doc));
     attr = attr->next;
   }
@@ -881,7 +887,17 @@ static VALUE
 nl_node_clone(VALUE self)
 {
   lxb_dom_node_t *node = nl_rb_node_unwrap(self);
-  lxb_dom_node_t *clone = lxb_dom_node_clone(node, 1);
+  lxb_dom_node_t *clone;
+
+  switch (node->type) {
+  case LXB_DOM_NODE_TYPE_ATTRIBUTE:
+    clone = lxb_dom_attr_interface_clone(node->owner_document, lxb_dom_interface_attr(node));
+  case LXB_DOM_NODE_TYPE_CDATA_SECTION:
+    clone = lxb_dom_cdata_section_interface_clone(node->owner_document, lxb_dom_interface_cdata_section(node));
+  default:
+    clone = lxb_dom_node_clone(node, true);
+    break;
+  }
   return nl_rb_node_create(clone, nl_rb_document_get(self));
 }
 
