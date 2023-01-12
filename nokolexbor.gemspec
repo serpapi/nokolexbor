@@ -30,7 +30,7 @@ Gem::Specification.new do |spec|
   spec.files         += Dir.glob("ext/**/*.in")
   spec.files         += Dir.glob("ext/**/CMakeLists.txt")
   spec.files         += Dir.glob("patches/**/*.patch")
-  spec.files         += Dir.glob("vendor/lexbor/source/**/*")
+  spec.files         += Dir.glob("vendor/lexbor/source/**/*") - Dir.glob("vendor/lexbor/source/lexbor/encoding/**/*")
   spec.files         += Dir.glob("vendor/lexbor/utils/lexbor/css/**/*")
   spec.files         += Dir.glob("vendor/lexbor/{CMakeLists.txt,config.cmake,feature.cmake,version}")
   spec.add_development_dependency "rake-compiler", "~> 1.0"
