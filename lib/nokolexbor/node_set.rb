@@ -115,6 +115,11 @@ module Nokolexbor
       node_set
     end
 
+    def wrap(node_or_tags)
+      map { |node| node.wrap(node_or_tags) }
+      self
+    end
+
     def xpath(*args)
       paths, handler, ns, binds = extract_params(args)
 

@@ -210,6 +210,23 @@ HTML
     _(reversed_nodes.first['class']).must_equal 'f'
   end
 
+  describe 'wrap' do
+    before do
+      @doc = Nokolexbor::HTML('<span>123</span><span>456</span>')
+      @nodes = @doc.css('span')
+    end
+
+    it 'with String' do
+      @nodes.wrap('<div></div>')
+      _(@doc.at_css('body').inner_html).must_equal '<div><span>123</span></div><div><span>456</span></div>'
+    end
+
+    it 'with fragment' do
+      @nodes.wrap(@doc.create_element('div'))
+      _(@doc.at_css('body').inner_html).must_equal '<div><span>123</span></div><div><span>456</span></div>'
+    end
+  end
+
   describe 'xpath' do
     it 'basic usage' do
       result = @nodes.xpath('.//text()')
