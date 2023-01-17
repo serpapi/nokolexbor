@@ -2,6 +2,33 @@
 
 module Nokolexbor
   class Document < Nokolexbor::Node
+    # Create a new Element with +name+ belonging to this document, optionally setting contents or
+    # attributes.
+    #
+    # @param name [String]
+    # @param contents_or_attrs [#to_s, Hash]
+    #
+    # @return [Element]
+    #
+    # @example An empty element without attributes
+    #   doc.create_element("div")
+    #   # => <div></div>
+    #
+    # @example An element with contents
+    #   doc.create_element("div", "contents")
+    #   # => <div>contents</div>
+    #
+    # @example An element with attributes
+    #   doc.create_element("div", {"class" => "container"})
+    #   # => <div class='container'></div>
+    #
+    # @example An element with contents and attributes
+    #   doc.create_element("div", "contents", {"class" => "container"})
+    #   # => <div class='container'>contents</div>
+    #
+    # @example Passing a block to mutate the element
+    #   doc.create_element("div") { |node| node["class"] = "blue" }
+    #   # => <div class='blue'></div>
     def create_element(name, *contents_or_attrs, &block)
       elm = Nokolexbor::Element.new(name, self, &block)
       contents_or_attrs.each do |arg|
@@ -11,7 +38,7 @@ module Nokolexbor
             elm[k.to_s] = v.to_s
           end
         else
-          elm.content = arg
+          elm.content = arg.to_s
         end
       end
       elm
@@ -37,6 +64,7 @@ module Nokolexbor
       self
     end
 
+    # Get the meta tag encoding for this document. If there is no meta tag, nil is returned.
     def meta_encoding
       if (meta = at_css("meta[charset]"))
         meta[:charset]
@@ -45,6 +73,15 @@ module Nokolexbor
       end
     end
 
+    # Set the meta tag encoding for this document.
+    #
+    # If an meta encoding tag is already present, its content is
+    # replaced with the given text.
+    #
+    # Otherwise, this method tries to create one at an appropriate
+    # place supplying head and/or html elements as necessary, which
+    # is inside a head element if any, and before any text node or
+    # content element (typically <body>) if any.
     def meta_encoding=(encoding)
       if (meta = meta_content_type)
         meta["content"] = format("text/html; charset=%s", encoding)

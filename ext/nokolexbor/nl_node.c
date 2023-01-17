@@ -81,6 +81,26 @@ nl_rb_node_unwrap(VALUE rb_node)
   return node;
 }
 
+/**
+ * call-seq:
+ *   new(name, document) { |node| ... } -> Node
+ *
+ * Create a new node with +name+ that belongs to +document+.
+ *
+ * If you intend to add a node to a document tree, it's likely that you will prefer one of the
+ * {Node} methods like {#add_child}, {#add_next_sibling}, {#replace}, etc. which will
+ * both create an element (or subtree) and place it in the document tree.
+ *
+ * Another alternative, if you are concerned about performance, is
+ * {Document#create_element} which accepts additional arguments for contents or
+ * attributes but (like this method) avoids parsing markup.
+ *
+ * @param name [String]
+ * @param document [Document] The document to which the the returned node will belong.
+ *
+ * @yield [Node]
+ * @return [Node]
+ */
 static VALUE
 nl_node_new(int argc, VALUE *argv, VALUE klass)
 {
@@ -113,6 +133,11 @@ nl_node_new(int argc, VALUE *argv, VALUE klass)
   return rb_node;
 }
 
+/**
+ * call-seq: attribute(name) → Attribute
+ *
+ * @return [Attribute] The attribute belonging to this node with name +name+.
+ */
 static VALUE
 nl_node_attribute(VALUE self, VALUE rb_name)
 {
@@ -135,6 +160,9 @@ nl_node_attribute(VALUE self, VALUE rb_name)
   return nl_rb_node_create(attr, nl_rb_document_get(self));
 }
 
+/**
+ * @return [Array<Attribute>] An array of {Attribute} belonging to this node.
+ */
 static VALUE
 nl_node_attribute_nodes(VALUE self)
 {
@@ -162,6 +190,11 @@ nl_node_attribute_nodes(VALUE self)
   return ary;
 }
 
+/**
+ * @return [String]
+ *   Contents of all the text nodes in this node's subtree, concatenated together into a single
+ *   String.
+ */
 static VALUE
 nl_node_content(VALUE self)
 {
@@ -178,6 +211,12 @@ nl_node_content(VALUE self)
   return rb_str;
 }
 
+/**
+ * Set the Node's content to a Text node containing +content+. The string gets XML escaped, not
+ * interpreted as markup.
+ *
+ * @return [String] +content+
+ */
 static VALUE
 nl_node_content_set(VALUE self, VALUE content)
 {
@@ -192,6 +231,14 @@ nl_node_content_set(VALUE self, VALUE content)
   return content;
 }
 
+/**
+ * call-seq: [](name) -> String,nil
+ *
+ * Fetch an attribute from this node.
+ *
+ * @param name The name of the attribute
+ * @return (String, nil) The value of the attribute +name+, or +nil+ if no matching attribute exists.
+ */
 static VALUE
 nl_node_get_attr(VALUE self, VALUE rb_attr)
 {
@@ -217,6 +264,15 @@ nl_node_get_attr(VALUE self, VALUE rb_attr)
   return rb_utf8_str_new((const char *)attr_value, attr_value_len);
 }
 
+/**
+ * call-seq: []=(name, value) -> String,nil
+ *
+ * Update the attribute +name+ to +value+, or create the attribute if it does not exist.
+ *
+ * @param name The name of the attribute
+ * @param value The value of the attribute
+ * @return [String] +value+
+ */
 static VALUE
 nl_node_set_attr(VALUE self, VALUE rb_attr, VALUE rb_value)
 {
@@ -241,13 +297,22 @@ nl_node_set_attr(VALUE self, VALUE rb_attr, VALUE rb_value)
   return rb_value;
 }
 
+/**
+ * call-seq: remove_attr(name) -> Boolean
+ *
+ * Remove the attribute named +name+
+ *
+ * @param name [String]
+ *
+ * @return [Boolean] +true+ if removal success, +false+ if node is not an {Element}.
+ */
 static VALUE
 nl_node_remove_attr(VALUE self, VALUE rb_attr)
 {
   lxb_dom_node_t *node = nl_rb_node_unwrap(self);
 
   if (node->type != LXB_DOM_NODE_TYPE_ELEMENT) {
-    return Qnil;
+    return Qfalse;
   }
 
   VALUE rb_attr_s = rb_String(rb_attr);
@@ -257,7 +322,12 @@ nl_node_remove_attr(VALUE self, VALUE rb_attr)
 
   lxb_dom_element_t *element = lxb_dom_interface_element(node);
 
-  return lxb_dom_element_remove_attribute(element, (const lxb_char_t *)attr_c, attr_len) == LXB_STATUS_OK ? Qtrue : Qfalse;
+  lxb_status_t status = lxb_dom_element_remove_attribute(element, (const lxb_char_t *)attr_c, attr_len);
+  if (status != LXB_STATUS_OK) {
+    nl_raise_lexbor_error(status);
+  }
+
+  return Qtrue;
 }
 
 lxb_status_t
@@ -384,6 +454,11 @@ void nl_sort_nodes_if_necessary(VALUE selector, lxb_dom_document_t *doc, lexbor_
   }
 }
 
+/**
+ * Internal implementation of {#at_css}
+ *
+ * @see #at_css
+ */
 static VALUE
 nl_node_at_css(VALUE self, VALUE selector)
 {
@@ -411,6 +486,11 @@ nl_node_at_css(VALUE self, VALUE selector)
   return ret;
 }
 
+/**
+ * Internal implementation of {#css}
+ *
+ * @see #css
+ */
 static VALUE
 nl_node_css(VALUE self, VALUE selector)
 {
@@ -428,6 +508,11 @@ nl_node_css(VALUE self, VALUE selector)
   return nl_rb_node_set_create_with_data(array, nl_rb_document_get(self));
 }
 
+/**
+ * Get the inner_html of this Node.
+ *
+ * @return [String]
+ */
 static VALUE
 nl_node_inner_html(int argc, VALUE *argv, VALUE self)
 {
@@ -465,6 +550,11 @@ nl_node_inner_html(int argc, VALUE *argv, VALUE self)
   return Qnil;
 }
 
+/**
+ * Serialize this Node to HTML, also known as outer_html.
+ *
+ * @return [String]
+ */
 static VALUE
 nl_node_outer_html(int argc, VALUE *argv, VALUE self)
 {
@@ -502,6 +592,11 @@ nl_node_outer_html(int argc, VALUE *argv, VALUE self)
   return Qnil;
 }
 
+/**
+ * call-seq: key?(name) -> Boolean
+ *
+ * @return true if +name+ is set.
+ */
 static VALUE
 nl_node_has_key(VALUE self, VALUE rb_attr)
 {
@@ -520,6 +615,11 @@ nl_node_has_key(VALUE self, VALUE rb_attr)
   return lxb_dom_element_has_attribute(element, (const lxb_char_t *)attr_c, attr_len) ? Qtrue : Qfalse;
 }
 
+/**
+ * Get the attribute names of this Node.
+ *
+ * @return [Array<String>] An array of attribute names.
+ */
 static VALUE
 nl_node_keys(VALUE self)
 {
@@ -543,6 +643,11 @@ nl_node_keys(VALUE self)
   return ary_keys;
 }
 
+/**
+ * Get the attribute values of this Node.
+ *
+ * @return [Array<String>] An array of attribute values.
+ */
 static VALUE
 nl_node_values(VALUE self)
 {
@@ -570,6 +675,11 @@ nl_node_values(VALUE self)
   return ary_values;
 }
 
+/**
+ * Get a hash of attribute names and values of this Node.
+ *
+ * @return [Hash{String => String}] A hash whose keys are attribute names and values are attribute values.
+ */
 static VALUE
 nl_node_attrs(VALUE self)
 {
@@ -598,6 +708,11 @@ nl_node_attrs(VALUE self)
   return rb_hash;
 }
 
+/**
+ * Get the parent node
+ *
+ * @return [Node,nil] The parent node
+ */
 static VALUE
 nl_node_parent(VALUE self)
 {
@@ -605,6 +720,11 @@ nl_node_parent(VALUE self)
   return node->parent ? nl_rb_node_create(node->parent, nl_rb_document_get(self)) : Qnil;
 }
 
+/**
+ * Get the previous sibling node
+ *
+ * @return [Node,nil] The previous sibling node
+ */
 static VALUE
 nl_node_previous(VALUE self)
 {
@@ -612,6 +732,11 @@ nl_node_previous(VALUE self)
   return node->prev ? nl_rb_node_create(node->prev, nl_rb_document_get(self)) : Qnil;
 }
 
+/**
+ * Get the previous sibling element.
+ *
+ * @return [Element,nil] The previous sibling element
+ */
 static VALUE
 nl_node_previous_element(VALUE self)
 {
@@ -625,6 +750,11 @@ nl_node_previous_element(VALUE self)
   return Qnil;
 }
 
+/**
+ * Get the next sibling node
+ *
+ * @return [Node,nil] The previous sibling node
+ */
 static VALUE
 nl_node_next(VALUE self)
 {
@@ -632,6 +762,11 @@ nl_node_next(VALUE self)
   return node->next ? nl_rb_node_create(node->next, nl_rb_document_get(self)) : Qnil;
 }
 
+/**
+ * Get the next sibling element.
+ *
+ * @return [Element,nil] The previous sibling element
+ */
 static VALUE
 nl_node_next_element(VALUE self)
 {
@@ -645,6 +780,11 @@ nl_node_next_element(VALUE self)
   return Qnil;
 }
 
+/**
+ * Get the children of this node.
+ *
+ * @return [NodeSet] The set of this node's children.
+ */
 static VALUE
 nl_node_children(VALUE self)
 {
@@ -660,6 +800,11 @@ nl_node_children(VALUE self)
   return nl_rb_node_set_create_with_data(array, nl_rb_document_get(self));
 }
 
+/**
+ * Get the first child of this node.
+ *
+ * @return [Node,nil] The first child.
+ */
 static VALUE
 nl_node_child(VALUE self)
 {
@@ -668,14 +813,26 @@ nl_node_child(VALUE self)
   return child ? nl_rb_node_create(child, nl_rb_document_get(self)) : Qnil;
 }
 
+/**
+ * Remove this node from its current context.
+ *
+ * @return [Node] +self+, to support chaining of calls.
+ */
 static VALUE
 nl_node_remove(VALUE self)
 {
   lxb_dom_node_t *node = nl_rb_node_unwrap(self);
   lxb_dom_node_remove(node);
-  return Qnil;
+  return self;
 }
 
+/**
+ * Remove this node from its current context and free its allocated memory.
+ *
+ * @return nil
+ *
+ * @see #remove
+ */
 static VALUE
 nl_node_destroy(VALUE self)
 {
@@ -684,6 +841,9 @@ nl_node_destroy(VALUE self)
   return Qnil;
 }
 
+/**
+ * @return true if this Node is equal to +other+.
+ */
 static VALUE
 nl_node_equals(VALUE self, VALUE other)
 {
@@ -702,6 +862,11 @@ lxb_dom_node_name_qualified(lxb_dom_node_t *node, size_t *len)
   return lxb_dom_node_name(node, len);
 }
 
+/**
+ * Get the name of this Node
+ *
+ * @return [String] The name of this Node
+ */
 static VALUE
 nl_node_name(VALUE self)
 {
@@ -733,6 +898,13 @@ nl_node_parse_fragment(lxb_dom_document_t *doc, lxb_dom_element_t *element, lxb_
   return frag_root;
 }
 
+/**
+ * Parse +html+ as a document fragment within the context of
+ * *this* node.
+ *
+ * @param html [String] The fragment to be parsed.
+ * @return [NodeSet] The {NodeSet} containing the parsed nodes.
+ */
 static VALUE
 nl_node_parse(VALUE self, VALUE html)
 {
@@ -752,6 +924,14 @@ nl_node_parse(VALUE self, VALUE html)
   return nl_rb_node_set_create_with_data(array, nl_rb_document_get(self));
 }
 
+/**
+ * Insert +node_or_tags+ before or after this Node (as a sibling).
+ *
+ * @see #add_previous_sibling
+ * @see #add_next_sibling
+ *
+ * @return [Node,NodeSet] The reparented {Node} (if +node_or_tags+ is a {Node}), or {NodeSet} (if +node_or_tags+ is a {DocumentFragment}, {NodeSet}, or {String}).
+ */
 static VALUE
 nl_node_add_sibling(VALUE self, VALUE next_or_previous, VALUE new)
 {
@@ -792,6 +972,13 @@ nl_node_add_sibling(VALUE self, VALUE next_or_previous, VALUE new)
   return Qnil;
 }
 
+/**
+ * Add +new+ as a child of this Node.
+ *
+ * @param new [Node, DocumentFragment, NodeSet, String] The node to be added.
+ *
+ * @return [Node,NodeSet] The reparented {Node} (if +new+ is a {Node}), or {NodeSet} (if +new+ is a {DocumentFragment}, {NodeSet}, or {String}).
+ */
 static VALUE
 nl_node_add_child(VALUE self, VALUE new)
 {
@@ -823,12 +1010,20 @@ nl_node_add_child(VALUE self, VALUE new)
   return Qnil;
 }
 
+/**
+ * Get the type of this Node
+ *
+ * @return {Numeric}
+ */
 static VALUE
 nl_node_get_type(VALUE self)
 {
   return INT2NUM(nl_rb_node_unwrap(self)->type);
 }
 
+/**
+ * @return The first child Node that is an element.
+ */
 static VALUE
 nl_node_first_element_child(VALUE self)
 {
@@ -856,6 +1051,9 @@ nl_node_first_element_child(VALUE self)
   return Qnil;
 }
 
+/**
+ * @return The last child Node that is an element.
+ */
 static VALUE
 nl_node_last_element_child(VALUE self)
 {
@@ -883,6 +1081,11 @@ nl_node_last_element_child(VALUE self)
   return Qnil;
 }
 
+/**
+ * Copy this node.
+ *
+ * @return The new {Node}.
+ */
 static VALUE
 nl_node_clone(VALUE self)
 {

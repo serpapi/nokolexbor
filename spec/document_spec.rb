@@ -121,8 +121,10 @@ describe Nokolexbor::Document do
       _(node.document).must_equal @doc
     end
 
-    it 'Other attr' do
-      _{ @doc.create_element('span', 1) }.must_raise TypeError
+    it 'Other attr that responds to to_s' do
+      node = @doc.create_element('span', 1)
+      _(node.to_html).must_equal '<span>1</span>'
+      _(node.document).must_equal @doc
     end
   end
 
