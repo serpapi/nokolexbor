@@ -83,7 +83,7 @@ nl_rb_node_unwrap(VALUE rb_node)
 
 /**
  * call-seq:
- *   new(name, document) { |node| ... } -> Node
+ *   new(name, document) { |Node| ... } -> Node
  *
  * Create a new node with +name+ that belongs to +document+.
  *
@@ -97,9 +97,6 @@ nl_rb_node_unwrap(VALUE rb_node)
  *
  * @param name [String]
  * @param document [Document] The document to which the the returned node will belong.
- *
- * @yield [Node]
- * @return [Node]
  */
 static VALUE
 nl_node_new(int argc, VALUE *argv, VALUE klass)

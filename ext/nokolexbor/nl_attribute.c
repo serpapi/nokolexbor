@@ -4,6 +4,15 @@ VALUE cNokolexborAttribute;
 extern VALUE mNokolexbor;
 extern VALUE cNokolexborNode;
 
+/**
+ * call-seq:
+ *   new(document, name) -> Attribute
+ *
+ * Create a new Attribute on the +document+ with +name+.
+ *
+ * @param document [Document]
+ * @param name [String]
+ */
 static VALUE
 nl_attribute_new(int argc, VALUE *argv, VALUE klass)
 {
@@ -38,6 +47,11 @@ nl_attribute_new(int argc, VALUE *argv, VALUE klass)
   return rb_node;
 }
 
+/**
+ * Get the name of the Attribute.
+ *
+ * @return [String]
+ */
 static VALUE
 nl_attribute_name(VALUE self)
 {
@@ -50,6 +64,12 @@ nl_attribute_name(VALUE self)
   return rb_utf8_str_new(name, len);
 }
 
+/**
+ * call-seq:
+ *   name=(name) -> String
+ *
+ * Set the name of the Attribute.
+ */
 static VALUE
 nl_attribute_set_name(VALUE self, VALUE rb_name)
 {
@@ -67,6 +87,11 @@ nl_attribute_set_name(VALUE self, VALUE rb_name)
   return rb_name;
 }
 
+/**
+ * Get the value of the Attribute.
+ *
+ * @return [String]
+ */
 static VALUE
 nl_attribute_value(VALUE self)
 {
@@ -79,6 +104,12 @@ nl_attribute_value(VALUE self)
   return rb_utf8_str_new(value, len);
 }
 
+/**
+ * call-seq:
+ *   value=(value) -> String
+ *
+ * Set the value of the Attribute.
+ */
 static VALUE
 nl_attribute_set_value(VALUE self, VALUE rb_content)
 {
@@ -96,6 +127,11 @@ nl_attribute_set_value(VALUE self, VALUE rb_content)
   return rb_content;
 }
 
+/**
+ * Get the parent Node of the Attribute.
+ *
+ * @return [Node]
+ */
 static VALUE
 nl_attribute_parent(VALUE self)
 {
@@ -108,6 +144,11 @@ nl_attribute_parent(VALUE self)
   return nl_rb_node_create(attr->owner, nl_rb_document_get(self));
 }
 
+/**
+ * Get the previous Attribute of the Attribute.
+ *
+ * @return [Attribute]
+ */
 static VALUE
 nl_attribute_previous(VALUE self)
 {
@@ -120,6 +161,11 @@ nl_attribute_previous(VALUE self)
   return nl_rb_node_create(attr->prev, nl_rb_document_get(self));
 }
 
+/**
+ * Get the next Attribute of the Attribute.
+ *
+ * @return [Attribute]
+ */
 static VALUE
 nl_attribute_next(VALUE self)
 {

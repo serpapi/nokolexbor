@@ -4,6 +4,12 @@ VALUE cNokolexborCData;
 extern VALUE cNokolexborText;
 extern VALUE mNokolexbor;
 
+/**
+ * call-seq:
+ *   new(content, document) { |CDATA| ... } -> CDATA
+ *
+ * Create a new CDATA from +content+.
+ */
 static VALUE
 nl_cdata_new(int argc, VALUE *argv, VALUE klass)
 {

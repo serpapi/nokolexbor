@@ -21,6 +21,16 @@ const rb_data_type_t nl_document_type = {
     RUBY_TYPED_FREE_IMMEDIATELY,
 };
 
+/**
+ * call-seq:
+ *   parse(string_or_io) -> Document
+ *
+ * Parse HTML into a {Document}.
+ *
+ * @param string_or_io [String, #read]
+ *   The HTML to be parsed. It may be a String, or any object that
+ *   responds to #read such as an IO, or StringIO.
+ */
 static VALUE
 nl_document_parse(VALUE self, VALUE rb_string_or_io)
 {
@@ -51,6 +61,11 @@ nl_document_parse(VALUE self, VALUE rb_string_or_io)
   return TypedData_Wrap_Struct(cNokolexborDocument, &nl_document_type, document);
 }
 
+/**
+ * Create a new document.
+ *
+ * @return [Document]
+ */
 static VALUE
 nl_document_new(VALUE self)
 {
@@ -65,7 +80,12 @@ nl_rb_document_unwrap(VALUE rb_doc)
   return doc;
 }
 
-VALUE
+/**
+ * Get the title of this document.
+ *
+ * @return [String]
+ */
+static VALUE
 nl_document_get_title(VALUE rb_doc)
 {
   size_t len;
@@ -73,13 +93,26 @@ nl_document_get_title(VALUE rb_doc)
   return str == NULL ? rb_str_new("", 0) : rb_utf8_str_new(str, len);
 }
 
-VALUE
+/**
+ * call-seq:
+ *   title=(text) -> String
+ *
+ * Set the title of this document.
+ *
+ * If a title element is already present, its content is replaced
+ * with the given text.
+ *
+ * Otherwise, this method tries to create one inside <head>.
+ *
+ * @return [String]
+ */
+static VALUE
 nl_document_set_title(VALUE rb_doc, VALUE rb_title)
 {
   const char *c_title = StringValuePtr(rb_title);
   size_t len = RSTRING_LEN(rb_title);
   lxb_char_t *str = lxb_html_document_title_set(nl_rb_document_unwrap(rb_doc), (const lxb_char_t *)c_title, len);
-  return Qnil;
+  return rb_title;
 }
 
 void Init_nl_document(void)

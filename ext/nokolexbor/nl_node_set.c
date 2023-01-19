@@ -63,12 +63,27 @@ nl_rb_node_set_create_with_data(lexbor_array_t *array, VALUE rb_document)
   return ret;
 }
 
+/**
+ * Get the length of this NodeSet.
+ *
+ * @return [Numeric]
+ */
 static VALUE
 nl_node_set_length(VALUE self)
 {
   return INT2NUM(nl_rb_node_set_unwrap(self)->length);
 }
 
+/**
+ * call-seq:
+ *   push(node)
+ *
+ * Append +node+ to the NodeSet.
+ *
+ * @param node [Node]
+ *
+ * @return [NodeSet] +self+, to support chaining of calls.
+ */
 static VALUE
 nl_node_set_push(VALUE self, VALUE rb_node)
 {
@@ -83,6 +98,17 @@ nl_node_set_push(VALUE self, VALUE rb_node)
   return self;
 }
 
+/**
+ *  call-seq:
+ *    delete(node)
+ *
+ * Delete +node+ from the Nodeset. If found, returns the deleted node,
+ * otherwise returns nil.
+ *
+ * @param node [Node]
+ *
+ * @return [Node,nil]
+ */
 static VALUE
 nl_node_set_delete(VALUE self, VALUE rb_node)
 {
@@ -103,6 +129,12 @@ nl_node_set_delete(VALUE self, VALUE rb_node)
   return rb_node;
 }
 
+/**
+ * call-seq:
+ *   include?(node)
+ *
+ * @return true if any member of this NodeSet equals +node+.
+ */
 static VALUE
 nl_node_set_is_include(VALUE self, VALUE rb_node)
 {
@@ -166,6 +198,18 @@ nl_node_set_subseq(VALUE self, long beg, long len)
   return nl_rb_node_set_create_with_data(new_array, nl_rb_document_get(self));
 }
 
+/**
+ * call-seq:
+ *   [](index) -> Node,nil
+ *   [](start, length) -> NodeSet,nil
+ *   [](range) -> NodeSet,nil
+ *
+ * Element reference - returns the {Node} at +index+, or returns a {NodeSet}
+ * containing nodes starting at +start+ and continuing for +length+ elements, or
+ * returns a {NodeSet} containing nodes specified by +range+. Negative +indices+
+ * count backward from the end of the +node_set+ (-1 is the last node). Returns
+ * nil if the +index+ (or +start+) are out of range.
+ */
 static VALUE
 nl_node_set_slice(int argc, VALUE *argv, VALUE self)
 {
@@ -205,6 +249,9 @@ nl_node_set_slice(int argc, VALUE *argv, VALUE self)
   return nl_node_set_index_at(self, NUM2LONG(arg));
 }
 
+/**
+ * @return [Array<Node>] This list as an Array
+ */
 static VALUE
 nl_node_set_to_array(VALUE self)
 {
@@ -221,6 +268,9 @@ nl_node_set_to_array(VALUE self)
   return list;
 }
 
+/**
+ * @return [NodeSet] A new set built by merging the +other+ set, excluding duplicates.
+ */
 static VALUE
 nl_node_set_union(VALUE self, VALUE other)
 {
@@ -301,6 +351,9 @@ nl_node_set_find(VALUE self, VALUE selector, lxb_selectors_cb_f cb, void *ctx)
   return status;
 }
 
+/**
+ * (see Node#at_css)
+ */
 static VALUE
 nl_node_set_at_css(VALUE self, VALUE selector)
 {
@@ -328,6 +381,9 @@ nl_node_set_at_css(VALUE self, VALUE selector)
   return ret;
 }
 
+/**
+ * (see Node#css)
+ */
 static VALUE
 nl_node_set_css(VALUE self, VALUE selector)
 {
@@ -353,7 +409,6 @@ void Init_nl_node_set(void)
 
   rb_define_method(cNokolexborNodeSet, "length", nl_node_set_length, 0);
   rb_define_method(cNokolexborNodeSet, "[]", nl_node_set_slice, -1);
-  rb_define_method(cNokolexborNodeSet, "slice", nl_node_set_slice, -1);
   rb_define_method(cNokolexborNodeSet, "push", nl_node_set_push, 1);
   rb_define_method(cNokolexborNodeSet, "|", nl_node_set_union, 1);
   rb_define_method(cNokolexborNodeSet, "to_a", nl_node_set_to_array, 0);
@@ -362,6 +417,7 @@ void Init_nl_node_set(void)
   rb_define_method(cNokolexborNodeSet, "at_css", nl_node_set_at_css, 1);
   rb_define_method(cNokolexborNodeSet, "css", nl_node_set_css, 1);
 
+  rb_define_alias(cNokolexborNodeSet, "slice", "[]");
   rb_define_alias(cNokolexborNodeSet, "<<", "push");
   rb_define_alias(cNokolexborNodeSet, "size", "length");
   rb_define_alias(cNokolexborNodeSet, "+", "|");

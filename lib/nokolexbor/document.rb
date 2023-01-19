@@ -45,26 +45,36 @@ module Nokolexbor
     end
 
     # Create a Text Node with +string+
+    #
+    # @return [Text]
     def create_text_node(string, &block)
       Nokolexbor::Text.new(string.to_s, self, &block)
     end
 
     # Create a CDATA Node containing +string+
+    #
+    # @return [CDATA]
     def create_cdata(string, &block)
       Nokolexbor::CDATA.new(string.to_s, self, &block)
     end
 
     # Create a Comment Node containing +string+
+    #
+    # @return [Comment]
     def create_comment(string, &block)
       Nokolexbor::Comment.new(string.to_s, self, &block)
     end
 
     # A reference to +self+
+    #
+    # @return [Document]
     def document
       self
     end
 
     # Get the meta tag encoding for this document. If there is no meta tag, nil is returned.
+    #
+    # @return [String]
     def meta_encoding
       if (meta = at_css("meta[charset]"))
         meta[:charset]

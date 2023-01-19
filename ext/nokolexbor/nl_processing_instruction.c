@@ -4,6 +4,12 @@ VALUE cNokolexborProcessingInstruction;
 extern VALUE cNokolexborNode;
 extern VALUE mNokolexbor;
 
+/**
+ * call-seq:
+ *   new(name, content, document) { |ProcessingInstruction| ... } -> ProcessingInstruction
+ *
+ * Create a new ProcessingInstruction from +name+ and +content+.
+ */
 static VALUE
 nl_processing_instruction_new(int argc, VALUE *argv, VALUE klass)
 {

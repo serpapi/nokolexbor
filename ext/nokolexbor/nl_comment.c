@@ -4,6 +4,12 @@ VALUE cNokolexborComment;
 extern VALUE cNokolexborCharacterData;
 extern VALUE mNokolexbor;
 
+/**
+ * call-seq:
+ *   new(content, document) { |Comment| ... } -> Comment
+ *
+ * Create a new Comment from +content+.
+ */
 static VALUE
 nl_comment_new(int argc, VALUE *argv, VALUE klass)
 {

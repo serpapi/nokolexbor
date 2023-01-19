@@ -4,6 +4,12 @@ VALUE cNokolexborText;
 extern VALUE cNokolexborCharacterData;
 extern VALUE mNokolexbor;
 
+/**
+ * call-seq:
+ *   new(text, document) { |Text| ... } -> Text
+ *
+ * Create a new Text from +text+.
+ */
 static VALUE
 nl_text_new(int argc, VALUE *argv, VALUE klass)
 {
