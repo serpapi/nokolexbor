@@ -1,5 +1,6 @@
 #include "nokolexbor.h"
 
+VALUE mLexbor;
 VALUE eLexborError;
 VALUE eLexborMemoryAllocationError;
 VALUE eLexborSmallBufferError;
@@ -71,23 +72,24 @@ void nl_raise_lexbor_error(lxb_status_t error)
 
 void Init_nl_error(void)
 {
-  eLexborError = rb_define_class_under(mNokolexbor, "LexborError", rb_eStandardError);
-  eLexborMemoryAllocationError = rb_define_class_under(mNokolexbor, "LexborMemoryAllocationError", eLexborError);
-  eLexborSmallBufferError = rb_define_class_under(mNokolexbor, "LexborSmallBufferError", eLexborError);
-  eLexborObjectIsNullError = rb_define_class_under(mNokolexbor, "LexborObjectIsNullError", eLexborError);
-  eLexborIncompleteObjectError = rb_define_class_under(mNokolexbor, "LexborIncompleteObjectError", eLexborError);
-  eLexborNoFreeSlotError = rb_define_class_under(mNokolexbor, "LexborNoFreeSlotError", eLexborError);
-  eLexborTooSmallSizeError = rb_define_class_under(mNokolexbor, "LexborTooSmallSizeError", eLexborError);
-  eLexborNotExistsError = rb_define_class_under(mNokolexbor, "LexborNotExistsError", eLexborError);
-  eLexborWrongArgsError = rb_define_class_under(mNokolexbor, "LexborWrongArgsError", eLexborError);
-  eLexborWrongStageError = rb_define_class_under(mNokolexbor, "LexborWrongStageError", eLexborError);
-  eLexborUnexpectedResultError = rb_define_class_under(mNokolexbor, "LexborUnexpectedResultError", eLexborError);
-  eLexborUnexpectedDataError = rb_define_class_under(mNokolexbor, "LexborUnexpectedDataError", eLexborError);
-  eLexborOverflowError = rb_define_class_under(mNokolexbor, "LexborOverflowError", eLexborError);
-  eLexborContinueStatus = rb_define_class_under(mNokolexbor, "LexborContinueStatus", eLexborError);
-  eLexborSmallBufferStatus = rb_define_class_under(mNokolexbor, "LexborSmallBufferStatus", eLexborError);
-  eLexborAbortedStatus = rb_define_class_under(mNokolexbor, "LexborAbortedStatus", eLexborError);
-  eLexborStoppedStatus = rb_define_class_under(mNokolexbor, "LexborStoppedStatus", eLexborError);
-  eLexborNextStatus = rb_define_class_under(mNokolexbor, "LexborNextStatus", eLexborError);
-  eLexborStopStatus = rb_define_class_under(mNokolexbor, "LexborStopStatus", eLexborError);
+  mLexbor = rb_define_module_under(mNokolexbor, "Lexbor");
+  eLexborError = rb_define_class_under(mLexbor, "Error", rb_eStandardError);
+  eLexborMemoryAllocationError = rb_define_class_under(mLexbor, "MemoryAllocationError", eLexborError);
+  eLexborSmallBufferError = rb_define_class_under(mLexbor, "SmallBufferError", eLexborError);
+  eLexborObjectIsNullError = rb_define_class_under(mLexbor, "ObjectIsNullError", eLexborError);
+  eLexborIncompleteObjectError = rb_define_class_under(mLexbor, "IncompleteObjectError", eLexborError);
+  eLexborNoFreeSlotError = rb_define_class_under(mLexbor, "NoFreeSlotError", eLexborError);
+  eLexborTooSmallSizeError = rb_define_class_under(mLexbor, "TooSmallSizeError", eLexborError);
+  eLexborNotExistsError = rb_define_class_under(mLexbor, "NotExistsError", eLexborError);
+  eLexborWrongArgsError = rb_define_class_under(mLexbor, "WrongArgsError", eLexborError);
+  eLexborWrongStageError = rb_define_class_under(mLexbor, "WrongStageError", eLexborError);
+  eLexborUnexpectedResultError = rb_define_class_under(mLexbor, "UnexpectedResultError", eLexborError);
+  eLexborUnexpectedDataError = rb_define_class_under(mLexbor, "UnexpectedDataError", eLexborError);
+  eLexborOverflowError = rb_define_class_under(mLexbor, "OverflowError", eLexborError);
+  eLexborContinueStatus = rb_define_class_under(mLexbor, "ContinueStatus", eLexborError);
+  eLexborSmallBufferStatus = rb_define_class_under(mLexbor, "SmallBufferStatus", eLexborError);
+  eLexborAbortedStatus = rb_define_class_under(mLexbor, "AbortedStatus", eLexborError);
+  eLexborStoppedStatus = rb_define_class_under(mLexbor, "StoppedStatus", eLexborError);
+  eLexborNextStatus = rb_define_class_under(mLexbor, "NextStatus", eLexborError);
+  eLexborStopStatus = rb_define_class_under(mLexbor, "StopStatus", eLexborError);
 }
