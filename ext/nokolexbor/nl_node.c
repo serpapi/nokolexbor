@@ -152,7 +152,7 @@ nl_node_attribute(VALUE self, VALUE rb_name)
     return Qnil;
   }
   if (attr->owner == NULL) {
-    attr->owner = node;
+    attr->owner = lxb_dom_interface_element(node);
   }
   return nl_rb_node_create(attr, nl_rb_document_get(self));
 }
@@ -178,7 +178,7 @@ nl_node_attribute_nodes(VALUE self)
   VALUE rb_doc = nl_rb_document_get(self);
   while (attr != NULL) {
     if (attr->owner == NULL) {
-      attr->owner = node;
+      attr->owner = lxb_dom_interface_element(node);
     }
     rb_ary_push(ary, nl_rb_node_create(attr, rb_doc));
     attr = attr->next;
@@ -951,7 +951,7 @@ nl_node_add_nodes(VALUE self, VALUE new, lxb_dom_node_add_nodes_to_f add_to, boo
     lexbor_array_t *node_array = nl_rb_node_set_unwrap(new);
 
     lxb_dom_node_t *last_node = node;
-    for (int i = 0; i < node_array->length; i++) {
+    for (size_t i = 0; i < node_array->length; i++) {
       lxb_dom_node_t *child = (lxb_dom_node_t *)node_array->list[i];
       lxb_dom_node_remove(child);
       operate_on_new_node ? add_to(last_node, child) : add_to(node, child);
@@ -1092,9 +1092,9 @@ nl_node_clone(VALUE self)
 
   switch (node->type) {
   case LXB_DOM_NODE_TYPE_ATTRIBUTE:
-    clone = lxb_dom_attr_interface_clone(node->owner_document, lxb_dom_interface_attr(node));
+    clone = (lxb_dom_node_t *)lxb_dom_attr_interface_clone(node->owner_document, lxb_dom_interface_attr(node));
   case LXB_DOM_NODE_TYPE_CDATA_SECTION:
-    clone = lxb_dom_cdata_section_interface_clone(node->owner_document, lxb_dom_interface_cdata_section(node));
+    clone = (lxb_dom_node_t *)lxb_dom_cdata_section_interface_clone(node->owner_document, lxb_dom_interface_cdata_section(node));
   default:
     clone = lxb_dom_node_clone(node, true);
     break;
