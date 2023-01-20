@@ -35,6 +35,7 @@ lxb_inline VALUE nl_rb_document_get(VALUE rb_node_or_doc)
 }
 
 lxb_dom_document_t *nl_rb_document_unwrap(VALUE rb_doc);
+lexbor_array_t *nl_rb_node_set_unwrap(VALUE rb_node_set);
 
 const lxb_char_t *
 lxb_dom_node_name_qualified(lxb_dom_node_t *node, size_t *len);

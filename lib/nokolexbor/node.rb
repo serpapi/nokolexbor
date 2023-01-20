@@ -115,6 +115,8 @@ module Nokolexbor
       case node
       when String
         new_parent = fragment(node).child
+      when DocumentFragment
+        new_parent = node.child
       when Node
         new_parent = node.dup
       else
@@ -243,18 +245,27 @@ module Nokolexbor
 
     # Replace this Node with +node+.
     #
-    # @param node [Node, DocumentFragment, NodeSet, String] The node to be added.
+    # @param node [Node, DocumentFragment, NodeSet, String]
     #
     # @return The reparented {Node} (if +node+ is a {Node}), or {NodeSet} (if +node+ is a {DocumentFragment}, {NodeSet}, or {String}).
     #
     # @see #swap
     def replace(node)
-      if node.is_a?(NodeSet)
-        node.each { |n| add_sibling(:previous, n) }
-      else
-        add_sibling(:previous, node)
-      end
+      ret = add_sibling(:previous, node)
       remove
+      ret
+    end
+
+    # Swap this Node for +node+
+    #
+    # @param node [Node, DocumentFragment, NodeSet, String]
+    #
+    # @return +self+, to support chaining of calls.
+    #
+    # @see #replace
+    def swap(node)
+      replace(node)
+      self
     end
 
     # Set the content of this Node.
@@ -264,11 +275,7 @@ module Nokolexbor
     # @see #inner_html=
     def children=(node)
       children.remove
-      if node.is_a?(NodeSet)
-        node.each { |n| add_child(n) }
-      else
-        add_child(node)
-      end
+      add_child(node)
     end
 
     # Set the parent Node of this Node.

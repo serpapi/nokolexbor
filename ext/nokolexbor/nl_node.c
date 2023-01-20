@@ -944,18 +944,35 @@ nl_node_add_sibling(VALUE self, VALUE next_or_previous, VALUE new)
     rb_raise(rb_eArgError, "Unsupported inserting position");
   }
 
-  if (TYPE(new) == T_STRING) {
-    lxb_dom_node_t *frag_root = nl_node_parse_fragment(doc, NULL, (lxb_char_t *)RSTRING_PTR(new), RSTRING_LEN(new));
+  if (TYPE(new) == T_STRING || rb_obj_is_kind_of(new, cNokolexborDocumentFragment)) {
+    lxb_dom_node_t *frag_root = (TYPE(new) == T_STRING) ? nl_node_parse_fragment(doc, NULL, (lxb_char_t *)RSTRING_PTR(new), RSTRING_LEN(new))
+                                                        : nl_rb_node_unwrap(new);
     lexbor_array_t *array = lexbor_array_create();
 
+    lxb_dom_node_t *insert_after_node = node;
     while (frag_root->first_child != NULL) {
       lxb_dom_node_t *child = frag_root->first_child;
       lxb_dom_node_remove(child);
-      insert_after ? lxb_dom_node_insert_after(node, child) : lxb_dom_node_insert_before(node, child);
+      insert_after ? lxb_dom_node_insert_after(insert_after_node, child) : lxb_dom_node_insert_before(node, child);
+      insert_after_node = child;
       lexbor_array_push(array, child);
     }
-    lxb_dom_node_destroy(frag_root);
+    if (TYPE(new) == T_STRING) {
+      lxb_dom_node_destroy(frag_root);
+    }
     return nl_rb_node_set_create_with_data(array, nl_rb_document_get(self));
+
+  } else if (rb_obj_is_kind_of(new, cNokolexborNodeSet)) {
+    lexbor_array_t *node_array = nl_rb_node_set_unwrap(new);
+
+    lxb_dom_node_t *insert_after_node = node;
+    for (int i = 0; i < node_array->length; i++) {
+      lxb_dom_node_t *child = (lxb_dom_node_t *)node_array->list[i];
+      lxb_dom_node_remove(child);
+      insert_after ? lxb_dom_node_insert_after(insert_after_node, child) : lxb_dom_node_insert_before(node, child);
+      insert_after_node = child;
+    }
+    return new;
 
   } else if (rb_obj_is_kind_of(new, cNokolexborNode)) {
     lxb_dom_node_t *node_new = nl_rb_node_unwrap(new);
@@ -982,8 +999,9 @@ nl_node_add_child(VALUE self, VALUE new)
   lxb_dom_node_t *node = nl_rb_node_unwrap(self);
   lxb_dom_document_t *doc = node->owner_document;
 
-  if (TYPE(new) == T_STRING) {
-    lxb_dom_node_t *frag_root = nl_node_parse_fragment(doc, NULL, (lxb_char_t *)RSTRING_PTR(new), RSTRING_LEN(new));
+  if (TYPE(new) == T_STRING || rb_obj_is_kind_of(new, cNokolexborDocumentFragment)) {
+    lxb_dom_node_t *frag_root = (TYPE(new) == T_STRING) ? nl_node_parse_fragment(doc, NULL, (lxb_char_t *)RSTRING_PTR(new), RSTRING_LEN(new))
+                                                        : nl_rb_node_unwrap(new);
     lexbor_array_t *array = lexbor_array_create();
 
     while (frag_root->first_child != NULL) {
@@ -992,8 +1010,20 @@ nl_node_add_child(VALUE self, VALUE new)
       lxb_dom_node_insert_child(node, child);
       lexbor_array_push(array, child);
     }
-    lxb_dom_node_destroy(frag_root);
+    if (TYPE(new) == T_STRING) {
+      lxb_dom_node_destroy(frag_root);
+    }
     return nl_rb_node_set_create_with_data(array, nl_rb_document_get(self));
+
+  } else if (rb_obj_is_kind_of(new, cNokolexborNodeSet)) {
+    lexbor_array_t *node_array = nl_rb_node_set_unwrap(new);
+
+    for (int i = 0; i < node_array->length; i++) {
+      lxb_dom_node_t *child = (lxb_dom_node_t *)node_array->list[i];
+      lxb_dom_node_remove(child);
+      lxb_dom_node_insert_child(node, child);
+    }
+    return new;
 
   } else if (rb_obj_is_kind_of(new, cNokolexborNode)) {
     lxb_dom_node_t *node_new = nl_rb_node_unwrap(new);

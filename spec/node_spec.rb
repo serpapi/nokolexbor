@@ -359,18 +359,30 @@ HTML
       end
 
       it 'with String' do
-        @node.add_sibling(:next, '<span class="a"></span>')
-        _(@root.inner_html).must_equal '<a></a><span></span><span class="a"></span>'
+        ret = @node.add_next_sibling('<span class="a"></span><div></div>')
+        _(@root.inner_html).must_equal '<a></a><span></span><span class="a"></span><div></div>'
+        _(ret).must_be_instance_of Nokolexbor::NodeSet
+        _(ret.to_html).must_equal '<span class="a"></span><div></div>'
       end
 
-      it 'with fragment' do
-        @node.add_sibling(:next, @node.fragment('<span class="a"></span>').child)
-        _(@root.inner_html).must_equal '<a></a><span></span><span class="a"></span>'
+      it 'with DocumentFragment' do
+        ret = @node.add_next_sibling(@node.fragment('<span class="a"></span><div></div>'))
+        _(@root.inner_html).must_equal '<a></a><span></span><span class="a"></span><div></div>'
+        _(ret).must_be_instance_of Nokolexbor::NodeSet
+        _(ret.to_html).must_equal '<span class="a"></span><div></div>'
+      end
+
+      it 'with NodeSet' do
+        ret = @node.add_next_sibling(@node.fragment('<span class="a"></span><div></div>').children)
+        _(@root.inner_html).must_equal '<a></a><span></span><span class="a"></span><div></div>'
+        _(ret).must_be_instance_of Nokolexbor::NodeSet
+        _(ret.to_html).must_equal '<span class="a"></span><div></div>'
       end
 
       it 'with existing node' do
-        @node.add_sibling(:next, @root.at_css('a'))
+        ret = @node.add_next_sibling(@root.at_css('a'))
         _(@root.inner_html).must_equal '<span></span><a></a>'
+        _(ret).must_be_instance_of Nokolexbor::Element
       end
     end
 
@@ -380,18 +392,30 @@ HTML
       end
 
       it 'with String' do
-        @node.add_sibling(:previous, '<span class="a"></span>')
-        _(@root.inner_html).must_equal '<span class="a"></span><a></a><span></span>'
+        ret = @node.add_previous_sibling('<span class="a"></span><div></div>')
+        _(@root.inner_html).must_equal '<span class="a"></span><div></div><a></a><span></span>'
+        _(ret).must_be_instance_of Nokolexbor::NodeSet
+        _(ret.to_html).must_equal '<span class="a"></span><div></div>'
       end
 
-      it 'with fragment' do
-        @node.add_sibling(:previous, @node.fragment('<span class="a"></span>').child)
-        _(@root.inner_html).must_equal '<span class="a"></span><a></a><span></span>'
+      it 'with DocumentFragment' do
+        ret = @node.add_previous_sibling(@node.fragment('<span class="a"></span><div></div>'))
+        _(@root.inner_html).must_equal '<span class="a"></span><div></div><a></a><span></span>'
+        _(ret).must_be_instance_of Nokolexbor::NodeSet
+        _(ret.to_html).must_equal '<span class="a"></span><div></div>'
+      end
+
+      it 'with NodeSet' do
+        ret = @node.add_previous_sibling(@node.fragment('<span class="a"></span><div></div>').children)
+        _(@root.inner_html).must_equal '<span class="a"></span><div></div><a></a><span></span>'
+        _(ret).must_be_instance_of Nokolexbor::NodeSet
+        _(ret.to_html).must_equal '<span class="a"></span><div></div>'
       end
 
       it 'with existing node' do
-        @node.add_sibling(:previous, @root.at_css('span'))
+        ret = @node.add_previous_sibling(@root.at_css('span'))
         _(@root.inner_html).must_equal '<span></span><a></a>'
+        _(ret).must_be_instance_of Nokolexbor::Element
       end
     end
   end
@@ -403,21 +427,30 @@ HTML
     end
 
     it 'with String' do
-      ret = @node.add_child('<span class="a"></span>')
-      _(@node.inner_html).must_equal '<span></span><span class="a"></span>'
+      ret = @node.add_child('<span class="a"></span><div></div>')
+      _(@node.inner_html).must_equal '<span></span><span class="a"></span><div></div>'
       _(ret).must_be_instance_of Nokolexbor::NodeSet
+      _(ret.to_html).must_equal '<span class="a"></span><div></div>'
     end
 
-    it 'with fragment' do
-      ret = @node.add_child(@node.fragment('<span class="a"></span>').child)
-      _(@node.inner_html).must_equal '<span></span><span class="a"></span>'
-      _(ret).must_be_kind_of Nokolexbor::Node
+    it 'with DocumentFragment' do
+      ret = @node.add_child(@node.fragment('<span class="a"></span><div></div>'))
+      _(@node.inner_html).must_equal '<span></span><span class="a"></span><div></div>'
+      _(ret).must_be_instance_of Nokolexbor::NodeSet
+      _(ret.to_html).must_equal '<span class="a"></span><div></div>'
+    end
+
+    it 'with NodeSet' do
+      ret = @node.add_child(@node.fragment('<span class="a"></span><div></div>').children)
+      _(@node.inner_html).must_equal '<span></span><span class="a"></span><div></div>'
+      _(ret).must_be_instance_of Nokolexbor::NodeSet
+      _(ret.to_html).must_equal '<span class="a"></span><div></div>'
     end
 
     it 'with existing node' do
       ret = @node.add_child(@doc.at_css('a'))
       _(@doc.at_css('body').inner_html).must_equal '<div><span></span><a></a></div>'
-      _(ret).must_be_kind_of Nokolexbor::Node
+      _(ret).must_be_instance_of Nokolexbor::Element
     end
   end
 
@@ -428,15 +461,24 @@ HTML
     end
 
     it 'with String' do
-      ret = @node.prepend_child('<span class="a"></span>')
-      _(@node.inner_html).must_equal '<span class="a"></span><span></span>'
+      ret = @node.prepend_child('<span class="a"></span><div></div>')
+      _(@node.inner_html).must_equal '<span class="a"></span><div></div><span></span>'
       _(ret).must_be_instance_of Nokolexbor::NodeSet
+      _(ret.to_html).must_equal '<span class="a"></span><div></div>'
     end
 
-    it 'with fragment' do
-      ret = @node.prepend_child(@node.fragment('<span class="a"></span>').child)
-      _(@node.inner_html).must_equal '<span class="a"></span><span></span>'
-      _(ret).must_be_kind_of Nokolexbor::Node
+    it 'with DocumentFragment' do
+      ret = @node.prepend_child(@node.fragment('<span class="a"></span><div></div>'))
+      _(@node.inner_html).must_equal '<span class="a"></span><div></div><span></span>'
+      _(ret).must_be_instance_of Nokolexbor::NodeSet
+      _(ret.to_html).must_equal '<span class="a"></span><div></div>'
+    end
+
+    it 'with NodeSet' do
+      ret = @node.prepend_child(@node.fragment('<span class="a"></span><div></div>').children)
+      _(@node.inner_html).must_equal '<span class="a"></span><div></div><span></span>'
+      _(ret).must_be_instance_of Nokolexbor::NodeSet
+      _(ret.to_html).must_equal '<span class="a"></span><div></div>'
     end
 
     it 'with existing node' do
@@ -540,12 +582,17 @@ HTML
     end
 
     it 'with String' do
-      @node.wrap('<div></div>')
+      @node.wrap('<div></div><a></a>')
       _(@doc.at_css('body').inner_html).must_equal '<div><span>123</span></div>'
     end
 
-    it 'with fragment' do
-      @node.wrap(@node.fragment('<div></div>').child)
+    it 'with Node' do
+      @node.wrap(@doc.create_element('div'))
+      _(@doc.at_css('body').inner_html).must_equal '<div><span>123</span></div>'
+    end
+
+    it 'with DocumentFragment' do
+      @node.wrap(@node.fragment('<div></div><a></a>'))
       _(@doc.at_css('body').inner_html).must_equal '<div><span>123</span></div>'
     end
   end
@@ -600,35 +647,49 @@ HTML
     end
 
     it 'with String' do
-      @node.replace('<section class="a"></section>')
-      _(@parent.inner_html).must_equal '<section class="a"></section>'
+      ret = @node.replace('<section class="a"></section><div></div>')
+      _(@parent.inner_html).must_equal '<section class="a"></section><div></div>'
+      _(ret).must_be_instance_of Nokolexbor::NodeSet
     end
 
-    it 'with fragment' do
-      @node.replace(@node.fragment('<section class="a"></section>').child)
-      _(@parent.inner_html).must_equal '<section class="a"></section>'
+    it 'with DocumentFragment' do
+      ret = @node.replace(@node.fragment('<section class="a"></section><section class="b"></section'))
+      _(@parent.inner_html).must_equal '<section class="a"></section><section class="b"></section>'
+      _(ret).must_be_instance_of Nokolexbor::NodeSet
+    end
+
+    it 'with Node' do
+      ret = @node.replace(@doc.create_element('section', '123', {'class' => 'a'}))
+      _(@doc.at_css('body').inner_html).must_equal '<section class="a">123</section>'
+      _(ret).must_be_kind_of Nokolexbor::Node
     end
 
     it 'with NodeSet' do
-      @node.replace(@node.fragment('<section class="a"></section><section class="b"></section').children)
+      ret = @node.replace(@node.fragment('<section class="a"></section><section class="b"></section').children)
       _(@parent.inner_html).must_equal '<section class="a"></section><section class="b"></section>'
+      _(ret).must_be_instance_of Nokolexbor::NodeSet
     end
   end
 
-  describe 'replace' do
+  describe 'children=' do
     before do
       @doc = Nokolexbor::HTML('')
       @node = @doc.at_css('body')
     end
 
     it 'with String' do
-      @node.children = '<section class="a"></section>'
-      _(@node.inner_html).must_equal '<section class="a"></section>'
+      @node.children = '<section class="a"></section><div></div>'
+      _(@node.inner_html).must_equal '<section class="a"></section><div></div>'
     end
 
-    it 'with fragment' do
-      @node.children = @node.fragment('<section class="a"></section>').child
-      _(@node.inner_html).must_equal '<section class="a"></section>'
+    it 'with DocumentFragment' do
+      @node.children = @node.fragment('<section class="a"></section><section class="b"></section')
+      _(@node.inner_html).must_equal '<section class="a"></section><section class="b"></section>'
+    end
+
+    it 'with Node' do
+      @node.children = @doc.create_element('section', '123', {'class' => 'a'})
+      _(@node.inner_html).must_equal '<section class="a">123</section>'
     end
 
     it 'with NodeSet' do
