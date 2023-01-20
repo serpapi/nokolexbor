@@ -4,7 +4,7 @@
 
 Nokolexbor is a drop-in replacement for Nokogiri. It's 5.2x faster at parsing HTML and up to 997x faster at CSS selectors.
 
-It's a performance-focused HTML parser for Ruby based on [Lexbor](https://github.com/lexbor/lexbor/). It supports both CSS selectors and XPath. Nokolexbor's API is designed to be 1:1 compatible as much as possible with [Nokogiri's API](https://github.com/sparklemotion/nokogiri).
+It's a performance-focused HTML5 parser for Ruby based on [Lexbor](https://github.com/lexbor/lexbor/). It supports both CSS selectors and XPath. Nokolexbor's API is designed to be 1:1 compatible as much as possible with [Nokogiri's API](https://github.com/sparklemotion/nokogiri).
 
 ## Requirements
 
@@ -69,13 +69,25 @@ end
 ```
 
 ## Features
-* A subset of Nokogiri compatible API.
+* Nokogiri-compatible APIs.
 * High performance HTML parsing, DOM manipulation and CSS selectors engine.
-* XPath search engine (the algorithm is ported from libxml2).
-* Selecting text nodes with CSS selectors using `::text`.
+* XPath search engine (ported from libxml2).
+* Text nodes CSS selector support: `::text`.
 
-## Limitations
-* Mixed expression of CSS selectors and XPath is not supported in Nokolexbor. Selectors like `div > a[last()]` won't work, use `div > a:last-of-type` instead.
+## Searching methods overview
+* `css` and `at_css`
+  * Based on Lexbor.
+  * Only accepts CSS selectors, doesn't support mixed syntax like `div#abc /text()`.
+  * To select text nodes, use pseudo element `::text`. e.g. `div#abc > ::text`.
+  * Performance is much higher than libxml2 based methods.
+* `xpath` and `at_xpath`
+  * Based on libxml2.
+  * Only accepts XPath syntax.
+  * Works in the same way as Nokogiri's `xpath` and `at_xpath`.
+* `nokogiri_css` and `nokogiri_at_css` (requires Nokogiri installed)
+  * Based on libxml2.
+  * Accept mixed syntax like `div#abc /text()`.
+  * Works in the same way as Nokogiri's `css` and `at_css`.
 
 ## Different behaviors from Nokogiri
 * For selector `:nth-of-type(n)`, `n` is not affected by prior filter. For example, if we want to select the 3rd `div` excluding class `a` and class `b`, which will be the last `div` in the following HTML:
