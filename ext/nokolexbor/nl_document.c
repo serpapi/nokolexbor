@@ -86,10 +86,10 @@ nl_rb_document_unwrap(VALUE rb_doc)
  * @return [String]
  */
 static VALUE
-nl_document_get_title(VALUE rb_doc)
+nl_document_get_title(VALUE self)
 {
   size_t len;
-  lxb_char_t *str = lxb_html_document_title(nl_rb_document_unwrap(rb_doc), &len);
+  lxb_char_t *str = lxb_html_document_title(nl_rb_document_unwrap(self), &len);
   return str == NULL ? rb_str_new("", 0) : rb_utf8_str_new(str, len);
 }
 
@@ -107,12 +107,24 @@ nl_document_get_title(VALUE rb_doc)
  * @return [String]
  */
 static VALUE
-nl_document_set_title(VALUE rb_doc, VALUE rb_title)
+nl_document_set_title(VALUE self, VALUE rb_title)
 {
   const char *c_title = StringValuePtr(rb_title);
   size_t len = RSTRING_LEN(rb_title);
-  lxb_char_t *str = lxb_html_document_title_set(nl_rb_document_unwrap(rb_doc), (const lxb_char_t *)c_title, len);
+  lxb_char_t *str = lxb_html_document_title_set(nl_rb_document_unwrap(self), (const lxb_char_t *)c_title, len);
   return rb_title;
+}
+
+/**
+ * Get the root node for this document.
+ *
+ * @return [Node]
+ */
+static VALUE
+nl_document_root(VALUE self)
+{
+  lxb_dom_document_t *doc = nl_rb_document_unwrap(self);
+  return nl_rb_node_create(lxb_dom_document_root(doc), self);
 }
 
 void Init_nl_document(void)
@@ -122,4 +134,5 @@ void Init_nl_document(void)
   rb_define_singleton_method(cNokolexborDocument, "parse", nl_document_parse, 1);
   rb_define_method(cNokolexborDocument, "title", nl_document_get_title, 0);
   rb_define_method(cNokolexborDocument, "title=", nl_document_set_title, 1);
+  rb_define_method(cNokolexborDocument, "root", nl_document_root, 0);
 }

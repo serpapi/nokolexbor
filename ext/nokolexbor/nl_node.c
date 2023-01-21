@@ -51,8 +51,11 @@ nl_rb_node_create(lxb_dom_node_t *node, VALUE rb_document)
   case LXB_DOM_NODE_TYPE_COMMENT:
     rb_class = cNokolexborComment;
     break;
-  // case LXB_DOM_NODE_TYPE_DOCUMENT:
-  //   break;
+  case LXB_DOM_NODE_TYPE_DOCUMENT:
+    if (nl_rb_node_unwrap(rb_document) != node) {
+      rb_raise(rb_eRuntimeError, "Unexpected node type: Document");
+    }
+    return rb_document;
   // case LXB_DOM_NODE_TYPE_DOCUMENT_TYPE:
   //   break;
   case LXB_DOM_NODE_TYPE_DOCUMENT_FRAGMENT:

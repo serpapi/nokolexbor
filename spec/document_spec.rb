@@ -194,4 +194,21 @@ describe Nokolexbor::Document do
       _(doc.to_html).must_equal '<html><head></head><body><noscript><div>No</div></noscript></body></html>'
     end
   end
+
+  describe 'root' do
+    before do
+      @doc = Nokolexbor::HTML('<!DOCTYPE html><!--comment--><html><div></div></html>')
+    end
+
+    it 'is the first element node' do
+      _(@doc.child.to_html).must_equal '<!DOCTYPE html>'
+      _(@doc.root).must_equal @doc.at_css('html')
+    end
+
+    it 'root parent is Document' do
+      parent = @doc.root.parent
+      _(parent).must_equal @doc
+      _(parent).must_be_instance_of Nokolexbor::Document
+    end
+  end
 end
