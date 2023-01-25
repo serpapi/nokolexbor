@@ -33,7 +33,7 @@ module Nokolexbor
     #
     # @param n [Numeric,nil]
     #
-    # @retrun [Array<Node>]
+    # @return [Node,Array<Node>] {Node} if +n+ is nil, otherwise {Array<Node>}
     def first(n = nil)
       return self[0] unless n
 
@@ -44,17 +44,17 @@ module Nokolexbor
 
     # Get the last element of the NodeSet.
     #
-    # @retrun [Node]
+    # @return [Node,nil]
     def last
       self[-1]
     end
 
-    # @return true if this NodeSet is empty.
+    # @return [Boolean] true if this NodeSet is empty.
     def empty?
       length == 0
     end
 
-    # @return The index of the first node in this NodeSet that is equal to +node+ or meets the given block. Returns nil if no match is found.
+    # @return [Integer] The index of the first node in this NodeSet that is equal to +node+ or meets the given block. Returns nil if no match is found.
     def index(node = nil)
       if node
         each_with_index { |member, j| return j if member == node }
@@ -103,7 +103,7 @@ module Nokolexbor
     alias_method :unlink, :remove
     alias_method :to_ary, :to_a
 
-    # Destroy all nodes in this NodeSet.
+    # Destroy all nodes in the NodeSet.
     #
     # @see Node#destroy
     def destroy
@@ -126,11 +126,9 @@ module Nokolexbor
       delete(first)
     end
 
-    # Equality -- Two NodeSets are equal if the contain the same number
-    # of elements and if each element is equal to the corresponding
-    # element in the other NodeSet.
-    #
-    # @return [Boolean]
+    # @return [Boolean] true if two NodeSets contain the same number
+    #   of elements and each element is equal to the corresponding
+    #   element in the other NodeSet.
     def ==(other)
       return false unless other.is_a?(NodeSet)
       return false unless length == other.length

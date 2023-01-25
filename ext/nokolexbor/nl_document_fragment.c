@@ -8,7 +8,7 @@ extern VALUE mNokolexbor;
  * call-seq:
  *   new(document, tags = nil, ctx = nil) -> DocumentFragment
  *
- * Create a new {DocumentFragment} from +tags+.
+ * Create a {DocumentFragment} from +tags+.
  *
  * If +ctx+ is present, it is used as a context node for the
  * subtree created.

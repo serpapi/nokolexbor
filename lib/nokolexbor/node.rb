@@ -22,37 +22,37 @@ module Nokolexbor
 
     LOOKS_LIKE_XPATH = %r{^(\./|/|\.\.|\.$)}
 
-    # @return true if this is a Comment
+    # @return true if this is a {Comment}
     def comment?
       type == COMMENT_NODE
     end
 
-    # @return true if this is a CDATA
+    # @return true if this is a {CDATA}
     def cdata?
       type == CDATA_SECTION_NODE
     end
 
-    # @return true if this is a ProcessingInstruction
+    # @return true if this is a {ProcessingInstruction}
     def processing_instruction?
       type == PI_NODE
     end
 
-    # @return true if this is a Text
+    # @return true if this is a {Text}
     def text?
       type == TEXT_NODE
     end
 
-    # @return true if this is a DocumentFragment
+    # @return true if this is a {DocumentFragment}
     def fragment?
       type == DOCUMENT_FRAG_NODE
     end
 
-    # @return true if this is an Element
+    # @return true if this is an {Element}
     def element?
       type == ELEMENT_NODE
     end
 
-    # @return true if this is a Document
+    # @return true if this is a {Document}
     def document?
       is_a?(Nokolexbor::Document)
     end
@@ -93,7 +93,7 @@ module Nokolexbor
     #  - when {Node}:
     #    An element that is cloned and used as the wrapper.
     #
-    # @return +self+
+    # @return [Node] +self+, to support chaining of calls.
     #
     # @see NodeSet#wrap
     #
@@ -165,9 +165,9 @@ module Nokolexbor
     #
     # @param node_or_tags [Node, DocumentFragment, NodeSet, String] The node to be added.
     #
-    # @return +self+, to support chaining of calls.
+    # @return [Node] +self+, to support chaining of calls.
     #
-    # @see #before
+    # @see #add_previous_sibling
     def before(node_or_tags)
       add_previous_sibling(node_or_tags)
       self
@@ -177,9 +177,9 @@ module Nokolexbor
     #
     # @param node_or_tags [Node, DocumentFragment, NodeSet, String] The node to be added.
     #
-    # @return +self+, to support chaining of calls.
+    # @return [Node] +self+, to support chaining of calls.
     #
-    # @see #after
+    # @see #add_next_sibling
     def after(node_or_tags)
       add_next_sibling(node_or_tags)
       self
@@ -194,7 +194,7 @@ module Nokolexbor
     #
     # @param node_or_tags [Node, DocumentFragment, NodeSet, String] The node to be added.
     #
-    # @return +self+, to support chaining of calls.
+    # @return [Node] +self+, to support chaining of calls.
     #
     # @see #add_child
     def <<(node_or_tags)
@@ -236,7 +236,7 @@ module Nokolexbor
 
     # Fetch this node's attributes.
     #
-    # @return Hash containing attributes belonging to +self+. The hash keys are String attribute names, and the hash values are {Nokolexbor::Attribute}.
+    # @return [Hash{String => Attribute}] Hash containing attributes belonging to +self+. The hash keys are String attribute names, and the hash values are {Nokolexbor::Attribute}.
     def attributes
       attribute_nodes.each_with_object({}) do |node, hash|
         hash[node.name] = node
@@ -247,7 +247,7 @@ module Nokolexbor
     #
     # @param node [Node, DocumentFragment, NodeSet, String]
     #
-    # @return The reparented {Node} (if +node+ is a {Node}), or {NodeSet} (if +node+ is a {DocumentFragment}, {NodeSet}, or {String}).
+    # @return [Node,NodeSet] The reparented {Node} (if +node+ is a {Node}), or {NodeSet} (if +node+ is a {DocumentFragment}, {NodeSet}, or {String}).
     #
     # @see #swap
     def replace(node)
@@ -256,11 +256,11 @@ module Nokolexbor
       ret
     end
 
-    # Swap this Node for +node+
+    # Swap this Node for +node+.
     #
     # @param node [Node, DocumentFragment, NodeSet, String]
     #
-    # @return +self+, to support chaining of calls.
+    # @return [Node] +self+, to support chaining of calls.
     #
     # @see #replace
     def swap(node)
@@ -286,6 +286,8 @@ module Nokolexbor
     end
 
     # Iterate over each attribute name and value pair of this Node.
+    #
+    # @yield [String,String] The name and value of the current attribute.
     def each
       attributes.each do |name, node|
         yield [name, node.value]
@@ -294,6 +296,8 @@ module Nokolexbor
 
     # Create a {DocumentFragment} containing +tags+ that is relative to _this_
     # context node.
+    #
+    # @return [DocumentFragment]
     def fragment(tags)
       Nokolexbor::DocumentFragment.new(document, tags, self)
     end
@@ -303,7 +307,7 @@ module Nokolexbor
     # Search this object for CSS +rules+. +rules+ must be one or more CSS
     # selectors.
     #
-    # This method uses Lexbor as the selector engine. Its performance is much higher than {#nokogiri_css}
+    # This method uses Lexbor as the selector engine. Its performance is much higher than {#xpath} or {#nokogiri_css}.
     #
     # @example
     #   node.css('title')
@@ -312,6 +316,7 @@ module Nokolexbor
     #
     # @return [NodeSet] The matched set of Nodes.
     #
+    # @see #xpath
     # @see #nokogiri_css
     def css(*args)
       css_impl(args.join(', '))
@@ -319,7 +324,7 @@ module Nokolexbor
 
     # Like {#css}, but returns the first match.
     #
-    # This method uses Lexbor as the selector engine. Its performance is much higher than {#nokogiri_at_css}
+    # This method uses Lexbor as the selector engine. Its performance is much higher than {#at_xpath} or {#nokogiri_at_css}.
     #
     # @return [Node, nil] The first matched Node.
     #
@@ -332,9 +337,11 @@ module Nokolexbor
     # Search this object for CSS +rules+. +rules+ must be one or more CSS
     # selectors. It supports a mixed syntax of CSS selectors and XPath.
     #
-    # This method uses libxml2 as the selector engine. It behaves the same as {Nokogiri::Node#css}
+    # This method uses libxml2 as the selector engine. It works the same way as {Nokogiri::Node#css}.
     #
     # @return [NodeSet] The matched set of Nodes.
+    #
+    # @see #css
     def nokogiri_css(*args)
       rules, handler, ns, _ = extract_params(args)
 
@@ -343,7 +350,7 @@ module Nokolexbor
 
     # Like {#nokogiri_css}, but returns the first match.
     #
-    # This method uses libxml2 as the selector engine. It behaves the same as {Nokogiri::Node#at_css}
+    # This method uses libxml2 as the selector engine. It works the same way as {Nokogiri::Node#at_css}.
     #
     # @return [Node, nil] The first matched Node.
     #
@@ -356,7 +363,7 @@ module Nokolexbor
     # Search this node for XPath +paths+. +paths+ must be one or more XPath
     # queries.
     #
-    # It behaves the same as {Nokogiri::Node#xpath}
+    # It works the same way as {Nokogiri::Node#xpath}.
     #
     # @example
     #   node.xpath('.//title')
@@ -370,7 +377,7 @@ module Nokolexbor
 
     # Like {#xpath}, but returns the first match.
     #
-    # It behaves the same as {Nokogiri::Node#at_xpath}
+    # It works the same way as {Nokogiri::Node#at_xpath}.
     #
     # @return [Node, nil] The first matched Node.
     #
@@ -451,7 +458,7 @@ module Nokolexbor
     #   will not be added. Any class names not present will be added. If no "class" attribute
     #   exists, one is created.
     #
-    # @return [Node] +self+ for ease of chaining method calls.
+    # @return [Node] +self+, to support chaining of calls.
     #
     # @example
     #   node.add_class("section") # => <div class="section"></div>
@@ -473,7 +480,7 @@ module Nokolexbor
     # @see #add_class
     # @see #remove_class
     #
-    # @return self
+    # @return [Node] +self+, to support chaining of calls.
     def append_class(names)
       kwattr_append("class", names)
     end
@@ -499,7 +506,7 @@ module Nokolexbor
     #   String names. Any class names already present will be removed. If no CSS classes remain,
     #   the "class" attribute is deleted.
     #
-    # @return [Node] +self+ for ease of chaining method calls.
+    # @return [Node] +self+, to support chaining of calls.
     #
     # @example
     #   node.remove_class("section")
@@ -552,7 +559,7 @@ module Nokolexbor
     #   not be added. Any values not present will be added. If the named attribute does not exist,
     #   it is created.
     #
-    # @return [Node] +self+ for ease of chaining method calls.
+    # @return [Node] +self+, to support chaining of calls.
     def kwattr_add(attribute_name, keywords)
       keywords = keywordify(keywords)
       current_kws = kwattr_values(attribute_name)
@@ -581,7 +588,7 @@ module Nokolexbor
     #   not be added. Any values not present will be added. If the named attribute does not exist,
     #   it is created.
     #
-    # @return [Node] +self+ for ease of chaining method calls.
+    # @return [Node] +self+, to support chaining of calls.
     def kwattr_append(attribute_name, keywords)
       keywords = keywordify(keywords)
       current_kws = kwattr_values(attribute_name)
@@ -613,7 +620,7 @@ module Nokolexbor
     #   not be added. Any values not present will be added. If the named attribute does not exist,
     #   it is created.
     #
-    # @return [Node] +self+ for ease of chaining method calls.
+    # @return [Node] +self+, to support chaining of calls.
     def kwattr_remove(attribute_name, keywords)
       if keywords.nil?
         remove_attr(attribute_name)
@@ -631,7 +638,7 @@ module Nokolexbor
       self
     end
 
-    # Write Node to +io+.
+    # Serialize Node and write to +io+.
     def write_to(io, *options)
       io.write(to_html(*options))
     end

@@ -128,7 +128,7 @@ nl_attribute_set_value(VALUE self, VALUE rb_content)
 }
 
 /**
- * Get the parent Node of the Attribute.
+ * Get the owner Node of the Attribute.
  *
  * @return [Node]
  */
@@ -145,7 +145,7 @@ nl_attribute_parent(VALUE self)
 }
 
 /**
- * Get the previous Attribute of the Attribute.
+ * Get the previous Attribute.
  *
  * @return [Attribute]
  */
@@ -162,7 +162,7 @@ nl_attribute_previous(VALUE self)
 }
 
 /**
- * Get the next Attribute of the Attribute.
+ * Get the next Attribute.
  *
  * @return [Attribute]
  */

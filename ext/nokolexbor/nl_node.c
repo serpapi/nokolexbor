@@ -236,7 +236,8 @@ nl_node_content_set(VALUE self, VALUE content)
  *
  * Fetch an attribute from this node.
  *
- * @param name The name of the attribute
+ * @param name The name of the attribute.
+ *
  * @return (String, nil) The value of the attribute +name+, or +nil+ if no matching attribute exists.
  */
 static VALUE
@@ -269,8 +270,9 @@ nl_node_get_attr(VALUE self, VALUE rb_attr)
  *
  * Update the attribute +name+ to +value+, or create the attribute if it does not exist.
  *
- * @param name The name of the attribute
- * @param value The value of the attribute
+ * @param name The name of the attribute.
+ * @param value The value of the attribute.
+ *
  * @return [String] +value+
  */
 static VALUE
@@ -300,7 +302,7 @@ nl_node_set_attr(VALUE self, VALUE rb_attr, VALUE rb_value)
 /**
  * call-seq: remove_attr(name) -> Boolean
  *
- * Remove the attribute named +name+
+ * Remove the attribute named +name+.
  *
  * @param name [String]
  *
@@ -709,7 +711,7 @@ nl_node_attrs(VALUE self)
 }
 
 /**
- * Get the parent node
+ * Get the parent node.
  *
  * @return [Node,nil] The parent node
  */
@@ -721,7 +723,7 @@ nl_node_parent(VALUE self)
 }
 
 /**
- * Get the previous sibling node
+ * Get the previous sibling node.
  *
  * @return [Node,nil] The previous sibling node
  */
@@ -751,7 +753,7 @@ nl_node_previous_element(VALUE self)
 }
 
 /**
- * Get the next sibling node
+ * Get the next sibling node.
  *
  * @return [Node,nil] The previous sibling node
  */
@@ -829,7 +831,7 @@ nl_node_remove(VALUE self)
 /**
  * Remove this node from its current context and free its allocated memory.
  *
- * @return nil
+ * @return [nil]
  *
  * @see #remove
  */
@@ -842,7 +844,7 @@ nl_node_destroy(VALUE self)
 }
 
 /**
- * @return true if this Node is equal to +other+.
+ * @return [Boolean] true if this Node is equal to +other+.
  */
 static VALUE
 nl_node_equals(VALUE self, VALUE other)
@@ -1014,7 +1016,7 @@ nl_node_add_child(VALUE self, VALUE new)
 /**
  * Get the type of this Node
  *
- * @return {Numeric}
+ * @return {Integer}
  */
 static VALUE
 nl_node_get_type(VALUE self)
@@ -1023,7 +1025,7 @@ nl_node_get_type(VALUE self)
 }
 
 /**
- * @return The first child Node that is an element.
+ * @return [Element] The first child Node that is an element.
  */
 static VALUE
 nl_node_first_element_child(VALUE self)
@@ -1053,7 +1055,7 @@ nl_node_first_element_child(VALUE self)
 }
 
 /**
- * @return The last child Node that is an element.
+ * @return [Element] The last child Node that is an element.
  */
 static VALUE
 nl_node_last_element_child(VALUE self)
@@ -1085,7 +1087,7 @@ nl_node_last_element_child(VALUE self)
 /**
  * Copy this node.
  *
- * @return The new {Node}.
+ * @return [Node] The new {Node}.
  */
 static VALUE
 nl_node_clone(VALUE self)

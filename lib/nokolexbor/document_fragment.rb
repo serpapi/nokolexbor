@@ -2,7 +2,7 @@
 
 module Nokolexbor
   class DocumentFragment < Nokolexbor::Node
-    # Create a {DocumentFragment} from +tags+
+    # Create a {DocumentFragment} from +tags+.
     #
     # @return [DocumentFragment]
     def self.parse(tags)
@@ -32,7 +32,7 @@ module Nokolexbor
     alias_method :to_s, :outer_html
     alias_method :serialize, :outer_html
 
-    # Create a {DocumentFragment} from +data+
+    # Create a {DocumentFragment} from +data+.
     #
     # @return [DocumentFragment]
     def fragment(data)

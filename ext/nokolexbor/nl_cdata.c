@@ -9,6 +9,8 @@ extern VALUE mNokolexbor;
  *   new(content, document) { |CDATA| ... } -> CDATA
  *
  * Create a new CDATA from +content+.
+ *
+ * @return [CDATA]
  */
 static VALUE
 nl_cdata_new(int argc, VALUE *argv, VALUE klass)

@@ -66,7 +66,7 @@ nl_rb_node_set_create_with_data(lexbor_array_t *array, VALUE rb_document)
 /**
  * Get the length of this NodeSet.
  *
- * @return [Numeric]
+ * @return [Integer]
  */
 static VALUE
 nl_node_set_length(VALUE self)
@@ -102,12 +102,11 @@ nl_node_set_push(VALUE self, VALUE rb_node)
  *  call-seq:
  *    delete(node)
  *
- * Delete +node+ from the Nodeset. If found, returns the deleted node,
- * otherwise returns nil.
+ * Delete +node+ from the NodeSet.
  *
  * @param node [Node]
  *
- * @return [Node,nil]
+ * @return [Node,nil] The deleted node if found, otherwise returns nil.
  */
 static VALUE
 nl_node_set_delete(VALUE self, VALUE rb_node)
@@ -204,11 +203,11 @@ nl_node_set_subseq(VALUE self, long beg, long len)
  *   [](start, length) -> NodeSet,nil
  *   [](range) -> NodeSet,nil
  *
- * Element reference - returns the {Node} at +index+, or returns a {NodeSet}
- * containing nodes starting at +start+ and continuing for +length+ elements, or
- * returns a {NodeSet} containing nodes specified by +range+. Negative +indices+
- * count backward from the end of the +node_set+ (-1 is the last node). Returns
- * nil if the +index+ (or +start+) are out of range.
+ * @return [Node,NodeSet,nil] the {Node} at +index+, or returns a {NodeSet}
+ *   containing nodes starting at +start+ and continuing for +length+ elements, or
+ *   returns a {NodeSet} containing nodes specified by +range+. Negative +indices+
+ *   count backward from the end of the +node_set+ (-1 is the last node). Returns
+ *   nil if the +index+ (or +start+) are out of range.
  */
 static VALUE
 nl_node_set_slice(int argc, VALUE *argv, VALUE self)

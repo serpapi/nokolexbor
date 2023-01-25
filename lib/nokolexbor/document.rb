@@ -2,7 +2,7 @@
 
 module Nokolexbor
   class Document < Nokolexbor::Node
-    # Create a new Element with +name+ belonging to this document, optionally setting contents or
+    # Create an {Element} with +name+ belonging to this document, optionally setting contents or
     # attributes.
     #
     # @param name [String]
@@ -44,28 +44,28 @@ module Nokolexbor
       elm
     end
 
-    # Create a Text Node with +string+
+    # Create a {Text} with +string+.
     #
     # @return [Text]
     def create_text_node(string, &block)
       Nokolexbor::Text.new(string.to_s, self, &block)
     end
 
-    # Create a CDATA Node containing +string+
+    # Create a {CDATA} containing +string+.
     #
     # @return [CDATA]
     def create_cdata(string, &block)
       Nokolexbor::CDATA.new(string.to_s, self, &block)
     end
 
-    # Create a Comment Node containing +string+
+    # Create a {Comment} containing +string+.
     #
     # @return [Comment]
     def create_comment(string, &block)
       Nokolexbor::Comment.new(string.to_s, self, &block)
     end
 
-    # A reference to +self+
+    # A reference to +self+.
     #
     # @return [Document]
     def document
