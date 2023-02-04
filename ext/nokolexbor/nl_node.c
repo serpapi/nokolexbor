@@ -383,7 +383,6 @@ nl_node_find(VALUE self, VALUE selector, lxb_selectors_cb_f cb, void *ctx)
   }
 
   /* Parse and get the log. */
-  // TODO: Cache the list for reuse, improves performance
   list = lxb_css_selectors_parse_relative_list(parser, (const lxb_char_t *)selector_c, selector_len);
   if (parser->status != LXB_STATUS_OK) {
     status = parser->status;
