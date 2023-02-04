@@ -5,6 +5,10 @@ if ENV["CC"]
   RbConfig::CONFIG["CC"] = RbConfig::MAKEFILE_CONFIG["CC"] = ENV["CC"]
 end
 
+def windows?
+  RbConfig::CONFIG["target_os"].match?(/mingw|mswin/)
+end
+
 # From: https://stackoverflow.com/questions/2108727
 # Cross-platform way of finding an executable in the $PATH.
 #
@@ -23,9 +27,9 @@ end
 cmake_flags = [ ENV["CMAKE_FLAGS"] ]
 cmake_flags << "-DCMAKE_TRY_COMPILE_TARGET_TYPE=STATIC_LIBRARY"
 # Set system name explicitly when cross-compiling
-cmake_flags << "-DCMAKE_SYSTEM_NAME=Windows -DWIN32=1" if Gem.win_platform?
+cmake_flags << "-DCMAKE_SYSTEM_NAME=Windows -DWIN32=1" if windows?
 # On Windows, Ruby-DevKit is MSYS-based, so ensure to use MSYS Makefiles.
-cmake_flags << "-G \"MSYS Makefiles\"" if Gem.win_platform? && !ENV['NOKOLEXBOR_CROSS_COMPILE']
+cmake_flags << "-G \"MSYS Makefiles\"" if windows? && !ENV['NOKOLEXBOR_CROSS_COMPILE']
 
 if ENV['NOKOLEXBOR_CROSS_COMPILE']
   # use the same toolchain for cross-compiling lexbor
@@ -74,7 +78,7 @@ end
 
 def self.run_cmake(timeout, args)
   # Set to process group so we can kill it and its children
-  pgroup = (Gem.win_platform? && !ENV['NOKOLEXBOR_CROSS_COMPILE']) ? :new_pgroup : :pgroup
+  pgroup = (windows? && !ENV['NOKOLEXBOR_CROSS_COMPILE']) ? :new_pgroup : :pgroup
   pid = Process.spawn("cmake #{args}", pgroup => true)
 
   Timeout.timeout(timeout) do
@@ -104,7 +108,7 @@ def apply_patch(patch_file, chdir)
 end
 
 
-MAKE = if Gem.win_platform?
+MAKE = if windows?
   # On Windows, Ruby-DevKit only has 'make'.
   find_executable('make')
 else
@@ -143,7 +147,7 @@ Dir.chdir(EXT_DIR) do
   Dir.mkdir("build") if !Dir.exist?("build")
 
   Dir.chdir("build") do
-    run_cmake(10 * 60, ".. #{cmake_flags.join(' ')} #{Gem.win_platform? ? "-DLIBXML2_WITH_THREADS=OFF" : ""}")
+    run_cmake(10 * 60, ".. #{cmake_flags.join(' ')} #{windows? ? "-DLIBXML2_WITH_THREADS=OFF" : ""}")
   end
 end
 
