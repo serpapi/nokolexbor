@@ -178,6 +178,19 @@ nl_attribute_next(VALUE self)
   return nl_rb_node_create(attr->next, nl_rb_document_get(self));
 }
 
+static VALUE
+nl_attribute_inspect(VALUE self)
+{
+  VALUE c = rb_class_name(CLASS_OF(self));
+  lxb_dom_node_t *node = nl_rb_node_unwrap(self);
+  lxb_dom_attr_t *attr = lxb_dom_interface_attr(node);
+  size_t len;
+
+  return rb_sprintf("#<%" PRIsVALUE " %s=\"%s\">", c,
+                    lxb_dom_attr_qualified_name(attr, &len),
+                    lxb_dom_attr_value(attr, &len));
+}
+
 void Init_nl_attribute(void)
 {
   cNokolexborAttribute = rb_define_class_under(mNokolexbor, "Attribute", cNokolexborNode);
@@ -191,6 +204,7 @@ void Init_nl_attribute(void)
   rb_define_method(cNokolexborAttribute, "parent", nl_attribute_parent, 0);
   rb_define_method(cNokolexborAttribute, "previous", nl_attribute_previous, 0);
   rb_define_method(cNokolexborAttribute, "next", nl_attribute_next, 0);
+  rb_define_method(cNokolexborAttribute, "inspect", nl_attribute_inspect, 0);
 
   rb_define_alias(cNokolexborAttribute, "node_name", "name");
   rb_define_alias(cNokolexborAttribute, "node_name=", "name=");

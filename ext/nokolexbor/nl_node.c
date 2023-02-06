@@ -1106,6 +1106,32 @@ nl_node_clone(VALUE self)
   return nl_rb_node_create(clone, nl_rb_document_get(self));
 }
 
+static VALUE
+nl_node_inspect(int argc, VALUE *argv, VALUE self)
+{
+  lxb_dom_node_t *node = nl_rb_node_unwrap(self);
+  if (node->type == LXB_DOM_NODE_TYPE_DOCUMENT) {
+    return rb_call_super(argc, argv);
+  }
+
+  VALUE c = rb_class_name(CLASS_OF(self));
+  lexbor_str_t str = {0};
+  lxb_status_t status = lxb_html_serialize_str(node, &str);
+  if (status != LXB_STATUS_OK) {
+    if (str.data != NULL) {
+      lexbor_str_destroy(&str, node->owner_document->text, false);
+    }
+    return rb_call_super(argc, argv);
+  }
+
+  if (str.data != NULL) {
+    VALUE ret = rb_sprintf("#<%" PRIsVALUE " %s>", c, str.data);
+    lexbor_str_destroy(&str, node->owner_document->text, false);
+    return ret;
+  }
+  return rb_call_super(argc, argv);
+}
+
 void Init_nl_node(void)
 {
   cNokolexborNode = rb_define_class_under(mNokolexbor, "Node", rb_cObject);
@@ -1148,6 +1174,7 @@ void Init_nl_node(void)
   rb_define_method(cNokolexborNode, "first_element_child", nl_node_first_element_child, 0);
   rb_define_method(cNokolexborNode, "last_element_child", nl_node_last_element_child, 0);
   rb_define_method(cNokolexborNode, "clone", nl_node_clone, 0);
+  rb_define_method(cNokolexborNode, "inspect", nl_node_inspect, -1);
 
   rb_define_alias(cNokolexborNode, "attr", "[]");
   rb_define_alias(cNokolexborNode, "get_attribute", "[]");

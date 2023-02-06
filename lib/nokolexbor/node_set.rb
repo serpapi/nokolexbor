@@ -196,6 +196,10 @@ module Nokolexbor
       end
     end
 
+    def inspect
+      "[#{map(&:inspect).join(', ')}]"
+    end
+
     private
 
     IMPLIED_XPATH_CONTEXTS = [".//", "self::"].freeze # :nodoc:
