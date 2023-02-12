@@ -9,6 +9,7 @@ extern VALUE mNokolexbor;
 extern VALUE cNokolexborDocument;
 extern VALUE cNokolexborText;
 extern VALUE cNokolexborComment;
+extern VALUE cNokolexborCData;
 extern VALUE cNokolexborProcessingInstruction;
 extern VALUE cNokolexborNodeSet;
 extern VALUE cNokolexborDocumentFragment;
@@ -39,7 +40,7 @@ nl_rb_node_create(lxb_dom_node_t *node, VALUE rb_document)
     rb_class = cNokolexborText;
     break;
   case LXB_DOM_NODE_TYPE_CDATA_SECTION:
-    rb_class = cNokolexborCharacterData;
+    rb_class = cNokolexborCData;
     break;
   // case LXB_DOM_NODE_TYPE_ENTITY_REFERENCE:
   //   break;

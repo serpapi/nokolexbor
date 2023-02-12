@@ -131,6 +131,7 @@ describe Nokolexbor::Document do
   it 'create_text_node' do
     doc = Nokolexbor::HTML('')
     node = doc.create_text_node('This is text')
+    _(node).must_be_instance_of Nokolexbor::Text
     _(node.text?).must_equal true
     _(node.to_html).must_equal 'This is text'
     _(node.document).must_equal doc
@@ -139,6 +140,7 @@ describe Nokolexbor::Document do
   it 'create_cdata' do
     doc = Nokolexbor::HTML('')
     node = doc.create_cdata('This is cdata')
+    _(node).must_be_instance_of Nokolexbor::CDATA
     _(node.cdata?).must_equal true
     _(node.document).must_equal doc
   end
@@ -146,6 +148,7 @@ describe Nokolexbor::Document do
   it 'create_comment' do
     doc = Nokolexbor::HTML('')
     node = doc.create_comment('This is comment')
+    _(node).must_be_instance_of Nokolexbor::Comment
     _(node.comment?).must_equal true
     _(node.to_html).must_equal '<!--This is comment-->'
     _(node.document).must_equal doc
