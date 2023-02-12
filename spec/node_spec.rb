@@ -859,4 +859,53 @@ HTML
       _(io.string).must_equal '<html><head></head><body></body></html>'
     end
   end
+
+  describe 'inspect' do
+    it 'Document' do
+      inspect_str = Nokolexbor::HTML('<div></div>').inspect
+      _(inspect_str).must_match /#<Nokolexbor::Document:0x[0-9a-f]+>/
+    end
+
+    it 'DocumentFragment' do
+      inspect_str = Nokolexbor::HTML('').fragment('<div></div>').inspect
+      _(inspect_str).must_match /#<Nokolexbor::DocumentFragment:0x[0-9a-f]+ .+>/
+    end
+
+    it 'Element' do
+      inspect_str = Nokolexbor::HTML('<div class="a b">123</div>').at_css('div').inspect
+      _(inspect_str).must_equal '#<Nokolexbor::Element <div class="a b">>'
+    end
+
+    it 'Text' do
+      inspect_str = Nokolexbor::HTML('<div>123 abc</div>').at_css('div').child.inspect
+      _(inspect_str).must_equal '#<Nokolexbor::Text 123 abc>'
+    end
+
+    it 'CDATA' do
+      inspect_str = Nokolexbor::CDATA.new('123 abc', Nokolexbor::HTML('')).inspect
+      _(inspect_str).must_match /#<Nokolexbor::CDATA:0x[0-9a-f]+ .+>/
+    end
+
+    it 'Comment' do
+      inspect_str = Nokolexbor::HTML('<!-- 123 abd -->').child.inspect
+      _(inspect_str).must_equal '#<Nokolexbor::Comment <!-- 123 abd -->>'
+    end
+
+    it 'ProcessingInstruction' do
+      inspect_str = Nokolexbor::ProcessingInstruction.new('xml', '123 abc', Nokolexbor::HTML('')).inspect
+      _(inspect_str).must_equal '#<Nokolexbor::ProcessingInstruction <?xml 123 abc>>'
+    end
+
+    it 'Attribute' do
+      inspect_str = Nokolexbor::HTML('<div class="a b"></div>').at_css('div').attribute('class').inspect
+      _(inspect_str).must_equal '#<Nokolexbor::Attribute class="a b">'
+      inspect_str = Nokolexbor::HTML('<div enabled></div>').at_css('div').attribute('enabled').inspect
+      _(inspect_str).must_equal '#<Nokolexbor::Attribute enabled="">'
+    end
+
+    it 'NodeSet' do
+      inspect_str = Nokolexbor::HTML('<div class="a b"></div><div style="c d"></div>').css('div').inspect
+      _(inspect_str).must_equal '[#<Nokolexbor::Element <div class="a b">>, #<Nokolexbor::Element <div style="c d">>]'
+    end
+  end
 end

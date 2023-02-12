@@ -185,10 +185,11 @@ nl_attribute_inspect(VALUE self)
   lxb_dom_node_t *node = nl_rb_node_unwrap(self);
   lxb_dom_attr_t *attr = lxb_dom_interface_attr(node);
   size_t len;
+  lxb_char_t *attr_value = lxb_dom_attr_value(attr, &len);
 
   return rb_sprintf("#<%" PRIsVALUE " %s=\"%s\">", c,
                     lxb_dom_attr_qualified_name(attr, &len),
-                    lxb_dom_attr_value(attr, &len));
+                    attr_value == NULL ? "" : attr_value);
 }
 
 void Init_nl_attribute(void)
