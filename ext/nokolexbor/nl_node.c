@@ -803,6 +803,28 @@ nl_node_children(VALUE self)
 }
 
 /**
+ * Get the element children of this node.
+ *
+ * @return [NodeSet] The set of this node's element children.
+ */
+static VALUE
+nl_node_element_children(VALUE self)
+{
+  lxb_dom_node_t *node = nl_rb_node_unwrap(self);
+  lxb_dom_node_t *child = node->first_child;
+  lexbor_array_t *array = lexbor_array_create();
+
+  while (child != NULL) {
+    if (child->type == LXB_DOM_NODE_TYPE_ELEMENT) {
+      lexbor_array_push(array, child);
+    }
+    child = child->next;
+  }
+
+  return nl_rb_node_set_create_with_data(array, nl_rb_document_get(self));
+}
+
+/**
  * Get the first child of this node.
  *
  * @return [Node,nil] The first child.
@@ -1164,6 +1186,7 @@ void Init_nl_node(void)
   rb_define_method(cNokolexborNode, "next_element", nl_node_next_element, 0);
   rb_define_method(cNokolexborNode, "children", nl_node_children, 0);
   rb_define_method(cNokolexborNode, "child", nl_node_child, 0);
+  rb_define_method(cNokolexborNode, "element_children", nl_node_element_children, 0);
   rb_define_method(cNokolexborNode, "remove", nl_node_remove, 0);
   rb_define_method(cNokolexborNode, "destroy", nl_node_destroy, 0);
   rb_define_method(cNokolexborNode, "attrs", nl_node_attrs, 0);
@@ -1183,6 +1206,7 @@ void Init_nl_node(void)
   rb_define_alias(cNokolexborNode, "set_attribute", "[]=");
   rb_define_alias(cNokolexborNode, "has_attribute?", "key?");
   rb_define_alias(cNokolexborNode, "delete", "remove_attr");
+  rb_define_alias(cNokolexborNode, "elements", "element_children");
   rb_define_alias(cNokolexborNode, "remove_attribute", "remove_attr");
   rb_define_alias(cNokolexborNode, "text", "content");
   rb_define_alias(cNokolexborNode, "inner_text", "content");

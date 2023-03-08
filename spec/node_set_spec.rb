@@ -237,4 +237,161 @@ HTML
       _(result[1].text).must_equal 'B'
     end
   end
+
+  describe 'union' do
+    before do
+      @doc = Nokolexbor::HTML('<a><div class="a"></div><span class="a"></span><div class="b"></div></a>')
+      @nodes1 = @doc.css("div")
+      @nodes2 = @doc.css(".a")
+    end
+
+    it 'works' do
+      _(@nodes1.size).must_equal 2
+      _(@nodes2.size).must_equal 2
+      [@nodes1 + @nodes2, @nodes1 | @nodes2].each do |new_nodes|
+        _(new_nodes.size).must_equal 3
+        _(new_nodes[0].to_html).must_equal '<div class="a"></div>'
+        _(new_nodes[1].to_html).must_equal '<div class="b"></div>'
+        _(new_nodes[2].to_html).must_equal '<span class="a"></span>'
+      end
+    end
+
+    it 'when self is empty' do
+      _(@nodes1 + Nokolexbor::NodeSet.new(@doc, [])).must_equal @nodes1
+    end
+
+    it 'when other is empty' do
+      _(Nokolexbor::NodeSet.new(@doc, []) + @nodes2).must_equal @nodes2
+    end
+
+    it 'when both are empty' do
+      new_nodes = Nokolexbor::NodeSet.new(@doc, []) + Nokolexbor::NodeSet.new(@doc, [])
+      _(new_nodes.size).must_equal 0
+    end
+
+    it 'raises when other is not NodeSet' do
+      _{ @nodes1 + 1 }.must_raise ArgumentError
+    end
+  end
+
+  describe 'intersection' do
+    before do
+      @doc = Nokolexbor::HTML('<a><div class="a"></div><span class="a"></span><div class="b"></div></a>')
+      @nodes1 = @doc.css("div")
+      @nodes2 = @doc.css(".a")
+    end
+
+    it 'works' do
+      _(@nodes1.size).must_equal 2
+      _(@nodes2.size).must_equal 2
+      new_nodes = @nodes1 & @nodes2
+      _(new_nodes.size).must_equal 1
+      _(new_nodes[0].to_html).must_equal '<div class="a"></div>'
+    end
+
+    it 'when self is empty' do
+      new_node = @nodes1 & Nokolexbor::NodeSet.new(@doc, [])
+      _(new_node.size).must_equal 0
+    end
+
+    it 'when other is empty' do
+      new_node = Nokolexbor::NodeSet.new(@doc, []) & @nodes2
+      _(new_node.size).must_equal 0
+    end
+
+    it 'when both are empty' do
+      new_node = Nokolexbor::NodeSet.new(@doc, []) & Nokolexbor::NodeSet.new(@doc, [])
+      _(new_node.size).must_equal 0
+    end
+
+    it 'raises when other is not NodeSet' do
+      _{ @nodes1 & 1 }.must_raise ArgumentError
+    end
+  end
+
+  describe 'difference' do
+    before do
+      @doc = Nokolexbor::HTML('<a><div class="a"></div><span class="a"></span><div class="b"></div></a>')
+      @nodes1 = @doc.css("div")
+      @nodes2 = @doc.css(".a")
+    end
+
+    it 'works' do
+      _(@nodes1.size).must_equal 2
+      _(@nodes2.size).must_equal 2
+      new_nodes = @nodes1 - @nodes2
+      _(new_nodes.size).must_equal 1
+      _(new_nodes[0].to_html).must_equal '<div class="b"></div>'
+    end
+
+    it 'when self is empty' do
+      _(@nodes1 - Nokolexbor::NodeSet.new(@doc, [])).must_equal @nodes1
+    end
+
+    it 'when other is empty' do
+      new_node = Nokolexbor::NodeSet.new(@doc, []) - @nodes2
+      _(new_node.size).must_equal 0
+    end
+
+    it 'when both are empty' do
+      new_node = Nokolexbor::NodeSet.new(@doc, []) - Nokolexbor::NodeSet.new(@doc, [])
+      _(new_node.size).must_equal 0
+    end
+
+    it 'raises when other is not NodeSet' do
+      _{ @nodes1 - 1 }.must_raise ArgumentError
+    end
+  end
+
+  it 'add_class' do
+    doc = Nokolexbor::HTML('<div><a></a><a class="b"></a></div>')
+    doc.css('a').add_class('b c')
+    _(doc.at_css('div').inner_html).must_equal '<a class="b c"></a><a class="b c"></a>'
+  end
+
+  it 'append_class' do
+    doc = Nokolexbor::HTML('<div><a></a><a class="b"></a></div>')
+    doc.css('a').append_class('b c')
+    _(doc.at_css('div').inner_html).must_equal '<a class="b c"></a><a class="b b c"></a>'
+  end
+
+  it 'remove_class' do
+    doc = Nokolexbor::HTML('<div><a class="d"></a><a class="b"></a></div>')
+    doc.css('a').remove_class('b c')
+    _(doc.at_css('div').inner_html).must_equal '<a class="d"></a><a></a>'
+  end
+
+  it 'remove_attr' do
+    doc = Nokolexbor::HTML('<div><a class="a" href="a"></a><a class="b"></a></div>')
+    doc.css('a').remove_attr('class')
+    _(doc.at_css('div').inner_html).must_equal '<a href="a"></a><a></a>'
+  end
+
+  describe 'attr' do
+    before do
+      @doc = Nokolexbor::HTML('<div><a class="a" href="b"></a><a class="c" style="d"></a></div>')
+      @nodes = @doc.css('a')
+    end
+
+    it 'as a getter' do
+      att = @nodes.attr('class')
+      _(att).must_be_instance_of Nokolexbor::Attribute
+      _(att.value).must_equal 'a'
+    end
+
+    it 'as a setter, with a hash' do
+      @nodes.attr("href" => "http://example.com", "class" => "b")
+      _(@doc.at_css('div').inner_html).must_equal '<a class="b" href="http://example.com"></a><a class="b" style="d" href="http://example.com"></a>'
+    end
+
+    it 'as a setter, passing key and value' do
+      @nodes.attr("href", "http://example.com")
+      _(@doc.at_css('div').inner_html).must_equal '<a class="a" href="http://example.com"></a><a class="c" style="d" href="http://example.com"></a>'
+    end
+
+    it 'as a setter, passing block' do
+      @nodes.attr("href") {|node| "http://example.com"}
+      _(@doc.at_css('div').inner_html).must_equal '<a class="a" href="http://example.com"></a><a class="c" style="d" href="http://example.com"></a>'
+    end
+  end
 end

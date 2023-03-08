@@ -292,6 +292,18 @@ HTML
     _(children[2]['class']).must_equal 'b'
   end
 
+  it 'elements' do
+    doc = Nokolexbor::HTML <<-HTML
+      <div><span class='a'></span>123<span class='b'></span></div>
+    HTML
+    [:elements, :element_children].each do |method|
+      children = doc.at_css('div').send(method)
+      _(children.size).must_equal 2
+      _(children[0]['class']).must_equal 'a'
+      _(children[1]['class']).must_equal 'b'
+    end
+  end
+
   it 'child' do
     doc = Nokolexbor::HTML <<-HTML
       <div><span class='a'></span>123<span class='b'></span></div>

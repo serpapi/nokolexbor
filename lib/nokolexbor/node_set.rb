@@ -54,6 +54,16 @@ module Nokolexbor
       length == 0
     end
 
+    # Insert +node+ before the first Node in this NodeSet
+    def before(node)
+      first.before(node)
+    end
+
+    # Insert +node+ after the last Node in this NodeSet
+    def after(node)
+      last.after(node)
+    end
+
     # @return [Integer] The index of the first node in this NodeSet that is equal to +node+ or meets the given block. Returns nil if no match is found.
     def index(node = nil)
       if node
@@ -168,6 +178,75 @@ module Nokolexbor
       map { |node| node.wrap(node_or_tags) }
       self
     end
+
+    # Add the class attribute +name+ to all containing nodes.
+    #
+    # @see Node#add_class
+    def add_class(name)
+      each do |el|
+        el.add_class(name)
+      end
+      self
+    end
+
+    # Append the class attribute +name+ to all containing nodes.
+    #
+    # @see Node#append_class
+    def append_class(name)
+      each do |el|
+        el.append_class(name)
+      end
+      self
+    end
+
+    # Remove the class attribute +name+ from all containing nodes.
+    #
+    # @see Node#remove_class
+    def remove_class(name = nil)
+      each do |el|
+        el.remove_class(name)
+      end
+      self
+    end
+
+    # Remove the attributed named +name+ from all containing nodes.
+    #
+    # @see Node#remove_attr
+    def remove_attr(name)
+      each { |el| el.delete(name) }
+      self
+    end
+    alias_method :remove_attribute, :remove_attr
+
+    # Set attributes on each Node in the NodeSet, or get an
+    # attribute from the first Node in the NodeSet.
+    #
+    # @example Get an attribute from the first Node in a NodeSet.
+    #   node_set.attr("href")
+    #
+    # @example Set attributes on each node.
+    #   node_set.attr("href" => "http://example.com", "class" => "a")
+    #   node_set.attr("href", "http://example.com")
+    #   node_set.attr("href") { |node| "http://example.com" }
+    #
+    # @return [NodeSet] +self+, to support chaining of calls.
+    def attr(key, value = nil, &block)
+      unless key.is_a?(Hash) || (key && (value || block))
+        return first&.attribute(key)
+      end
+
+      hash = key.is_a?(Hash) ? key : { key => value }
+
+      hash.each do |k, v|
+        each do |node|
+          node[k] = v || yield(node)
+        end
+      end
+
+      self
+    end
+    alias_method :set, :attr
+    alias_method :attribute, :attr
 
     # (see Node#xpath)
     def xpath(*args)

@@ -300,6 +300,64 @@ nl_node_set_union(VALUE self, VALUE other)
   return nl_rb_node_set_create_with_data(new_array, nl_rb_document_get(self));
 }
 
+/**
+ * @return [NodeSet] A new NodeSet with the common nodes only.
+ */
+static VALUE
+nl_node_set_intersection(VALUE self, VALUE other)
+{
+  if (!rb_obj_is_kind_of(other, cNokolexborNodeSet)) {
+    rb_raise(rb_eArgError, "Parameter must be a Nokolexbor::NodeSet");
+  }
+
+  lexbor_array_t *self_array = nl_rb_node_set_unwrap(self);
+  lexbor_array_t *other_array = nl_rb_node_set_unwrap(other);
+
+  lexbor_array_t *new_array = lexbor_array_create();
+
+  for (size_t i = 0; i < self_array->length; i++) {
+    for (size_t j = 0; j < other_array->length; j++) {
+      if (self_array->list[i] == other_array->list[j]) {
+        lexbor_array_push(new_array, self_array->list[i]);
+        break;
+      }
+    }
+  }
+
+  return nl_rb_node_set_create_with_data(new_array, nl_rb_document_get(self));
+}
+
+/**
+ * @return [NodeSet] A new NodeSet with the nodes in this NodeSet that aren't in +other+
+ */
+static VALUE
+nl_node_set_difference(VALUE self, VALUE other)
+{
+  if (!rb_obj_is_kind_of(other, cNokolexborNodeSet)) {
+    rb_raise(rb_eArgError, "Parameter must be a Nokolexbor::NodeSet");
+  }
+
+  lexbor_array_t *self_array = nl_rb_node_set_unwrap(self);
+  lexbor_array_t *other_array = nl_rb_node_set_unwrap(other);
+
+  lexbor_array_t *new_array = lexbor_array_create();
+
+  for (size_t i = 0; i < self_array->length; i++) {
+    bool found = false;
+    for (size_t j = 0; j < other_array->length; j++) {
+      if (self_array->list[i] == other_array->list[j]) {
+        found = true;
+        break;
+      }
+    }
+    if (!found) {
+      lexbor_array_push(new_array, self_array->list[i]);
+    }
+  }
+
+  return nl_rb_node_set_create_with_data(new_array, nl_rb_document_get(self));
+}
+
 static lxb_status_t
 nl_node_set_find(VALUE self, VALUE selector, lxb_selectors_cb_f cb, void *ctx)
 {
@@ -410,6 +468,8 @@ void Init_nl_node_set(void)
   rb_define_method(cNokolexborNodeSet, "[]", nl_node_set_slice, -1);
   rb_define_method(cNokolexborNodeSet, "push", nl_node_set_push, 1);
   rb_define_method(cNokolexborNodeSet, "|", nl_node_set_union, 1);
+  rb_define_method(cNokolexborNodeSet, "&", nl_node_set_intersection, 1);
+  rb_define_method(cNokolexborNodeSet, "-", nl_node_set_difference, 1);
   rb_define_method(cNokolexborNodeSet, "to_a", nl_node_set_to_array, 0);
   rb_define_method(cNokolexborNodeSet, "delete", nl_node_set_delete, 1);
   rb_define_method(cNokolexborNodeSet, "include?", nl_node_set_is_include, 1);
