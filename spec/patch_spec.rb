@@ -106,5 +106,10 @@ describe "Patches to lexbor" do
       _(@node_with_template.to_html).must_equal '<div class="a">123<template><span class="a">456</span><a href="b">789</a></template></div>'
       _(cloned_node.to_html).must_equal '<div class="a">123<template><span class="c">456</span><a href="b">0000</a></template></div>'
     end
+
+    it 'cloned template should have only one child' do
+      _(@the_template.children.size).must_equal 1
+      _(@the_template.clone.children.size).must_equal 1
+    end
   end
 end
