@@ -1,0 +1,24 @@
+diff --git a/source/lexbor/dom/interfaces/document.c b/source/lexbor/dom/interfaces/document.c
+index a2153f4..8a9c69f 100755
+--- a/source/lexbor/dom/interfaces/document.c
++++ b/source/lexbor/dom/interfaces/document.c
+@@ -12,6 +12,7 @@
+ #include "lexbor/dom/interfaces/cdata_section.h"
+ #include "lexbor/dom/interfaces/cdata_section.h"
+ #include "lexbor/dom/interfaces/processing_instruction.h"
++#include "lexbor/html/interfaces/template_element.h"
+ 
+ 
+ lxb_dom_document_t *
+@@ -449,6 +450,11 @@ lxb_dom_document_import_node(lxb_dom_document_t *doc, lxb_dom_node_t *node,
+             return NULL;
+         }
+ 
++        if (curr->local_name == LXB_TAG_TEMPLATE && curr->first_child != NULL && cnode->type == LXB_DOM_NODE_TYPE_DOCUMENT_FRAGMENT) {
++            lxb_dom_node_remove(curr->first_child);
++            lxb_html_interface_template(curr)->content = cnode;
++        }
++
+         lxb_dom_node_insert_child(curr, cnode);
+ 
+         if (node->first_child != NULL) {

@@ -54,7 +54,7 @@ describe "Patches to lexbor" do
     end
   end
 
-  describe "search contains results of template tag" do
+  describe "search respects <template> contents" do
     before do
       @doc = Nokolexbor::HTML <<-HTML
         <div class='a'>
@@ -72,12 +72,12 @@ describe "Patches to lexbor" do
       HTML
     end
 
-    it "on css" do
+    it "with css" do
       _(@doc.css('div').size).must_equal 5
       _(@doc.css('div').map {|n| n['class']}).must_equal %w{a b c d e}
     end
 
-    it "on xpath" do
+    it "with xpath" do
       _(@doc.xpath('//div').size).must_equal 5
       _(@doc.xpath('//div').map {|n| n['class']}).must_equal %w{a b c d e}
     end
@@ -87,4 +87,24 @@ describe "Patches to lexbor" do
     end
   end
 
+  describe "clone element including <template>" do
+    before do
+      doc = Nokolexbor::HTML('<div class="a">123<template><span class="a">456</span><a href="b">789</a></template></div>')
+      @node_with_template = doc.at_css('div')
+      @the_template = doc.at_css('template')
+    end
+
+    it 'serialization works' do
+      _(@node_with_template.to_html).must_equal @node_with_template.clone.to_html
+      _(@the_template.to_html).must_equal @the_template.clone.to_html
+    end
+
+    it 'is not a shallow clone' do
+      cloned_node = @node_with_template.clone
+      cloned_node.at_css('span')['class'] = 'c'
+      cloned_node.at_css('a').inner_html = '0000'
+      _(@node_with_template.to_html).must_equal '<div class="a">123<template><span class="a">456</span><a href="b">789</a></template></div>'
+      _(cloned_node.to_html).must_equal '<div class="a">123<template><span class="c">456</span><a href="b">0000</a></template></div>'
+    end
+  end
 end
