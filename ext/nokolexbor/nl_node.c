@@ -1053,20 +1053,8 @@ static VALUE
 nl_node_first_element_child(VALUE self)
 {
   lxb_dom_node_t *parent = nl_rb_node_unwrap(self);
-  lxb_dom_node_t *cur;
+  lxb_dom_node_t *cur = parent->first_child;
 
-  if (parent == NULL) {
-    return Qnil;
-  }
-  switch (parent->type) {
-  case LXB_DOM_NODE_TYPE_ELEMENT:
-  case LXB_DOM_NODE_TYPE_ENTITY:
-  case LXB_DOM_NODE_TYPE_DOCUMENT:
-    cur = parent->first_child;
-    break;
-  default:
-    return Qnil;
-  }
   while (cur != NULL) {
     if (cur->type == LXB_DOM_NODE_TYPE_ELEMENT) {
       return nl_rb_node_create(cur, nl_rb_document_get(self));
@@ -1083,20 +1071,8 @@ static VALUE
 nl_node_last_element_child(VALUE self)
 {
   lxb_dom_node_t *parent = nl_rb_node_unwrap(self);
-  lxb_dom_node_t *cur;
+  lxb_dom_node_t *cur = parent->last_child;
 
-  if (parent == NULL) {
-    return Qnil;
-  }
-  switch (parent->type) {
-  case LXB_DOM_NODE_TYPE_ELEMENT:
-  case LXB_DOM_NODE_TYPE_ENTITY:
-  case LXB_DOM_NODE_TYPE_DOCUMENT:
-    cur = parent->last_child;
-    break;
-  default:
-    return Qnil;
-  }
   while (cur != NULL) {
     if (cur->type == LXB_DOM_NODE_TYPE_ELEMENT) {
       return nl_rb_node_create(cur, nl_rb_document_get(self));

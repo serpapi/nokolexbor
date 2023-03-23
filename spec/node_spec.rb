@@ -517,26 +517,51 @@ HTML
   describe 'element_child' do
     before do
       @doc = Nokolexbor::HTML <<-HTML
-        <div>
-          123
-          456
-          <span>
-          </span>
-          <a>
-          </a>
-          789
-          012
+        <div class='a'><!-- comment -->
+          123 456
+          <span></span>
+          <a></a>
+          789 012
+          <template>
+            345
+            <b></b>
+            <strong></strong>
+            789
+          </template>
         </div>
       HTML
       @root = @doc.at_css('div')
+      @comment = @root.child
+      @attr = @root.attribute('class')
+      @text = @doc.at_css('::text')
+      @frag = @doc.at_css('template').child
+    end
+
+    it 'check types' do
+      _(@doc).must_be_instance_of Nokolexbor::Document
+      _(@root).must_be_instance_of Nokolexbor::Element
+      _(@comment).must_be_instance_of Nokolexbor::Comment
+      _(@attr).must_be_instance_of Nokolexbor::Attribute
+      _(@text).must_be_instance_of Nokolexbor::Text
+      _(@frag).must_be_instance_of Nokolexbor::DocumentFragment
     end
 
     it 'first_element_child' do
+      _(@doc.first_element_child.name).must_equal 'html'
       _(@root.first_element_child.name).must_equal 'span'
+      _(@comment.first_element_child).must_be_nil
+      _(@attr.first_element_child).must_be_nil
+      _(@text.first_element_child).must_be_nil
+      _(@frag.first_element_child.name).must_equal 'b'
     end
 
-    it 'lat_element_child' do
-      _(@root.last_element_child.name).must_equal 'a'
+    it 'last_element_child' do
+      _(@doc.last_element_child.name).must_equal 'html'
+      _(@root.last_element_child.name).must_equal 'template'
+      _(@comment.last_element_child).must_be_nil
+      _(@attr.last_element_child).must_be_nil
+      _(@text.last_element_child).must_be_nil
+      _(@frag.last_element_child.name).must_equal 'strong'
     end
   end
 
