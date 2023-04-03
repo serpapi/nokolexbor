@@ -112,4 +112,26 @@ describe "Patches to lexbor" do
       _(@the_template.clone.children.size).must_equal 1
     end
   end
+
+  describe "source_location" do
+    before do
+      @doc = Nokolexbor::HTML('<body><!--comment--><div class="a">123</div></body>')
+    end
+
+    it 'element' do
+      _(@doc.at_css('div').source_location).must_equal 21
+    end
+
+    it 'text node' do
+      _(@doc.at_css('::text').source_location).must_equal 35
+    end
+
+    it 'comment' do
+      _(@doc.at_css('body').child.source_location).must_equal 10
+    end
+
+    it 'attribute' do
+      _(@doc.at_css('div').attribute('class').source_location).must_equal 25
+    end
+  end
 end
