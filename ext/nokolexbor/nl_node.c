@@ -1131,6 +1131,16 @@ nl_node_inspect(int argc, VALUE *argv, VALUE self)
   return rb_call_super(argc, argv);
 }
 
+/**
+ * @return [Integer] The node's location at the source HTML. Returns 0 if the node is not parsed from a HTML string.
+ */
+static VALUE
+nl_node_source_location(VALUE self)
+{
+  lxb_dom_node_t *node = nl_rb_node_unwrap(self);
+  return INT2NUM(node->source_location);
+}
+
 void Init_nl_node(void)
 {
   cNokolexborNode = rb_define_class_under(mNokolexbor, "Node", rb_cObject);
@@ -1175,6 +1185,7 @@ void Init_nl_node(void)
   rb_define_method(cNokolexborNode, "last_element_child", nl_node_last_element_child, 0);
   rb_define_method(cNokolexborNode, "clone", nl_node_clone, 0);
   rb_define_method(cNokolexborNode, "inspect", nl_node_inspect, -1);
+  rb_define_method(cNokolexborNode, "source_location", nl_node_source_location, 0);
 
   rb_define_alias(cNokolexborNode, "attr", "[]");
   rb_define_alias(cNokolexborNode, "get_attribute", "[]");
