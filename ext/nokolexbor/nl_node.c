@@ -1138,7 +1138,7 @@ static VALUE
 nl_node_source_location(VALUE self)
 {
   lxb_dom_node_t *node = nl_rb_node_unwrap(self);
-  return INT2NUM(node->source_location);
+  return ULONG2NUM(node->source_location);
 }
 
 void Init_nl_node(void)

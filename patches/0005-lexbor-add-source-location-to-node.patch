@@ -36,19 +36,10 @@ index ba9602f..08d0d9a 100755
  
      /* Entities */
 diff --git a/source/lexbor/html/tree.c b/source/lexbor/html/tree.c
-index 8c42990..6b19c32 100755
+index 8c42990..28c97cc 100755
 --- a/source/lexbor/html/tree.c
 +++ b/source/lexbor/html/tree.c
-@@ -434,6 +434,8 @@ lxb_html_tree_create_element_for_token(lxb_html_tree_t *tree,
-         return NULL;
-     }
- 
-+    node->source_location = token->begin - tree->tkz_ref->first;
-+
-     lxb_status_t status;
-     lxb_dom_element_t *element = lxb_dom_interface_element(node);
- 
-@@ -484,6 +486,7 @@ lxb_html_tree_append_attributes(lxb_html_tree_t *tree,
+@@ -484,6 +484,7 @@ lxb_html_tree_append_attributes(lxb_html_tree_t *tree,
  
          attr->node.local_name = token_attr->name->attr_id;
          attr->node.ns = ns;
@@ -56,30 +47,19 @@ index 8c42990..6b19c32 100755
  
          /* Fix for adjust MathML/SVG attributes */
          if (tree->before_append_attr != NULL) {
-@@ -767,6 +770,8 @@ lxb_html_tree_insert_character_for_data(lxb_html_tree_t *tree,
+diff --git a/source/lexbor/html/tree.h b/source/lexbor/html/tree.h
+index 231239d..bc0249e 100755
+--- a/source/lexbor/html/tree.h
++++ b/source/lexbor/html/tree.h
+@@ -266,8 +266,10 @@ lxb_inline lxb_dom_node_t *
+ lxb_html_tree_create_node(lxb_html_tree_t *tree,
+                           lxb_tag_id_t tag_id, lxb_ns_id_t ns)
+ {
+-    return (lxb_dom_node_t *) lxb_html_interface_create(tree->document,
++    lxb_dom_node_t *node = (lxb_dom_node_t *) lxb_html_interface_create(tree->document,
+                                                         tag_id, ns);
++    node->source_location = (tree->tkz_ref->token->begin > tree->tkz_ref->first ? tree->tkz_ref->token->begin : tree->tkz_ref->begin) - tree->tkz_ref->first;
++    return node;
+ }
  
-     lxb_dom_interface_text(text)->char_data.data = *str;
- 
-+    text->source_location = tree->tkz_ref->begin - tree->tkz_ref->first;
-+
-     if (ret_node != NULL) {
-         *ret_node = text;
-     }
-@@ -812,6 +817,8 @@ lxb_html_tree_insert_comment(lxb_html_tree_t *tree,
-         return NULL;
-     }
- 
-+    node->source_location = token->begin - tree->tkz_ref->first;
-+
-     lxb_html_tree_insert_node(pos, node, ipos);
- 
-     return comment;
-@@ -831,6 +838,8 @@ lxb_html_tree_create_document_type_from_token(lxb_html_tree_t *tree,
-         return NULL;
-     }
- 
-+    doctype_node->source_location = token->begin - tree->tkz_ref->first;
-+
-     doc_type = lxb_dom_interface_document_type(doctype_node);
- 
-     /* Parse */
+ lxb_inline bool
