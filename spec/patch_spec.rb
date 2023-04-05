@@ -116,22 +116,47 @@ describe "Patches to lexbor" do
   describe "source_location" do
     before do
       @doc = Nokolexbor::HTML('<body><!--comment--><div class="a">123</div></body>')
+      @ele = @doc.at_css('div')
+      @text = @doc.at_css('::text')
+      @comment = @doc.at_css('body').child
+      @attr = @doc.at_css('div').attribute('class')
     end
 
     it 'element' do
-      _(@doc.at_css('div').source_location).must_equal 21
+      _(@ele.source_location).must_equal 21
     end
 
     it 'text node' do
-      _(@doc.at_css('::text').source_location).must_equal 35
+      _(@text.source_location).must_equal 35
     end
 
     it 'comment' do
-      _(@doc.at_css('body').child.source_location).must_equal 10
+      _(@comment.source_location).must_equal 10
     end
 
     it 'attribute' do
-      _(@doc.at_css('div').attribute('class').source_location).must_equal 25
+      _(@attr.source_location).must_equal 25
+    end
+
+    describe 'their clones' do
+      it 'element' do
+        cloned_ele = @ele.clone
+        _(cloned_ele.source_location).must_equal 21
+        _(cloned_ele.attribute('class').source_location).must_equal 25
+        _(cloned_ele.at_css('::text').source_location).must_equal 35
+      end
+
+      it 'text node' do
+        _(@text.clone.source_location).must_equal 35
+      end
+
+      it 'comment' do
+        _(@comment.clone.source_location).must_equal 10
+      end
+
+      it 'attribute' do
+        _(@attr.clone.source_location).must_equal 25
+      end
     end
   end
 end

@@ -1,3 +1,15 @@
+diff --git a/source/lexbor/dom/interfaces/node.c b/source/lexbor/dom/interfaces/node.c
+index cf6475d..9f1cf75 100755
+--- a/source/lexbor/dom/interfaces/node.c
++++ b/source/lexbor/dom/interfaces/node.c
+@@ -85,6 +85,7 @@ lxb_dom_node_interface_copy(lxb_dom_node_t *dst,
+ 
+     dst->type = src->type;
+     dst->user = src->user;
++    dst->source_location = src->source_location;
+ 
+     if (dst->owner_document == src->owner_document) {
+         dst->local_name = src->local_name;
 diff --git a/source/lexbor/dom/interfaces/node.h b/source/lexbor/dom/interfaces/node.h
 index acd0c1c..f436257 100755
 --- a/source/lexbor/dom/interfaces/node.h
