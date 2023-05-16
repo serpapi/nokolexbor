@@ -196,6 +196,11 @@ HTML
       _(@doc.at_css('div').values).must_equal ['', 'a', 'b']
     end
 
+    it 'value?' do
+      _(@doc.at_css('div').value?('a')).must_equal true
+      _(@doc.at_css('div').value?('c')).must_equal false
+    end
+
     it 'attrs' do
       _(@doc.at_css('div').attrs).must_equal({'attr1' => '', 'attr2' => 'a', 'attr3' => 'b'})
     end
@@ -336,7 +341,9 @@ HTML
     doc = Nokolexbor::HTML <<-HTML
       <DiV></DiV>
     HTML
-    _(doc.at_css('div').name).must_equal 'div'
+    [:name, :node_name].each do |method|
+      _(doc.at_css('div').send(method)).must_equal 'div'
+    end
   end
 
   describe 'fragment' do

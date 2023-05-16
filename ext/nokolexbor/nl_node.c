@@ -1195,6 +1195,7 @@ void Init_nl_node(void)
   rb_define_alias(cNokolexborNode, "delete", "remove_attr");
   rb_define_alias(cNokolexborNode, "elements", "element_children");
   rb_define_alias(cNokolexborNode, "remove_attribute", "remove_attr");
+  rb_define_alias(cNokolexborNode, "node_name", "name");
   rb_define_alias(cNokolexborNode, "text", "content");
   rb_define_alias(cNokolexborNode, "inner_text", "content");
   rb_define_alias(cNokolexborNode, "to_str", "content");

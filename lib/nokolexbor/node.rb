@@ -51,6 +51,7 @@ module Nokolexbor
     def element?
       type == ELEMENT_NODE
     end
+    alias_method :elem?, :element?
 
     # @return true if this is a {Document}
     def document?
@@ -283,6 +284,11 @@ module Nokolexbor
     # @param parent_node [Node] The parent node.
     def parent=(parent_node)
       parent_node.add_child(self)
+    end
+
+    # @return true if this Node's attributes include <value>
+    def value?(value)
+      values.include?(value)
     end
 
     # Iterate over each attribute name and value pair of this Node.
