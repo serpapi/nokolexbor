@@ -1,4 +1,5 @@
 #include "nokolexbor.h"
+#include "libxml/tree.h"
 
 #define SORT_NAME nl_css_result
 #define SORT_TYPE lxb_dom_node_t *
@@ -1141,6 +1142,22 @@ nl_node_source_location(VALUE self)
   return ULONG2NUM(node->source_location);
 }
 
+/**
+ * @return [String] The path associated with this Node.
+ */
+static VALUE
+nl_node_path(VALUE self)
+{
+  lxb_dom_node_t *node = nl_rb_node_unwrap(self);
+  char* path = nl_xmlGetNodePath(node);
+  if (path == NULL) {
+    return Qnil;
+  }
+  VALUE ret = rb_utf8_str_new_cstr(path);
+  nl_xmlFree(path);
+  return ret;
+}
+
 void Init_nl_node(void)
 {
   cNokolexborNode = rb_define_class_under(mNokolexbor, "Node", rb_cObject);
@@ -1186,6 +1203,7 @@ void Init_nl_node(void)
   rb_define_method(cNokolexborNode, "clone", nl_node_clone, 0);
   rb_define_method(cNokolexborNode, "inspect", nl_node_inspect, -1);
   rb_define_method(cNokolexborNode, "source_location", nl_node_source_location, 0);
+  rb_define_method(cNokolexborNode, "path", nl_node_path, 0);
 
   rb_define_alias(cNokolexborNode, "attr", "[]");
   rb_define_alias(cNokolexborNode, "get_attribute", "[]");

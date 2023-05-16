@@ -158,3 +158,252 @@ void
 nl_xmlFreeNodeList(lxb_dom_node_t_ptr cur) {
     // Should never be called
 }
+
+/**
+ * xmlGetNodePath:
+ * @node: a node
+ *
+ * Build a structure based Path for the given node
+ *
+ * Returns the new path or NULL in case of error. The caller must free
+ *     the returned string
+ */
+xmlChar *
+nl_xmlGetNodePath(const lxb_dom_node_t *node)
+{
+    const lxb_dom_node_t *cur, *tmp, *next;
+    xmlChar *buffer = NULL, *temp;
+    size_t buf_len;
+    xmlChar *buf;
+    const char *sep;
+    const char *name;
+    char nametemp[100];
+    int occur = 0, generic;
+
+    if ((node == NULL) || (node->type == XML_NAMESPACE_DECL))
+        return (NULL);
+
+    buf_len = 500;
+    buffer = (xmlChar *) nl_xmlMallocAtomic(buf_len);
+    if (buffer == NULL) {
+	xmlTreeErrMemory("getting node path");
+        return (NULL);
+    }
+    buf = (xmlChar *) nl_xmlMallocAtomic(buf_len);
+    if (buf == NULL) {
+	xmlTreeErrMemory("getting node path");
+        nl_xmlFree(buffer);
+        return (NULL);
+    }
+
+    buffer[0] = 0;
+    cur = node;
+    do {
+        name = "";
+        sep = "?";
+        occur = 0;
+        const lxb_char_t* cur_name = NODE_NAME(cur);
+        const lxb_char_t* cur_ns_prefix = NODE_NS_PREFIX(cur);
+        if ((cur->type == LXB_DOM_NODE_TYPE_DOCUMENT) ||
+            (cur->type == XML_HTML_DOCUMENT_NODE)) {
+            if (buffer[0] == '/')
+                break;
+            sep = "/";
+            next = NULL;
+        } else if (cur->type == LXB_DOM_NODE_TYPE_ELEMENT) {
+	    generic = 0;
+            sep = "/";
+            name = (const char *) cur_name;
+            if (cur->ns) {
+		if (cur_ns_prefix != NULL) {
+                    snprintf(nametemp, sizeof(nametemp) - 1, "%s:%s",
+			(char *)cur_ns_prefix, (char *)cur_name);
+		    nametemp[sizeof(nametemp) - 1] = 0;
+		    name = nametemp;
+		} else {
+		    /*
+		    * We cannot express named elements in the default
+		    * namespace, so use "*".
+		    */
+		    generic = 1;
+		    name = "*";
+		}
+            }
+            next = cur->parent;
+
+            /*
+             * Thumbler index computation
+	     * TODO: the occurrence test seems bogus for namespaced names
+             */
+            tmp = cur->prev;
+            while (tmp != NULL) {
+                if ((tmp->type == LXB_DOM_NODE_TYPE_ELEMENT) &&
+		    (generic ||
+		     (nl_xmlStrEqual(cur_name, NODE_NAME(tmp)) &&
+		     ((tmp->ns == cur->ns) ||
+		      ((tmp->ns != NULL) && (cur->ns != NULL) &&
+		       (nl_xmlStrEqual(cur_ns_prefix, NODE_NS_PREFIX(tmp))))))))
+                    occur++;
+                tmp = tmp->prev;
+            }
+            if (occur == 0) {
+                tmp = cur->next;
+                while (tmp != NULL && occur == 0) {
+                    if ((tmp->type == LXB_DOM_NODE_TYPE_ELEMENT) &&
+			(generic ||
+			 (nl_xmlStrEqual(cur_name, NODE_NAME(tmp)) &&
+			 ((tmp->ns == cur->ns) ||
+			  ((tmp->ns != NULL) && (cur->ns != NULL) &&
+			   (nl_xmlStrEqual(cur_ns_prefix, NODE_NS_PREFIX(tmp))))))))
+                        occur++;
+                    tmp = tmp->next;
+                }
+                if (occur != 0)
+                    occur = 1;
+            } else
+                occur++;
+        } else if (cur->type == LXB_DOM_NODE_TYPE_COMMENT) {
+            sep = "/";
+	    name = "comment()";
+            next = cur->parent;
+
+            /*
+             * Thumbler index computation
+             */
+            tmp = cur->prev;
+            while (tmp != NULL) {
+                if (tmp->type == LXB_DOM_NODE_TYPE_COMMENT)
+		    occur++;
+                tmp = tmp->prev;
+            }
+            if (occur == 0) {
+                tmp = cur->next;
+                while (tmp != NULL && occur == 0) {
+		    if (tmp->type == LXB_DOM_NODE_TYPE_COMMENT)
+		        occur++;
+                    tmp = tmp->next;
+                }
+                if (occur != 0)
+                    occur = 1;
+            } else
+                occur++;
+        } else if ((cur->type == LXB_DOM_NODE_TYPE_TEXT) ||
+                   (cur->type == LXB_DOM_NODE_TYPE_CDATA_SECTION)) {
+            sep = "/";
+	    name = "text()";
+            next = cur->parent;
+
+            /*
+             * Thumbler index computation
+             */
+            tmp = cur->prev;
+            while (tmp != NULL) {
+                if ((tmp->type == LXB_DOM_NODE_TYPE_TEXT) ||
+		    (tmp->type == LXB_DOM_NODE_TYPE_CDATA_SECTION))
+		    occur++;
+                tmp = tmp->prev;
+            }
+	    /*
+	    * Evaluate if this is the only text- or CDATA-section-node;
+	    * if yes, then we'll get "text()", otherwise "text()[1]".
+	    */
+            if (occur == 0) {
+                tmp = cur->next;
+                while (tmp != NULL) {
+		    if ((tmp->type == LXB_DOM_NODE_TYPE_TEXT) ||
+			(tmp->type == LXB_DOM_NODE_TYPE_CDATA_SECTION))
+		    {
+			occur = 1;
+			break;
+		    }
+		    tmp = tmp->next;
+		}
+            } else
+                occur++;
+        } else if (cur->type == LXB_DOM_NODE_TYPE_PROCESSING_INSTRUCTION) {
+            sep = "/";
+	    snprintf(nametemp, sizeof(nametemp) - 1,
+		     "processing-instruction('%s')", (char *)cur_name);
+            nametemp[sizeof(nametemp) - 1] = 0;
+            name = nametemp;
+
+	    next = cur->parent;
+
+            /*
+             * Thumbler index computation
+             */
+            tmp = cur->prev;
+            while (tmp != NULL) {
+                if ((tmp->type == LXB_DOM_NODE_TYPE_PROCESSING_INSTRUCTION) &&
+		    (nl_xmlStrEqual(cur_name, NODE_NAME(tmp))))
+                    occur++;
+                tmp = tmp->prev;
+            }
+            if (occur == 0) {
+                tmp = cur->next;
+                while (tmp != NULL && occur == 0) {
+                    if ((tmp->type == LXB_DOM_NODE_TYPE_PROCESSING_INSTRUCTION) &&
+			(nl_xmlStrEqual(cur_name, NODE_NAME(tmp))))
+                        occur++;
+                    tmp = tmp->next;
+                }
+                if (occur != 0)
+                    occur = 1;
+            } else
+                occur++;
+
+        } else if (cur->type == LXB_DOM_NODE_TYPE_ATTRIBUTE) {
+            sep = "/@";
+            name = (const char *) lxb_dom_attr_qualified_name(cur, &tmp_len);
+            if (cur->ns) {
+	        if (cur_ns_prefix != NULL)
+                    snprintf(nametemp, sizeof(nametemp) - 1, "%s:%s",
+			(char *)cur_ns_prefix, (char *)cur_name);
+		else
+		    snprintf(nametemp, sizeof(nametemp) - 1, "%s",
+			(char *)cur_name);
+                nametemp[sizeof(nametemp) - 1] = 0;
+                name = nametemp;
+            }
+            next = ((lxb_dom_attr_t_ptr)cur)->owner;
+        } else {
+            nl_xmlFree(buf);
+            nl_xmlFree(buffer);
+            return (NULL);
+        }
+
+        /*
+         * Make sure there is enough room
+         */
+        if (nl_xmlStrlen(buffer) + sizeof(nametemp) + 20 > buf_len) {
+            buf_len =
+                2 * buf_len + nl_xmlStrlen(buffer) + sizeof(nametemp) + 20;
+            temp = (xmlChar *) nl_xmlRealloc(buffer, buf_len);
+            if (temp == NULL) {
+		xmlTreeErrMemory("getting node path");
+                nl_xmlFree(buf);
+                nl_xmlFree(buffer);
+                return (NULL);
+            }
+            buffer = temp;
+            temp = (xmlChar *) nl_xmlRealloc(buf, buf_len);
+            if (temp == NULL) {
+		xmlTreeErrMemory("getting node path");
+                nl_xmlFree(buf);
+                nl_xmlFree(buffer);
+                return (NULL);
+            }
+            buf = temp;
+        }
+        if (occur == 0)
+            snprintf((char *) buf, buf_len, "%s%s%s",
+                     sep, name, (char *) buffer);
+        else
+            snprintf((char *) buf, buf_len, "%s%s[%d]%s",
+                     sep, name, occur, (char *) buffer);
+        snprintf((char *) buffer, buf_len, "%s", (char *)buf);
+        cur = next;
+    } while (cur != NULL);
+    nl_xmlFree(buf);
+    return (buffer);
+}

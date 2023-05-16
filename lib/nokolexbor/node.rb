@@ -58,6 +58,13 @@ module Nokolexbor
       is_a?(Nokolexbor::Document)
     end
 
+    # Get the path to this node as a CSS expression
+    def css_path
+      path.split(%r{/}).filter_map do |part|
+        part.empty? ? nil : part.gsub(/\[(\d+)\]/, ':nth-of-type(\1)')
+      end.join(" > ")
+    end
+
     # Get a list of ancestor Node of this Node
     #
     # @param [String, nil] selector The selector to match ancestors
