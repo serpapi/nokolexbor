@@ -952,4 +952,15 @@ HTML
       _(inspect_str).must_equal '[#<Nokolexbor::Element <div class="a b">>, #<Nokolexbor::Element <div style="c d">>]'
     end
   end
+
+  it 'path' do
+    doc = Nokolexbor::HTML("<div><span><a class='a'>123</a></div>")
+    _(doc.at_css('.a').path).must_equal '/html/body/div/span/a'
+    _(doc.at_css('.a').attribute('class').path).must_equal '/html/body/div/span/a/@class'
+    _(doc.at_css('.a').child.path).must_equal '/html/body/div/span/a/text()'
+
+    doc = Nokolexbor::HTML("<div><span><a class='a'></a><a class='b'></a></div>")
+    _(doc.at_css('.a').path).must_equal '/html/body/div/span/a[1]'
+    _(doc.at_css('.b').path).must_equal '/html/body/div/span/a[2]'
+  end
 end
