@@ -214,21 +214,6 @@ nl_xmlGetNodePath(const lxb_dom_node_t *node)
 	    generic = 0;
             sep = "/";
             name = (const char *) cur_name;
-            if (cur->ns) {
-		if (cur_ns_prefix != NULL) {
-                    snprintf(nametemp, sizeof(nametemp) - 1, "%s:%s",
-			(char *)cur_ns_prefix, (char *)cur_name);
-		    nametemp[sizeof(nametemp) - 1] = 0;
-		    name = nametemp;
-		} else {
-		    /*
-		    * We cannot express named elements in the default
-		    * namespace, so use "*".
-		    */
-		    generic = 1;
-		    name = "*";
-		}
-            }
             next = cur->parent;
 
             /*
@@ -355,16 +340,6 @@ nl_xmlGetNodePath(const lxb_dom_node_t *node)
         } else if (cur->type == LXB_DOM_NODE_TYPE_ATTRIBUTE) {
             sep = "/@";
             name = (const char *) lxb_dom_attr_qualified_name(cur, &tmp_len);
-            if (cur->ns) {
-	        if (cur_ns_prefix != NULL)
-                    snprintf(nametemp, sizeof(nametemp) - 1, "%s:%s",
-			(char *)cur_ns_prefix, (char *)cur_name);
-		else
-		    snprintf(nametemp, sizeof(nametemp) - 1, "%s",
-			(char *)cur_name);
-                nametemp[sizeof(nametemp) - 1] = 0;
-                name = nametemp;
-            }
             next = ((lxb_dom_attr_t_ptr)cur)->owner;
         } else {
             nl_xmlFree(buf);
