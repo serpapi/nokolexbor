@@ -872,6 +872,9 @@ nl_node_destroy(VALUE self)
 static VALUE
 nl_node_equals(VALUE self, VALUE other)
 {
+  if (!rb_obj_is_kind_of(other, cNokolexborNode)) {
+    return Qfalse;
+  }
   lxb_dom_node_t *node1 = nl_rb_node_unwrap(self);
   lxb_dom_node_t *node2 = nl_rb_node_unwrap(other);
   return node1 == node2 ? Qtrue : Qfalse;

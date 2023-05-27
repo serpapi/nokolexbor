@@ -328,13 +328,42 @@ HTML
     _(root.inner_html).must_equal '<span class="b"></span>'
   end
 
-  it 'equals' do
-    doc = Nokolexbor::HTML <<-HTML
-      <div><span class='a'></span></div>
-    HTML
-    node1 = doc.at_css('span')
-    node2 = doc.at_css('.a')
-    _(node1).must_equal node2
+  describe 'equals' do
+    it 'between elements' do
+      doc = Nokolexbor::HTML <<-HTML
+        <div><span class='a'></span></div>
+      HTML
+      node1 = doc.at_css('span')
+      node2 = doc.at_css('.a')
+      _(node1).must_equal node2
+    end
+
+    it 'between text' do
+      doc = Nokolexbor::HTML <<-HTML
+        <div>123</div>
+      HTML
+      node = doc.at_css('div').child
+      _(node).must_equal node
+    end
+
+    it 'between attributes' do
+      doc = Nokolexbor::HTML <<-HTML
+        <div class='a'></div>
+      HTML
+      attri = doc.at_css('div')['class']
+      _(attri).must_equal attri
+    end
+
+    it 'against non-node type' do
+      doc = Nokolexbor::HTML('<div></div>')
+      node = doc.at_css('div')
+      _(doc == nil).must_equal false
+      _(node == nil).must_equal false
+      _(node == 1).must_equal false
+      _(node == 'string').must_equal false
+      _(node == []).must_equal false
+      _(node == {}).must_equal false
+    end
   end
 
   it 'name' do
