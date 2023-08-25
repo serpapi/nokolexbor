@@ -15,16 +15,30 @@ require 'nokogiri'
 
 html_file = File.join(current_dir, 'coffee.html')
 html = File.open(html_file, "r:UTF-8", &:read)
+html_small = "<div>Hello world</div>" * 50
 
 Benchmark.ips do |x|
   x.warmup = 5
   x.time = 20
-    
-  x.report("Nokolexbor parse") do
+
+  x.report("Nokolexbor parse (#{html.size / 1024} KB)") do
     Nokolexbor::HTML(html)
   end
-  x.report("Nokogiri parse") do
+  x.report("Nokogiri parse (#{html.size / 1024} KB)") do
     Nokogiri::HTML(html)
+  end
+  x.compare!
+end
+
+Benchmark.ips do |x|
+  x.warmup = 5
+  x.time = 20
+
+  x.report("Nokolexbor parse (#{html_small.size} B)") do
+    Nokolexbor::HTML(html_small)
+  end
+  x.report("Nokogiri parse (#{html_small.size} B)") do
+    Nokogiri::HTML(html_small)
   end
   x.compare!
 end
