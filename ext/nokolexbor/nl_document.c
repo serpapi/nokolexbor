@@ -20,7 +20,7 @@ const rb_data_type_t nl_document_type = {
     "Nokolexbor::Document",
     {
         0,
-        free_nl_document,
+        (RUBY_DATA_FUNC)free_nl_document,
     },
     0,
     0,
@@ -126,7 +126,7 @@ nl_document_set_title(VALUE self, VALUE rb_title)
 {
   const char *c_title = StringValuePtr(rb_title);
   size_t len = RSTRING_LEN(rb_title);
-  lxb_char_t *str = lxb_html_document_title_set(nl_rb_document_unwrap(self), (const lxb_char_t *)c_title, len);
+  lxb_html_document_title_set(nl_rb_document_unwrap(self), (const lxb_char_t *)c_title, len);
   return rb_title;
 }
 

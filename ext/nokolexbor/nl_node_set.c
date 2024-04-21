@@ -30,7 +30,7 @@ const rb_data_type_t nl_node_set_type = {
     "Nokolexbor::NodeSet",
     {
         0,
-        free_nl_node_set,
+        (RUBY_DATA_FUNC)free_nl_node_set,
     },
     0,
     0,
