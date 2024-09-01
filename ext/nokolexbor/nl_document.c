@@ -7,7 +7,7 @@ VALUE cNokolexborDocument;
 
 #ifdef HAVE_PTHREAD_H
 #include <pthread.h>
-pthread_key_t p_key_parser;
+pthread_key_t p_key_html_parser;
 #endif
 
 static void
@@ -51,23 +51,23 @@ nl_document_parse(VALUE self, VALUE rb_string_or_io)
   size_t html_len = RSTRING_LEN(rb_html);
 
 #ifdef HAVE_PTHREAD_H
-  lxb_html_parser_t *g_parser = (lxb_html_parser_t *)pthread_getspecific(p_key_parser);
+  lxb_html_parser_t *html_parser = (lxb_html_parser_t *)pthread_getspecific(p_key_html_parser);
 #else
-  lxb_html_parser_t *g_parser = NULL;
+  lxb_html_parser_t *html_parser = NULL;
 #endif
-  if (g_parser == NULL) {
-    g_parser = lxb_html_parser_create();
-    lxb_status_t status = lxb_html_parser_init(g_parser);
+  if (html_parser == NULL) {
+    html_parser = lxb_html_parser_create();
+    lxb_status_t status = lxb_html_parser_init(html_parser);
     if (status != LXB_STATUS_OK) {
       nl_raise_lexbor_error(status);
     }
-    g_parser->tree->scripting = true;
+    html_parser->tree->scripting = true;
 #ifdef HAVE_PTHREAD_H
-    pthread_setspecific(p_key_parser, g_parser);
+    pthread_setspecific(p_key_html_parser, html_parser);
 #endif
   }
 
-  lxb_html_document_t *document = lxb_html_parse(g_parser, (const lxb_char_t *)html_c, html_len);
+  lxb_html_document_t *document = lxb_html_parse(html_parser, (const lxb_char_t *)html_c, html_len);
 
   if (document == NULL) {
     rb_raise(rb_eRuntimeError, "Error parsing document");
@@ -143,18 +143,18 @@ nl_document_root(VALUE self)
 }
 
 static void
-free_parser(void *data)
+free_html_parser(void *data)
 {
-  lxb_html_parser_t *g_parser = (lxb_html_parser_t *)data;
-  if (g_parser != NULL) {
-    g_parser = lxb_html_parser_destroy(g_parser);
+  lxb_html_parser_t *html_parser = (lxb_html_parser_t *)data;
+  if (html_parser != NULL) {
+    html_parser = lxb_html_parser_destroy(html_parser);
   }
 }
 
 void Init_nl_document(void)
 {
 #ifdef HAVE_PTHREAD_H
-  pthread_key_create(&p_key_parser, free_parser);
+  pthread_key_create(&p_key_html_parser, free_html_parser);
 #endif
 
   cNokolexborDocument = rb_define_class_under(mNokolexbor, "Document", cNokolexborNode);
