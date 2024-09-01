@@ -64,14 +64,6 @@ end
 append_cflags("-DLEXBOR_STATIC")
 append_cflags("-DLIBXML_STATIC")
 
-def sys(cmd)
-  puts "-- #{cmd}"
-  unless ret = xsystem(cmd)
-    raise "ERROR: '#{cmd}' failed"
-  end
-  ret
-end
-
 # Thrown when we detect CMake is taking too long and we killed it
 class CMakeTimeout < StandardError
 end
@@ -138,7 +130,7 @@ Dir.chdir(LEXBOR_DIR) do
 
   Dir.chdir("build") do
     run_cmake(10 * 60, ".. -DCMAKE_INSTALL_PREFIX:PATH=#{INSTALL_DIR} #{lexbor_cmake_flags.join(' ')}")
-    sys("#{MAKE} install")
+    system("#{MAKE}", "install")
   end
 end
 
