@@ -104,7 +104,7 @@ static VALUE
 nl_document_get_title(VALUE self)
 {
   size_t len;
-  lxb_char_t *str = lxb_html_document_title(nl_rb_document_unwrap(self), &len);
+  lxb_char_t *str = lxb_html_document_title((lxb_html_document_t *)nl_rb_document_unwrap(self), &len);
   return str == NULL ? rb_str_new("", 0) : rb_utf8_str_new(str, len);
 }
 
@@ -126,7 +126,7 @@ nl_document_set_title(VALUE self, VALUE rb_title)
 {
   const char *c_title = StringValuePtr(rb_title);
   size_t len = RSTRING_LEN(rb_title);
-  lxb_html_document_title_set(nl_rb_document_unwrap(self), (const lxb_char_t *)c_title, len);
+  lxb_html_document_title_set((lxb_html_document_t *)nl_rb_document_unwrap(self), (const lxb_char_t *)c_title, len);
   return rb_title;
 }
 

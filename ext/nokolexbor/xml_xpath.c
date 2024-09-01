@@ -6389,7 +6389,7 @@ xmlXPathNodeValHash(lxb_dom_node_t_ptr node) {
 		return(0);
 	    return(string[0] + (string[1] << 8));
 	case LXB_DOM_NODE_TYPE_ATTRIBUTE:
-	    string = lxb_dom_attr_value(node, &tmp_len);
+	    string = lxb_dom_attr_value((lxb_dom_attr_t_ptr)node, &tmp_len);
 	    if (string == NULL)
 		return(0);
 	    if (string[0] == 0)
@@ -8452,9 +8452,9 @@ nl_xmlXPathNextAttribute(xmlXPathParserContextPtr ctxt, lxb_dom_node_t_ptr cur) 
     if (cur == NULL) {
         if (ctxt->context->node == (lxb_dom_node_t_ptr) ctxt->context->doc)
 	    return(NULL);
-        return lxb_dom_element_first_attribute(ctxt->context->node);
+        return (lxb_dom_node_t_ptr)lxb_dom_element_first_attribute((lxb_dom_element_t *)ctxt->context->node);
     }
-    return(((lxb_dom_attr_t *)cur)->next);
+    return (lxb_dom_node_t_ptr)(((lxb_dom_attr_t *)cur)->next);
 }
 
 /************************************************************************

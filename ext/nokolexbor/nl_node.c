@@ -165,7 +165,7 @@ nl_node_attribute(VALUE self, VALUE rb_name)
   if (attr->owner == NULL) {
     attr->owner = lxb_dom_interface_element(node);
   }
-  return nl_rb_node_create(attr, nl_rb_document_get(self));
+  return nl_rb_node_create((lxb_dom_node_t *)attr, nl_rb_document_get(self));
 }
 
 /**
@@ -191,7 +191,7 @@ nl_node_attribute_nodes(VALUE self)
     if (attr->owner == NULL) {
       attr->owner = lxb_dom_interface_element(node);
     }
-    rb_ary_push(ary, nl_rb_node_create(attr, rb_doc));
+    rb_ary_push(ary, nl_rb_node_create((lxb_dom_node_t *)attr, rb_doc));
     attr = attr->next;
   }
 
