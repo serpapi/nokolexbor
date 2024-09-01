@@ -141,7 +141,7 @@ nl_attribute_parent(VALUE self)
   if (attr->owner == NULL) {
     return Qnil;
   }
-  return nl_rb_node_create(attr->owner, nl_rb_document_get(self));
+  return nl_rb_node_create((lxb_dom_node_t *)attr->owner, nl_rb_document_get(self));
 }
 
 /**
@@ -158,7 +158,7 @@ nl_attribute_previous(VALUE self)
   if (attr->prev == NULL) {
     return Qnil;
   }
-  return nl_rb_node_create(attr->prev, nl_rb_document_get(self));
+  return nl_rb_node_create((lxb_dom_node_t *)attr->prev, nl_rb_document_get(self));
 }
 
 /**
@@ -175,7 +175,7 @@ nl_attribute_next(VALUE self)
   if (attr->next == NULL) {
     return Qnil;
   }
-  return nl_rb_node_create(attr->next, nl_rb_document_get(self));
+  return nl_rb_node_create((lxb_dom_node_t *)attr->next, nl_rb_document_get(self));
 }
 
 static VALUE
@@ -189,7 +189,7 @@ nl_attribute_inspect(VALUE self)
 
   return rb_sprintf("#<%" PRIsVALUE " %s=\"%s\">", c,
                     lxb_dom_attr_qualified_name(attr, &len),
-                    attr_value == NULL ? "" : attr_value);
+                    attr_value == NULL ? "" : (char *)attr_value);
 }
 
 void Init_nl_attribute(void)

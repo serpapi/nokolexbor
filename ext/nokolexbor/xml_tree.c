@@ -339,8 +339,8 @@ nl_xmlGetNodePath(const lxb_dom_node_t *node)
 
         } else if (cur->type == LXB_DOM_NODE_TYPE_ATTRIBUTE) {
             sep = "/@";
-            name = (const char *) lxb_dom_attr_qualified_name(cur, &tmp_len);
-            next = ((lxb_dom_attr_t_ptr)cur)->owner;
+            name = (const char *) lxb_dom_attr_qualified_name((lxb_dom_attr_t_ptr)cur, &tmp_len);
+            next = (lxb_dom_node_t *)((lxb_dom_attr_t_ptr)cur)->owner;
         } else {
             nl_xmlFree(buf);
             nl_xmlFree(buffer);
