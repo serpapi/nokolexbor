@@ -50,6 +50,8 @@ nl_document_parse(VALUE self, VALUE rb_string_or_io)
     html_parser = lxb_html_parser_create();
     lxb_status_t status = lxb_html_parser_init(html_parser);
     if (status != LXB_STATUS_OK) {
+      lxb_html_parser_destroy(html_parser);
+      html_parser = NULL;
       nl_raise_lexbor_error(status);
     }
     html_parser->tree->scripting = true;
