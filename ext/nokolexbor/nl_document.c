@@ -5,11 +5,6 @@ extern VALUE mNokolexbor;
 extern VALUE cNokolexborNode;
 VALUE cNokolexborDocument;
 
-#ifdef HAVE_PTHREAD_H
-#include <pthread.h>
-pthread_key_t p_key_html_parser;
-#endif
-
 static void
 free_nl_document(lxb_html_document_t *document)
 {
@@ -50,11 +45,7 @@ nl_document_parse(VALUE self, VALUE rb_string_or_io)
   const char *html_c = StringValuePtr(rb_html);
   size_t html_len = RSTRING_LEN(rb_html);
 
-#ifdef HAVE_PTHREAD_H
-  lxb_html_parser_t *html_parser = (lxb_html_parser_t *)pthread_getspecific(p_key_html_parser);
-#else
-  lxb_html_parser_t *html_parser = NULL;
-#endif
+  static lxb_html_parser_t *html_parser = NULL;
   if (html_parser == NULL) {
     html_parser = lxb_html_parser_create();
     lxb_status_t status = lxb_html_parser_init(html_parser);
@@ -62,9 +53,6 @@ nl_document_parse(VALUE self, VALUE rb_string_or_io)
       nl_raise_lexbor_error(status);
     }
     html_parser->tree->scripting = true;
-#ifdef HAVE_PTHREAD_H
-    pthread_setspecific(p_key_html_parser, html_parser);
-#endif
   }
 
   lxb_html_document_t *document = lxb_html_parse(html_parser, (const lxb_char_t *)html_c, html_len);
@@ -142,21 +130,8 @@ nl_document_root(VALUE self)
   return nl_rb_node_create(lxb_dom_document_root(doc), self);
 }
 
-static void
-free_html_parser(void *data)
-{
-  lxb_html_parser_t *html_parser = (lxb_html_parser_t *)data;
-  if (html_parser != NULL) {
-    html_parser = lxb_html_parser_destroy(html_parser);
-  }
-}
-
 void Init_nl_document(void)
 {
-#ifdef HAVE_PTHREAD_H
-  pthread_key_create(&p_key_html_parser, free_html_parser);
-#endif
-
   cNokolexborDocument = rb_define_class_under(mNokolexbor, "Document", cNokolexborNode);
   rb_define_singleton_method(cNokolexborDocument, "new", nl_document_new, 0);
   rb_define_singleton_method(cNokolexborDocument, "parse", nl_document_parse, 1);
