@@ -1031,9 +1031,9 @@ static VALUE
 nl_node_add_sibling(VALUE self, VALUE next_or_previous, VALUE new)
 {
   bool insert_after;
-  if (rb_eql(rb_String(next_or_previous), rb_str_new_literal("next"))) {
+  if (rb_str_cmp(rb_String(next_or_previous), rb_str_new_literal("next")) == 0) {
     insert_after = true;
-  } else if (rb_eql(rb_String(next_or_previous), rb_str_new_literal("previous"))) {
+  } else if (rb_str_cmp(rb_String(next_or_previous), rb_str_new_literal("previous")) == 0) {
     insert_after = false;
   } else {
     rb_raise(rb_eArgError, "Unsupported inserting position");
