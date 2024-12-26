@@ -1,9 +1,13 @@
-name: Publish Gem
+name: Build Gem
 
 on:
   push:
-    tags:
-      - v**
+    branches:
+      - master
+  pull_request:
+    types: [opened, synchronize]
+    branches:
+      - '*'
 
 jobs:
   build-ruby:
@@ -31,17 +35,9 @@ jobs:
       with:
         name: "ruby-gem"
         path: "*.gem"
-    - name: Publish to RubyGems
-      run: |
-        mkdir -p $HOME/.gem
-        touch $HOME/.gem/credentials
-        chmod 0600 $HOME/.gem/credentials
-        printf -- "---\n:rubygems_api_key: ${GEM_HOST_API_KEY}\n" > $HOME/.gem/credentials
-        gem push *.gem
-      env:
-        GEM_HOST_API_KEY: "${{secrets.RUBYGEMS_API_KEY}}"
 
   build-native:
+    needs: ['build-ruby']
     strategy:
       matrix:
         platform: ['x86-mingw32', 'x64-mingw-ucrt', 'x64-mingw32', 'x86_64-linux', 'x86_64-darwin', 'arm64-darwin']
@@ -65,13 +61,27 @@ jobs:
       with:
         name: "${{ matrix.platform }}-gem"
         path: pkg/*.gem
-    - name: Publish to RubyGems
-      shell: bash
-      run: |
-        mkdir -p $HOME/.gem
-        touch $HOME/.gem/credentials
-        chmod 0600 $HOME/.gem/credentials
-        printf -- "---\n:rubygems_api_key: ${GEM_HOST_API_KEY}\n" > $HOME/.gem/credentials
-        gem push pkg/*.gem
-      env:
-        GEM_HOST_API_KEY: "${{secrets.RUBYGEMS_API_KEY}}"
+
+  publish:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: ['build-ruby', 'build-native']
+    strategy:
+      matrix:
+        platform: ['ruby', 'x86-mingw32', 'x64-mingw-ucrt', 'x64-mingw32', 'x86_64-linux', 'x86_64-darwin', 'arm64-darwin']
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/download-artifact@v3
+      with:
+        name: "${{ matrix.platform }}-gem"
+    - name: List files
+      run: ls -l pkg
+    # - name: Publish to RubyGems
+    #   shell: bash
+    #   run: |
+    #     mkdir -p $HOME/.gem
+    #     touch $HOME/.gem/credentials
+    #     chmod 0600 $HOME/.gem/credentials
+    #     printf -- "---\n:rubygems_api_key: ${GEM_HOST_API_KEY}\n" > $HOME/.gem/credentials
+    #     gem push pkg/*.gem
+    #   env:
+    #     GEM_HOST_API_KEY: "${{secrets.RUBYGEMS_API_KEY}}"
