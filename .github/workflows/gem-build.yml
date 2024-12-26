@@ -17,7 +17,7 @@ jobs:
       contents: read
       packages: write
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         submodules: true
     - name: Set up Ruby 2.6
@@ -31,7 +31,7 @@ jobs:
         gem install *.gem
         bundle install
         rake test:gem
-    - uses: actions/upload-artifact@v3
+    - uses: actions/upload-artifact@v4
       with:
         name: "ruby-gem"
         path: "*.gem"
@@ -47,9 +47,9 @@ jobs:
       contents: read
       packages: write
     container:
-      image: "ghcr.io/rake-compiler/rake-compiler-dock-image:1.4.0-mri-${{ matrix.platform }}"
+      image: "ghcr.io/rake-compiler/rake-compiler-dock-image:1.7.0-mri-${{ matrix.platform }}"
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         submodules: true
     - name: Build native gem
@@ -57,22 +57,23 @@ jobs:
       run: |
         bundle install
         bundle exec rake gem:${{ matrix.platform }}:build
-    - uses: actions/upload-artifact@v3
+    - uses: actions/upload-artifact@v4
       with:
         name: "${{ matrix.platform }}-gem"
         path: pkg/*.gem
 
   publish:
-    if: startsWith(github.ref, 'refs/tags/v')
+    # if: startsWith(github.ref, 'refs/tags/v')
     needs: ['build-ruby', 'build-native']
     strategy:
       matrix:
         platform: ['ruby', 'x86-mingw32', 'x64-mingw-ucrt', 'x64-mingw32', 'x86_64-linux', 'x86_64-darwin', 'arm64-darwin']
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/download-artifact@v3
+    - uses: actions/download-artifact@v4
       with:
         name: "${{ matrix.platform }}-gem"
+        path: pkg
     - name: List files
       run: ls -l pkg
     # - name: Publish to RubyGems
