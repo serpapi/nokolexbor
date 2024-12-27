@@ -8,7 +8,7 @@ native_gemspec = eval(File.read 'nokolexbor.gemspec').tap do |spec|
   spec.metadata.delete('msys2_mingw_dependencies')
 end
 
-ENV['RUBY_CC_VERSION'] = %w{2.6.0 2.7.0 3.0.0 3.1.0 3.2.0 3.3.0}.join(':')
+ENV['RUBY_CC_VERSION'] = %w{2.6.0 2.7.0 3.0.0 3.1.0 3.2.0 3.3.5 3.4.0}.join(':')
 cross_platforms = %w[x86-mingw32 x64-mingw-ucrt x64-mingw32 x86-linux x86_64-linux aarch64-linux x86_64-darwin arm64-darwin]
 
 Rake::ExtensionTask.new('nokolexbor', native_gemspec) do |ext|
