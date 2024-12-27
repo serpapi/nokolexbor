@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - master
+    tags:
+      - v**
   pull_request:
     types: [opened, synchronize]
     branches:
@@ -63,7 +65,7 @@ jobs:
         path: pkg/*.gem
 
   publish:
-    # if: startsWith(github.ref, 'refs/tags/v')
+    if: startsWith(github.ref, 'refs/tags/v')
     needs: ['build-ruby', 'build-native']
     strategy:
       matrix:
@@ -74,15 +76,13 @@ jobs:
       with:
         name: "${{ matrix.platform }}-gem"
         path: pkg
-    - name: List files
-      run: ls -l pkg
-    # - name: Publish to RubyGems
-    #   shell: bash
-    #   run: |
-    #     mkdir -p $HOME/.gem
-    #     touch $HOME/.gem/credentials
-    #     chmod 0600 $HOME/.gem/credentials
-    #     printf -- "---\n:rubygems_api_key: ${GEM_HOST_API_KEY}\n" > $HOME/.gem/credentials
-    #     gem push pkg/*.gem
-    #   env:
-    #     GEM_HOST_API_KEY: "${{secrets.RUBYGEMS_API_KEY}}"
+    - name: Publish to RubyGems
+      shell: bash
+      run: |
+        mkdir -p $HOME/.gem
+        touch $HOME/.gem/credentials
+        chmod 0600 $HOME/.gem/credentials
+        printf -- "---\n:rubygems_api_key: ${GEM_HOST_API_KEY}\n" > $HOME/.gem/credentials
+        gem push pkg/*.gem
+      env:
+        GEM_HOST_API_KEY: "${{secrets.RUBYGEMS_API_KEY}}"
