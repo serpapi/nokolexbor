@@ -154,6 +154,10 @@ module Nokolexbor
         html = string_or_io.read
       end
 
+      if html.respond_to?(:encoding) && html.encoding != Encoding::UTF_8
+        html = html.encode(Encoding::UTF_8, invalid: :replace, undef: :replace)
+      end
+
       parse_native(html)
     end
 
