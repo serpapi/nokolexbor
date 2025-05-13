@@ -22,26 +22,9 @@ const rb_data_type_t nl_document_type = {
     RUBY_TYPED_FREE_IMMEDIATELY,
 };
 
-/**
- * call-seq:
- *   parse(string_or_io) -> Document
- *
- * Parse HTML into a {Document}.
- *
- * @param string_or_io [String, #read]
- *   The HTML to be parsed. It may be a String, or any object that
- *   responds to #read such as an IO, or StringIO.
- */
 static VALUE
-nl_document_parse(VALUE self, VALUE rb_string_or_io)
+nl_document_parse_native(VALUE self, VALUE rb_html)
 {
-  VALUE id_read = rb_intern("read");
-  VALUE rb_html;
-  if (rb_respond_to(rb_string_or_io, id_read)) {
-    rb_html = rb_funcall(rb_string_or_io, id_read, 0);
-  } else {
-    rb_html = rb_string_or_io;
-  }
   const char *html_c = StringValuePtr(rb_html);
   size_t html_len = RSTRING_LEN(rb_html);
 
@@ -74,7 +57,7 @@ nl_document_parse(VALUE self, VALUE rb_string_or_io)
 static VALUE
 nl_document_new(VALUE self)
 {
-  return nl_document_parse(self, rb_str_new("", 0));
+  return nl_document_parse_native(self, rb_str_new("", 0));
 }
 
 lxb_dom_document_t *
@@ -136,7 +119,7 @@ void Init_nl_document(void)
 {
   cNokolexborDocument = rb_define_class_under(mNokolexbor, "Document", cNokolexborNode);
   rb_define_singleton_method(cNokolexborDocument, "new", nl_document_new, 0);
-  rb_define_singleton_method(cNokolexborDocument, "parse", nl_document_parse, 1);
+  rb_define_singleton_method(cNokolexborDocument, "parse_native", nl_document_parse_native, 1);
   rb_define_method(cNokolexborDocument, "title", nl_document_get_title, 0);
   rb_define_method(cNokolexborDocument, "title=", nl_document_set_title, 1);
   rb_define_method(cNokolexborDocument, "root", nl_document_root, 0);

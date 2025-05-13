@@ -141,6 +141,22 @@ module Nokolexbor
       end
     end
 
+    # Parse HTML into a {Document}.
+    #
+    # @param string_or_io [String, #read]
+    #   The HTML to be parsed. It may be a String, or any object that
+    #   responds to #read such as an IO, or StringIO.
+    #
+    # @return [Document]
+    def self.parse(string_or_io)
+      html = string_or_io
+      if string_or_io.respond_to?(:read)
+        html = string_or_io.read
+      end
+
+      parse_native(html)
+    end
+
     private
 
     IMPLIED_XPATH_CONTEXTS = ["//"].freeze # :nodoc:
