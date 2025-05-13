@@ -24,7 +24,20 @@ def which(cmd)
   return nil
 end
 
+if !find_executable('cmake')
+  abort "ERROR: CMake is required to build Lexbor."
+end
+
 cmake_flags = [ ENV["CMAKE_FLAGS"] ]
+
+cmake_version_full = `cmake --version`
+unless cmake_version_full.empty?
+  cmake_version = cmake_version_full[/cmake version ([0-9\.]+)/, 1]
+  if Gem::Version.new(cmake_version) >= Gem::Version.new('4.0')
+    cmake_flags << "-DCMAKE_POLICY_VERSION_MINIMUM=3.5"
+  end
+end
+
 cmake_flags << "-DCMAKE_TRY_COMPILE_TARGET_TYPE=STATIC_LIBRARY"
 # Set system name explicitly when cross-compiling
 cmake_flags << "-DCMAKE_SYSTEM_NAME=Windows -DWIN32=1" if windows?
@@ -115,10 +128,6 @@ CWD = File.expand_path(File.dirname(__FILE__))
 LEXBOR_DIR = File.join(CWD, '..', '..', 'vendor', 'lexbor')
 EXT_DIR = File.join(CWD, '..', '..', 'ext', 'nokolexbor')
 INSTALL_DIR = File.join(LEXBOR_DIR, 'dist')
-
-if !find_executable('cmake')
-  abort "ERROR: CMake is required to build Lexbor."
-end
 
 Dir.chdir(LEXBOR_DIR) do
   # Patch lexbor
