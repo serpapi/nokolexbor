@@ -68,6 +68,71 @@ describe Nokolexbor::Document do
     _(nodes.first.to_html).must_equal @first_li_html
   end
 
+  describe 'parse' do
+    it 'works with string' do
+      doc = Nokolexbor::Document.parse('<div>Hello</div>')
+      _(doc.to_html).must_equal '<html><head></head><body><div>Hello</div></body></html>'
+    end
+
+    it 'works with io' do
+      doc = Nokolexbor::Document.parse(StringIO.new('<div>Hello</div>'))
+      _(doc.to_html).must_equal '<html><head></head><body><div>Hello</div></body></html>'
+    end
+
+    describe 'with non-utf-8 encoding' do
+      before do
+        @html_utf8 = '<html><head></head><body><div title="你好">世界！</div></body></html>'
+        @html = @html_utf8.encode(Encoding::GBK)
+        @doc = Nokolexbor::Document.parse(@html)
+      end
+
+      it 'source encoding is correct' do
+        _(@html_utf8.encoding).must_equal Encoding::UTF_8
+        _(@html.encoding).must_equal Encoding::GBK
+      end
+
+      it 'encoding of Document#to_html is utf-8' do
+        output_html = @doc.to_html
+        _(output_html.encoding).must_equal Encoding::UTF_8
+        _(output_html).must_equal @html_utf8
+      end
+
+      it 'encoding of Node#text is utf-8' do
+        text = @doc.at_css('div').text
+        _(text.encoding).must_equal Encoding::UTF_8
+        _(text).must_equal '世界！'
+      end
+
+      it 'encoding of Node#inner_html is utf-8' do
+        inner_html = @doc.at_css('body').inner_html
+        _(inner_html.encoding).must_equal Encoding::UTF_8
+        _(inner_html).must_equal '<div title="你好">世界！</div>'
+      end
+
+      it 'encoding of Node#attr is utf-8' do
+        attribute = @doc.at_css('div')['title']
+        _(attribute.encoding).must_equal Encoding::UTF_8
+        _(attribute).must_equal '你好'
+      end
+
+      it 'encoding of Attribute#value is utf-8' do
+        attribute = @doc.at_css('div').attribute('title')
+        value = attribute.value
+        _(value.encoding).must_equal Encoding::UTF_8
+        _(value).must_equal '你好'
+      end
+    end
+
+    describe 'with invalid bytes' do
+      it 'replaces invalid characters with �' do
+        html = "<div>\xF0</div>"
+        html.force_encoding(Encoding::GBK)
+        doc = Nokolexbor::Document.parse(html)
+        _(doc.to_html).must_equal '<html><head></head><body><div>�</div></body></html>'
+      end
+    end
+  end
+
   describe 'title get' do
     it 'when <title> does not exist' do
       doc = Nokolexbor::HTML('')
