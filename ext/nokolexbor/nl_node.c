@@ -335,8 +335,9 @@ nl_node_remove_attr(VALUE self, VALUE rb_attr)
 }
 
 lxb_status_t
-nl_node_at_css_callback(lxb_dom_node_t *node, lxb_css_selector_specificity_t *spec, void *ctx)
+nl_node_at_css_callback(lxb_dom_node_t *node, lxb_css_selector_specificity_t spec, void *ctx)
 {
+  (void)spec;
   lexbor_array_t *array = (lexbor_array_t *)ctx;
   lxb_status_t status = lexbor_array_push_unique(array, node);
   if (status != LXB_STATUS_OK && status != LXB_STATUS_STOPPED) {
@@ -347,8 +348,9 @@ nl_node_at_css_callback(lxb_dom_node_t *node, lxb_css_selector_specificity_t *sp
 }
 
 lxb_status_t
-nl_node_css_callback(lxb_dom_node_t *node, lxb_css_selector_specificity_t *spec, void *ctx)
+nl_node_css_callback(lxb_dom_node_t *node, lxb_css_selector_specificity_t spec, void *ctx)
 {
+  (void)spec;
   lexbor_array_t *array = (lexbor_array_t *)ctx;
   lxb_status_t status = lexbor_array_push_unique(array, node);
   if (status != LXB_STATUS_OK && status != LXB_STATUS_STOPPED) {
@@ -373,7 +375,7 @@ nl_node_find(VALUE self, VALUE selector, lxb_selectors_cb_f cb, void *ctx)
   /* CSS parser. */
   if (css_parser == NULL) {
     css_parser = lxb_css_parser_create();
-    status = lxb_css_parser_init(css_parser, NULL, NULL);
+    status = lxb_css_parser_init(css_parser, NULL);
     if (status != LXB_STATUS_OK) {
       goto init_error;
     }
@@ -922,7 +924,7 @@ nl_node_parse_fragment(lxb_dom_document_t *doc, lxb_dom_element_t *element, lxb_
   size_t tag_name_len;
   lxb_html_document_t *html_doc = lxb_html_interface_document(doc);
   if (element == NULL) {
-    const lxb_char_t *tag_name = lxb_tag_name_by_id(lxb_html_document_tags(html_doc), LXB_TAG__UNDEF, &tag_name_len);
+    const lxb_char_t *tag_name = lxb_tag_name_by_id(LXB_TAG__UNDEF, &tag_name_len);
     if (tag_name == NULL) {
       rb_raise(rb_eRuntimeError, "Error getting tag name");
     }
