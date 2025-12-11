@@ -1,8 +1,8 @@
 diff --git a/source/lexbor/dom/interfaces/node.c b/source/lexbor/dom/interfaces/node.c
-index cf6475d..9f1cf75 100755
+index 68028b4..0cbc905 100644
 --- a/source/lexbor/dom/interfaces/node.c
 +++ b/source/lexbor/dom/interfaces/node.c
-@@ -85,6 +85,7 @@ lxb_dom_node_interface_copy(lxb_dom_node_t *dst,
+@@ -156,6 +156,7 @@ lxb_dom_node_interface_copy(lxb_dom_node_t *dst,
  
      dst->type = src->type;
      dst->user = src->user;
@@ -11,10 +11,10 @@ index cf6475d..9f1cf75 100755
      if (dst->owner_document == src->owner_document) {
          dst->local_name = src->local_name;
 diff --git a/source/lexbor/dom/interfaces/node.h b/source/lexbor/dom/interfaces/node.h
-index acd0c1c..f436257 100755
+index 27718ba..0e59c7c 100644
 --- a/source/lexbor/dom/interfaces/node.h
 +++ b/source/lexbor/dom/interfaces/node.h
-@@ -46,6 +46,8 @@ struct lxb_dom_node {
+@@ -75,6 +75,8 @@ struct lxb_dom_node {
      uintptr_t              prefix;     /* lowercase: lalala */
      uintptr_t              ns;         /* namespace */
  
@@ -24,7 +24,7 @@ index acd0c1c..f436257 100755
  
      lxb_dom_node_t         *next;
 diff --git a/source/lexbor/html/tokenizer.c b/source/lexbor/html/tokenizer.c
-index 741bced..6343c65 100755
+index 741bced..6343c65 100644
 --- a/source/lexbor/html/tokenizer.c
 +++ b/source/lexbor/html/tokenizer.c
 @@ -309,6 +309,7 @@ lxb_html_tokenizer_chunk(lxb_html_tokenizer_t *tkz, const lxb_char_t *data,
@@ -36,7 +36,7 @@ index 741bced..6343c65 100755
  
      while (data < end) {
 diff --git a/source/lexbor/html/tokenizer.h b/source/lexbor/html/tokenizer.h
-index ba9602f..08d0d9a 100755
+index ba9602f..08d0d9a 100644
 --- a/source/lexbor/html/tokenizer.h
 +++ b/source/lexbor/html/tokenizer.h
 @@ -72,6 +72,7 @@ struct lxb_html_tokenizer {
@@ -48,7 +48,7 @@ index ba9602f..08d0d9a 100755
  
      /* Entities */
 diff --git a/source/lexbor/html/tree.c b/source/lexbor/html/tree.c
-index 8c42990..28c97cc 100755
+index 7446139..22d6f20 100644
 --- a/source/lexbor/html/tree.c
 +++ b/source/lexbor/html/tree.c
 @@ -484,6 +484,7 @@ lxb_html_tree_append_attributes(lxb_html_tree_t *tree,
@@ -60,10 +60,10 @@ index 8c42990..28c97cc 100755
          /* Fix for adjust MathML/SVG attributes */
          if (tree->before_append_attr != NULL) {
 diff --git a/source/lexbor/html/tree.h b/source/lexbor/html/tree.h
-index 231239d..bc0249e 100755
+index 4912efb..4a25b97 100644
 --- a/source/lexbor/html/tree.h
 +++ b/source/lexbor/html/tree.h
-@@ -266,8 +266,10 @@ lxb_inline lxb_dom_node_t *
+@@ -273,8 +273,10 @@ lxb_inline lxb_dom_node_t *
  lxb_html_tree_create_node(lxb_html_tree_t *tree,
                            lxb_tag_id_t tag_id, lxb_ns_id_t ns)
  {

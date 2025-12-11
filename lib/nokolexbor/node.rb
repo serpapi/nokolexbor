@@ -332,7 +332,15 @@ module Nokolexbor
     # @see #xpath
     # @see #nokogiri_css
     def css(*args)
-      css_impl(args.join(', '))
+      selector = args.join(', ')
+      results = css_impl(selector)
+
+      if selector.lstrip.start_with?('>')
+        filtered = results.select { |node| node.parent == self }
+        return Nokolexbor::NodeSet.new(document, filtered)
+      end
+
+      results
     end
 
     # Like {#css}, but returns the first match.
@@ -344,7 +352,13 @@ module Nokolexbor
     # @see #css
     # @see #nokogiri_at_css
     def at_css(*args)
-      at_css_impl(args.join(', '))
+      selector = args.join(', ')
+
+      if selector.lstrip.start_with?('>')
+        css(selector).first
+      else
+        at_css_impl(selector)
+      end
     end
 
     # Search this object for CSS +rules+. +rules+ must be one or more CSS
