@@ -1,10 +1,10 @@
 require 'spec_helper'
 
 describe "Multi threading" do
-  # Correctness guard: verifies the fixed code produces correct results under
-  # concurrent use. Does NOT reliably reproduce the original data race on MRI
-  # Ruby (the GVL serialises C extension calls, making the race window too
-  # narrow). For definitive race proof see test/tsan_race_test.c.
+  # Correctness guard: verifies correct results under concurrent use.
+  # Does NOT reliably reproduce a data race on MRI Ruby —
+  # the GVL serialises C extension calls, making the race window too
+  # narrow. For definitive race proof see test/tsan_race_test.c.
   it 'should be thread-safe' do
     1000.times.map do
       Thread.new do
