@@ -366,26 +366,22 @@ nl_node_find(VALUE self, VALUE selector, lxb_selectors_cb_f cb, void *ctx)
   lxb_dom_node_t *node = nl_rb_node_unwrap(self);
 
   lxb_status_t status;
-  static lxb_css_parser_t *css_parser = NULL;
-  static lxb_selectors_t *selectors = NULL;
+  lxb_css_parser_t *css_parser = NULL;
+  lxb_selectors_t *selectors = NULL;
   lxb_css_selector_list_t *list = NULL;
 
   /* CSS parser. */
-  if (css_parser == NULL) {
-    css_parser = lxb_css_parser_create();
-    status = lxb_css_parser_init(css_parser, NULL, NULL);
-    if (status != LXB_STATUS_OK) {
-      goto init_error;
-    }
+  css_parser = lxb_css_parser_create();
+  status = lxb_css_parser_init(css_parser, NULL, NULL);
+  if (status != LXB_STATUS_OK) {
+    goto cleanup;
   }
 
   /* Selectors. */
-  if (selectors == NULL) {
-    selectors = lxb_selectors_create();
-    status = lxb_selectors_init(selectors);
-    if (status != LXB_STATUS_OK) {
-      goto init_error;
-    }
+  selectors = lxb_selectors_create();
+  status = lxb_selectors_init(selectors);
+  if (status != LXB_STATUS_OK) {
+    goto cleanup;
   }
 
   /* Parse and get the log. */
@@ -397,27 +393,20 @@ nl_node_find(VALUE self, VALUE selector, lxb_selectors_cb_f cb, void *ctx)
 
   /* Find HTML nodes by CSS Selectors. */
   status = lxb_selectors_find(selectors, node, list, cb, ctx);
-  if (status != LXB_STATUS_OK) {
-    goto cleanup;
-  }
 
 cleanup:
   /* Destroy all object for all CSS Selector List. */
   lxb_css_selector_list_destroy_memory(list);
 
-  return status;
-
-init_error:
   /* Destroy Selectors object. */
-  lxb_selectors_destroy(selectors, true);
-  selectors = NULL;
+  if (selectors != NULL) {
+    lxb_selectors_destroy(selectors, true);
+  }
 
   /* Destroy resources for CSS Parser. */
-  lxb_css_parser_destroy(css_parser, true);
-  css_parser = NULL;
-
-  /* Destroy all object for all CSS Selector List. */
-  lxb_css_selector_list_destroy_memory(list);
+  if (css_parser != NULL) {
+    lxb_css_parser_destroy(css_parser, true);
+  }
 
   return status;
 }
