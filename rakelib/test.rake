@@ -91,14 +91,14 @@ namespace :test do
       fixed_bin = File.join(tmpdir, 'tsan_fixed')
 
       # Compile buggy variant
-      compile_buggy = "#{cc} #{tsan_flags} -I#{lexbor_include} #{lexbor_static} #{link_flags} -o #{buggy_bin} #{src}"
+      compile_buggy = "#{cc} #{tsan_flags} -I#{lexbor_include} -o #{buggy_bin} #{src} #{lexbor_static} #{link_flags}"
       puts "Compiling buggy variant..."
       unless system(compile_buggy)
         abort "test:tsan: failed to compile buggy variant. Command:\n  #{compile_buggy}"
       end
 
       # Compile fixed variant
-      compile_fixed = "#{cc} #{tsan_flags} -DFIXED -I#{lexbor_include} #{lexbor_static} #{link_flags} -o #{fixed_bin} #{src}"
+      compile_fixed = "#{cc} #{tsan_flags} -DFIXED -I#{lexbor_include} -o #{fixed_bin} #{src} #{lexbor_static} #{link_flags}"
       puts "Compiling fixed variant..."
       unless system(compile_fixed)
         abort "test:tsan: failed to compile fixed variant. Command:\n  #{compile_fixed}"
