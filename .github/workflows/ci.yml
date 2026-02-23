@@ -58,8 +58,25 @@ jobs:
     - name: Run tests
       run: bundle exec rake test:asan
 
+  # Check for data races with TSan (ThreadSanitizer)
+  tsan-check:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: true
+    - name: Set up Ruby
+      uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: '2.6'
+        bundler-cache: true
+    - name: Build
+      run: bundle exec rake compile
+    - name: Run TSan test
+      run: bundle exec rake test:tsan
+
   install-gem-and-test:
-    needs: ['build', 'memory-check']
+    needs: ['build', 'memory-check', 'tsan-check']
     strategy:
       matrix:
         ruby-version: ['2.6', '2.7', '3.0', '3.1', '3.2', '3.3', '3.4']
