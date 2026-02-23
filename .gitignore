@@ -16,3 +16,13 @@ rdoc/
 ext/nokolexbor/build/
 ext/nokolexbor/config.h
 ext/nokolexbor/libxml/xmlversion.h
+# TSan test build artifacts
+test/tsan_race_test_buggy
+test/tsan_race_test_buggy.dSYM/
+test/tsan_race_test_fixed
+test/tsan_race_test_fixed.dSYM/
+test/tsan_race_test_fixed_1t
+test/tsan_race_test_fixed_1t.dSYM/
+test/tsan_test_cb
+test/tsan_test_cb.dSYM/
+test/tsan_test_cb.c

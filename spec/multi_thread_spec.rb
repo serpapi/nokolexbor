@@ -1,6 +1,10 @@
 require 'spec_helper'
 
 describe "Multi threading" do
+  # Correctness guard: verifies the fixed code produces correct results under
+  # concurrent use. Does NOT reliably reproduce the original data race on MRI
+  # Ruby (the GVL serialises C extension calls, making the race window too
+  # narrow). For definitive race proof see test/tsan_race_test.c.
   it 'should be thread-safe' do
     1000.times.map do
       Thread.new do
@@ -11,6 +15,9 @@ describe "Multi threading" do
     end.each(&:join)
   end
 
+  # Correctness guard: verifies correct results with diverse selectors under
+  # high concurrency. Like the test above, does not reliably reproduce the
+  # original static-singleton data race on MRI Ruby due to GVL serialisation.
   it 'returns correct results under concurrent access with diverse selectors' do
     num_threads = 100
     iterations = 50
@@ -60,9 +67,10 @@ describe "Multi threading" do
       'div >>',
     ]
 
-    # Aggressively cycle error-then-valid 1000 times with diverse invalid selectors.
-    # The static css_parser may be left in a dirty state (stage = LXB_CSS_PARSER_RUN)
-    # after a parse failure, causing subsequent valid queries to fail.
+    # Correctness guard: verifies error-recovery behaviour is correct.
+    # Runs sequentially — does not reproduce the multi-threaded race.
+    # The fix (per-call allocation) makes cross-call state leakage structurally
+    # impossible, so this test remains valid as a regression guard.
     1000.times do |i|
       sel = invalid_selectors[i % invalid_selectors.length]
 
