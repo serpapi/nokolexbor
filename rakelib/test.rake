@@ -2,6 +2,7 @@
 
 require 'rake/testtask'
 require 'open3'
+require 'timeout'
 require 'tmpdir'
 
 # Task to detect memory leaks with ASAN
@@ -105,8 +106,24 @@ namespace :test do
       end
 
       # Run buggy — expect TSan warnings
+      # NOTE: On macOS Tahoe (Darwin 25+), TSan's DEADLYSIGNAL abort handler
+      # can deadlock when the process is spawned from Ruby.  We use popen3
+      # with a timeout so we can SIGKILL the stuck process and still read
+      # the stderr that TSan wrote before it stalled.
       puts "\nRunning buggy variant (expect TSan data race warnings)..."
-      _buggy_out, buggy_err, _buggy_status = Open3.capture3(buggy_bin)
+      buggy_err = ''
+      Open3.popen3(buggy_bin) do |_in, out, err, wait_thr|
+        _in.close
+        out_reader = Thread.new { out.read }
+        err_reader = Thread.new { err.read }
+        begin
+          Timeout.timeout(3) { wait_thr.value }
+        rescue Timeout::Error
+          Process.kill('KILL', wait_thr.pid) rescue nil
+        end
+        out_reader.value
+        buggy_err = err_reader.value
+      end
       buggy_has_race = buggy_err.include?('ThreadSanitizer: data race')
 
       # Run fixed — expect clean output
