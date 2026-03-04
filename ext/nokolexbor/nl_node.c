@@ -371,18 +371,16 @@ nl_node_find(VALUE self, VALUE selector, lxb_selectors_cb_f cb, void *ctx)
   lxb_css_selector_list_t *list = NULL;
 
   /* CSS parser. */
-  css_parser = lxb_css_parser_create();
-  status = lxb_css_parser_init(css_parser, NULL, NULL);
-  if (status != LXB_STATUS_OK) {
+  if ((css_parser = lxb_css_parser_create()) == NULL)
     goto cleanup;
-  }
+  if ((status = lxb_css_parser_init(css_parser, NULL, NULL)) != LXB_STATUS_OK)
+    goto cleanup;
 
   /* Selectors. */
-  selectors = lxb_selectors_create();
-  status = lxb_selectors_init(selectors);
-  if (status != LXB_STATUS_OK) {
+  if ((selectors = lxb_selectors_create()) == NULL)
     goto cleanup;
-  }
+  if ((status = lxb_selectors_init(selectors)) != LXB_STATUS_OK)
+    goto cleanup;
 
   /* Parse and get the log. */
   list = lxb_css_selectors_parse_relative_list(css_parser, (const lxb_char_t *)selector_c, selector_len);
@@ -399,14 +397,10 @@ cleanup:
   lxb_css_selector_list_destroy_memory(list);
 
   /* Destroy Selectors object. */
-  if (selectors != NULL) {
-    lxb_selectors_destroy(selectors, true);
-  }
+  lxb_selectors_destroy(selectors, true);
 
   /* Destroy resources for CSS Parser. */
-  if (css_parser != NULL) {
-    lxb_css_parser_destroy(css_parser, true);
-  }
+  lxb_css_parser_destroy(css_parser, true);
 
   return status;
 }
