@@ -65,10 +65,6 @@ namespace :test do
     t.pattern = 'spec/**/*_spec.rb'
   end
 
-  # Task to prove the static-singleton data race with ThreadSanitizer.
-  # Compiles test/tsan_race_test.c in both buggy and fixed variants and
-  # verifies that TSan detects races in the buggy variant and none in the fixed.
-  # Can only run on Linux or macOS (TSan not supported on Windows).
   task :tsan do
     if RbConfig::CONFIG['host_os'].match?(/mingw|mswin|cygwin/)
       puts 'Skipping test:tsan — ThreadSanitizer is not supported on Windows.'
@@ -91,14 +87,12 @@ namespace :test do
       buggy_bin = File.join(tmpdir, 'tsan_buggy')
       fixed_bin = File.join(tmpdir, 'tsan_fixed')
 
-      # Compile buggy variant
       compile_buggy = "#{cc} #{tsan_flags} -I#{lexbor_include} -o #{buggy_bin} #{src} #{lexbor_static} #{link_flags}"
       puts "Compiling buggy variant..."
       unless system(compile_buggy)
         abort "test:tsan: failed to compile buggy variant. Command:\n  #{compile_buggy}"
       end
 
-      # Compile fixed variant
       compile_fixed = "#{cc} #{tsan_flags} -DFIXED -I#{lexbor_include} -o #{fixed_bin} #{src} #{lexbor_static} #{link_flags}"
       puts "Compiling fixed variant..."
       unless system(compile_fixed)
@@ -106,10 +100,6 @@ namespace :test do
       end
 
       # Run buggy — expect TSan warnings
-      # NOTE: On macOS Tahoe (Darwin 25+), TSan's DEADLYSIGNAL abort handler
-      # can deadlock when the process is spawned from Ruby.  We use popen3
-      # with a timeout so we can SIGKILL the stuck process and still read
-      # the stderr that TSan wrote before it stalled.
       puts "\nRunning buggy variant (expect TSan data race warnings)..."
       buggy_err = ''
       Open3.popen3(buggy_bin) do |_in, out, err, wait_thr|
