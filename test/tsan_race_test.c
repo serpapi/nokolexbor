@@ -1,5 +1,5 @@
 /*
- * TSan (ThreadSanitizer) race condition test for nl_node_find()
+ * TSan (ThreadSanitizer) race condition test
  *
  * Proves that the original static css_parser/selectors singletons in
  * nl_node_find() are subject to a data race when called concurrently.
@@ -34,6 +34,10 @@
 /* BUGGY: process-global singletons, no locking — mirrors original code */
 static lxb_css_parser_t *css_parser = NULL;
 static lxb_selectors_t  *selectors  = NULL;
+#else
+/* FIXED: thread-local storage via pthread keys */
+static pthread_key_t p_key_css_parser;
+static pthread_key_t p_key_selectors;
 #endif
 
 /* Manual barrier (pthread_barrier_t not available on macOS) */
@@ -129,33 +133,50 @@ init_error:
     return status;
 
 #else
-    /* FIXED: per-call allocation, no sharing */
+    /* FIXED: thread-local cached allocation via pthread keys */
     lxb_status_t status;
-    lxb_css_parser_t *local_parser = NULL;
-    lxb_selectors_t  *local_selectors = NULL;
+    lxb_css_parser_t *css_parser = (lxb_css_parser_t *)pthread_getspecific(p_key_css_parser);
+    lxb_selectors_t  *selectors  = (lxb_selectors_t *)pthread_getspecific(p_key_selectors);
     lxb_css_selector_list_t *list = NULL;
 
-    local_parser = lxb_css_parser_create();
-    status = lxb_css_parser_init(local_parser, NULL, NULL);
-    if (status != LXB_STATUS_OK) goto cleanup;
+    if (css_parser == NULL) {
+        css_parser = lxb_css_parser_create();
+        status = lxb_css_parser_init(css_parser, NULL, NULL);
+        if (status != LXB_STATUS_OK) {
+            goto init_error;
+        }
+        pthread_setspecific(p_key_css_parser, css_parser);
+    }
 
-    local_selectors = lxb_selectors_create();
-    status = lxb_selectors_init(local_selectors);
-    if (status != LXB_STATUS_OK) goto cleanup;
+    if (selectors == NULL) {
+        selectors = lxb_selectors_create();
+        status = lxb_selectors_init(selectors);
+        if (status != LXB_STATUS_OK) {
+            goto init_error;
+        }
+        pthread_setspecific(p_key_selectors, selectors);
+    }
 
-    list = lxb_css_selectors_parse_relative_list(local_parser,
+    list = lxb_css_selectors_parse_relative_list(css_parser,
                (const lxb_char_t *)selector_str, selector_len);
-    if (local_parser->status != LXB_STATUS_OK) {
-        status = local_parser->status;
+    if (css_parser->status != LXB_STATUS_OK) {
+        status = css_parser->status;
         goto cleanup;
     }
 
-    status = lxb_selectors_find(local_selectors, node, list, selector_cb, NULL);
+    status = lxb_selectors_find(selectors, node, list, selector_cb, NULL);
 
 cleanup:
     lxb_css_selector_list_destroy_memory(list);
-    if (local_selectors != NULL) lxb_selectors_destroy(local_selectors, true);
-    if (local_parser != NULL)    lxb_css_parser_destroy(local_parser, true);
+    return status;
+
+init_error:
+    lxb_selectors_destroy(selectors, true);
+    selectors = NULL;
+    lxb_css_parser_destroy(css_parser, true);
+    css_parser = NULL;
+    pthread_setspecific(p_key_css_parser, NULL);
+    pthread_setspecific(p_key_selectors, NULL);
     return status;
 #endif
 }
@@ -249,7 +270,10 @@ main(void)
     lxb_dom_node_t *root = lxb_dom_interface_node(document);
 
 #ifdef FIXED
-    printf("Running FIXED version (per-call allocation)...\n");
+    printf("Running FIXED version (thread-local storage)...\n");
+
+    pthread_key_create(&p_key_css_parser, NULL);
+    pthread_key_create(&p_key_selectors, NULL);
 #else
     printf("Running BUGGY version (static singletons)...\n");
 #endif
