@@ -1,5 +1,12 @@
 #include "nokolexbor.h"
+#include "config.h"
 #include "libxml/tree.h"
+
+#ifdef HAVE_PTHREAD_H
+#include <pthread.h>
+pthread_key_t p_key_css_parser;
+pthread_key_t p_key_selectors;
+#endif
 
 #define SORT_NAME nl_css_result
 #define SORT_TYPE lxb_dom_node_t *
@@ -366,21 +373,38 @@ nl_node_find(VALUE self, VALUE selector, lxb_selectors_cb_f cb, void *ctx)
   lxb_dom_node_t *node = nl_rb_node_unwrap(self);
 
   lxb_status_t status;
+#ifdef HAVE_PTHREAD_H
+  lxb_css_parser_t *css_parser = (lxb_css_parser_t *)pthread_getspecific(p_key_css_parser);
+  lxb_selectors_t *selectors = (lxb_selectors_t *)pthread_getspecific(p_key_selectors);
+#else
   lxb_css_parser_t *css_parser = NULL;
   lxb_selectors_t *selectors = NULL;
+#endif
   lxb_css_selector_list_t *list = NULL;
 
   /* CSS parser. */
-  if ((css_parser = lxb_css_parser_create()) == NULL)
-    goto cleanup;
-  if ((status = lxb_css_parser_init(css_parser, NULL, NULL)) != LXB_STATUS_OK)
-    goto cleanup;
+  if (css_parser == NULL) {
+    css_parser = lxb_css_parser_create();
+    status = lxb_css_parser_init(css_parser, NULL, NULL);
+    if (status != LXB_STATUS_OK) {
+      goto init_error;
+    }
+#ifdef HAVE_PTHREAD_H
+    pthread_setspecific(p_key_css_parser, css_parser);
+#endif
+  }
 
   /* Selectors. */
-  if ((selectors = lxb_selectors_create()) == NULL)
-    goto cleanup;
-  if ((status = lxb_selectors_init(selectors)) != LXB_STATUS_OK)
-    goto cleanup;
+  if (selectors == NULL) {
+    selectors = lxb_selectors_create();
+    status = lxb_selectors_init(selectors);
+    if (status != LXB_STATUS_OK) {
+      goto init_error;
+    }
+#ifdef HAVE_PTHREAD_H
+    pthread_setspecific(p_key_selectors, selectors);
+#endif
+  }
 
   /* Parse and get the log. */
   list = lxb_css_selectors_parse_relative_list(css_parser, (const lxb_char_t *)selector_c, selector_len);
@@ -393,14 +417,32 @@ nl_node_find(VALUE self, VALUE selector, lxb_selectors_cb_f cb, void *ctx)
   status = lxb_selectors_find(selectors, node, list, cb, ctx);
 
 cleanup:
+#ifndef HAVE_PTHREAD_H
+  /* Destroy Selectors object. */
+  (void)lxb_selectors_destroy(selectors, true);
+
+  /* Destroy resources for CSS Parser. */
+  (void)lxb_css_parser_destroy(css_parser, true);
+#endif
+
   /* Destroy all object for all CSS Selector List. */
   lxb_css_selector_list_destroy_memory(list);
 
+  return status;
+
+init_error:
   /* Destroy Selectors object. */
   lxb_selectors_destroy(selectors, true);
+  selectors = NULL;
 
   /* Destroy resources for CSS Parser. */
   lxb_css_parser_destroy(css_parser, true);
+  css_parser = NULL;
+
+#ifdef HAVE_PTHREAD_H
+  pthread_setspecific(p_key_css_parser, NULL);
+  pthread_setspecific(p_key_selectors, NULL);
+#endif
 
   return status;
 }
@@ -1156,8 +1198,30 @@ nl_node_path(VALUE self)
   return ret;
 }
 
+static void
+free_css_parser(void *data)
+{
+  lxb_css_parser_t *css_parser = (lxb_css_parser_t *)data;
+  if (css_parser != NULL) {
+    lxb_css_parser_destroy(css_parser, true);
+  }
+}
+
+static void
+free_selectors(void *data)
+{
+  lxb_selectors_t *selectors = (lxb_selectors_t *)data;
+  if (selectors != NULL) {
+    lxb_selectors_destroy(selectors, true);
+  }
+}
+
 void Init_nl_node(void)
 {
+#ifdef HAVE_PTHREAD_H
+  pthread_key_create(&p_key_css_parser, free_css_parser);
+  pthread_key_create(&p_key_selectors, free_selectors);
+#endif
   cNokolexborNode = rb_define_class_under(mNokolexbor, "Node", rb_cObject);
   rb_undef_alloc_func(cNokolexborNode);
 
