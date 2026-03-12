@@ -1,20 +1,15 @@
 /*
- * TSan (ThreadSanitizer) race condition test
+ * TSan (ThreadSanitizer) test for thread-local css_parser/selectors/html_parser.
  *
- * Proves that the original static css_parser/selectors singletons in
- * nl_node_find() are subject to a data race when called concurrently.
+ * Mirrors the pthread thread-local caching used in nl_node.c and nl_document.c.
+ * Build with TSan to verify no data races exist in the implementation.
  *
- * Build and run (buggy):
+ * Build & run:
  *   clang -fsanitize=thread -g -O1 \
- *     -I../../vendor/lexbor/dist/include \
- *     -L../../vendor/lexbor/dist/lib \
- *     -llexbor_static \
- *     -lpthread \
- *     -o tsan_race_test tsan_race_test.c && ./tsan_race_test
- *
- * Build and run (fixed):
- *   Same command, but with -DFIXED
- *   TSan should report no races.
+ *     -I vendor/lexbor/dist/include \
+ *     -o tsan_test test/tsan_race_test.c \
+ *     vendor/lexbor/dist/lib/liblexbor_static.a -lpthread
+ *   ./tsan_test
  */
 
 #include <pthread.h>
@@ -27,216 +22,188 @@
 #include <lexbor/selectors/selectors.h>
 
 /* ------------------------------------------------------------------ */
-/* Shared state — mirrors the original buggy nl_node_find() exactly    */
+/* Thread-local keys — mirrors nl_node.c and nl_document.c             */
 /* ------------------------------------------------------------------ */
 
-#ifndef FIXED
-/* BUGGY: process-global singletons, no locking — mirrors original code */
-static lxb_css_parser_t *css_parser = NULL;
-static lxb_selectors_t  *selectors  = NULL;
-#else
-/* FIXED: thread-local storage via pthread keys */
 static pthread_key_t p_key_css_parser;
 static pthread_key_t p_key_selectors;
-#endif
-
-/* Manual barrier (pthread_barrier_t not available on macOS) */
-static pthread_mutex_t barrier_mutex = PTHREAD_MUTEX_INITIALIZER;
-static pthread_cond_t  barrier_cond  = PTHREAD_COND_INITIALIZER;
-static int             barrier_count = 0;
-static int             barrier_total = 0;
+static pthread_key_t p_key_html_parser;
 
 static void
-barrier_init(int n)
+free_css_parser(void *data)
 {
-    pthread_mutex_lock(&barrier_mutex);
-    barrier_count = 0;
-    barrier_total = n;
-    pthread_mutex_unlock(&barrier_mutex);
+  if (data != NULL)
+    lxb_css_parser_destroy((lxb_css_parser_t *)data, true);
 }
 
 static void
-barrier_wait(void)
+free_selectors(void *data)
 {
-    pthread_mutex_lock(&barrier_mutex);
-    barrier_count++;
-    if (barrier_count >= barrier_total) {
-        pthread_cond_broadcast(&barrier_cond);
-    } else {
-        while (barrier_count < barrier_total)
-            pthread_cond_wait(&barrier_cond, &barrier_mutex);
-    }
-    pthread_mutex_unlock(&barrier_mutex);
+  if (data != NULL)
+    lxb_selectors_destroy((lxb_selectors_t *)data, true);
 }
 
+static void
+free_html_parser(void *data)
+{
+  if (data != NULL)
+    lxb_html_parser_destroy((lxb_html_parser_t *)data);
+}
 
-/* Dummy callback for lxb_selectors_find (must not be NULL) */
+/* Dummy callback for lxb_selectors_find */
 static lxb_status_t
 selector_cb(lxb_dom_node_t *node, lxb_css_selector_specificity_t *spec, void *ctx)
 {
-    return LXB_STATUS_OK;
+  (void)spec;
+  (*(int *)ctx)++;
+  return LXB_STATUS_OK;
 }
+
 /* ------------------------------------------------------------------ */
-/* The function under test                                             */
+/* Mirrors nl_node_find() — thread-local cached css_parser/selectors   */
 /* ------------------------------------------------------------------ */
 
 static lxb_status_t
-nl_node_find_buggy(lxb_dom_node_t *node,
-                   const char *selector_str, size_t selector_len)
+nl_node_find(lxb_dom_node_t *node, const char *selector_str, size_t selector_len, int *match_count)
 {
-#ifndef FIXED
-    lxb_status_t status;
-    lxb_css_selector_list_t *list = NULL;
+  lxb_status_t status;
+  lxb_css_parser_t *css_parser = (lxb_css_parser_t *)pthread_getspecific(p_key_css_parser);
+  lxb_selectors_t *selectors = (lxb_selectors_t *)pthread_getspecific(p_key_selectors);
+  lxb_css_selector_list_t *list = NULL;
 
-    /* CSS parser — lazy init, shared across all threads (THE BUG) */
-    if (css_parser == NULL) {
-        css_parser = lxb_css_parser_create();
-        status = lxb_css_parser_init(css_parser, NULL, NULL);
-        if (status != LXB_STATUS_OK) {
-            goto init_error;
-        }
-    }
+  if (css_parser == NULL) {
+    css_parser = lxb_css_parser_create();
+    status = lxb_css_parser_init(css_parser, NULL, NULL);
+    if (status != LXB_STATUS_OK)
+      goto init_error;
+    pthread_setspecific(p_key_css_parser, css_parser);
+  }
 
-    /* Selectors — lazy init, shared across all threads (THE BUG) */
-    if (selectors == NULL) {
-        selectors = lxb_selectors_create();
-        status = lxb_selectors_init(selectors);
-        if (status != LXB_STATUS_OK) {
-            goto init_error;
-        }
-    }
+  if (selectors == NULL) {
+    selectors = lxb_selectors_create();
+    status = lxb_selectors_init(selectors);
+    if (status != LXB_STATUS_OK)
+      goto init_error;
+    pthread_setspecific(p_key_selectors, selectors);
+  }
 
-    /* Parse — css_parser->stage is written here: LXB_CSS_PARSER_RUN */
-    list = lxb_css_selectors_parse_relative_list(css_parser,
-               (const lxb_char_t *)selector_str, selector_len);
-    if (css_parser->status != LXB_STATUS_OK) {
-        status = css_parser->status;
-        goto cleanup;
-    }
+  list = lxb_css_selectors_parse_relative_list(css_parser,
+             (const lxb_char_t *)selector_str, selector_len);
+  if (css_parser->status != LXB_STATUS_OK) {
+    status = css_parser->status;
+    goto cleanup;
+  }
 
-    /* Find */
-    status = lxb_selectors_find(selectors, node, list, selector_cb, NULL);
+  *match_count = 0;
+  status = lxb_selectors_find(selectors, node, list, selector_cb, match_count);
+
+cleanup:
+  lxb_css_selector_list_destroy_memory(list);
+  return status;
+
+init_error:
+  lxb_selectors_destroy(selectors, true);
+  selectors = NULL;
+  lxb_css_parser_destroy(css_parser, true);
+  css_parser = NULL;
+  pthread_setspecific(p_key_css_parser, NULL);
+  pthread_setspecific(p_key_selectors, NULL);
+  return status;
+}
+
+/* ------------------------------------------------------------------ */
+/* Mirrors nl_document_parse_native() — thread-local cached html_parser*/
+/* ------------------------------------------------------------------ */
+
+static lxb_html_document_t *
+parse_html(const char *html, size_t html_len)
+{
+  lxb_html_parser_t *html_parser = (lxb_html_parser_t *)pthread_getspecific(p_key_html_parser);
+
+  if (html_parser == NULL) {
+    html_parser = lxb_html_parser_create();
+    lxb_status_t status = lxb_html_parser_init(html_parser);
     if (status != LXB_STATUS_OK) {
-        goto cleanup;
+      lxb_html_parser_destroy(html_parser);
+      return NULL;
     }
+    html_parser->tree->scripting = true;
+    pthread_setspecific(p_key_html_parser, html_parser);
+  }
 
-cleanup:
-    lxb_css_selector_list_destroy_memory(list);
-    return status;
-
-init_error:
-    lxb_selectors_destroy(selectors, true);
-    selectors = NULL;
-    lxb_css_parser_destroy(css_parser, true);
-    css_parser = NULL;
-    lxb_css_selector_list_destroy_memory(list);
-    return status;
-
-#else
-    /* FIXED: thread-local cached allocation via pthread keys */
-    lxb_status_t status;
-    lxb_css_parser_t *css_parser = (lxb_css_parser_t *)pthread_getspecific(p_key_css_parser);
-    lxb_selectors_t  *selectors  = (lxb_selectors_t *)pthread_getspecific(p_key_selectors);
-    lxb_css_selector_list_t *list = NULL;
-
-    if (css_parser == NULL) {
-        css_parser = lxb_css_parser_create();
-        status = lxb_css_parser_init(css_parser, NULL, NULL);
-        if (status != LXB_STATUS_OK) {
-            goto init_error;
-        }
-        pthread_setspecific(p_key_css_parser, css_parser);
-    }
-
-    if (selectors == NULL) {
-        selectors = lxb_selectors_create();
-        status = lxb_selectors_init(selectors);
-        if (status != LXB_STATUS_OK) {
-            goto init_error;
-        }
-        pthread_setspecific(p_key_selectors, selectors);
-    }
-
-    list = lxb_css_selectors_parse_relative_list(css_parser,
-               (const lxb_char_t *)selector_str, selector_len);
-    if (css_parser->status != LXB_STATUS_OK) {
-        status = css_parser->status;
-        goto cleanup;
-    }
-
-    status = lxb_selectors_find(selectors, node, list, selector_cb, NULL);
-
-cleanup:
-    lxb_css_selector_list_destroy_memory(list);
-    return status;
-
-init_error:
-    lxb_selectors_destroy(selectors, true);
-    selectors = NULL;
-    lxb_css_parser_destroy(css_parser, true);
-    css_parser = NULL;
-    pthread_setspecific(p_key_css_parser, NULL);
-    pthread_setspecific(p_key_selectors, NULL);
-    return status;
-#endif
+  return lxb_html_parse(html_parser, (const lxb_char_t *)html, html_len);
 }
 
 /* ------------------------------------------------------------------ */
 /* Thread worker                                                       */
 /* ------------------------------------------------------------------ */
 
-#define NUM_THREADS  4
-#define ITERATIONS   50
+#define NUM_THREADS  8
+#define ITERATIONS   200
+
+/* Manual barrier (pthread_barrier_t not available on macOS) */
+static pthread_mutex_t barrier_mutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_cond_t  barrier_cond  = PTHREAD_COND_INITIALIZER;
+static int             barrier_count = 0;
+
+static void
+barrier_wait(void)
+{
+  pthread_mutex_lock(&barrier_mutex);
+  barrier_count++;
+  if (barrier_count >= NUM_THREADS) {
+    pthread_cond_broadcast(&barrier_cond);
+  } else {
+    while (barrier_count < NUM_THREADS)
+      pthread_cond_wait(&barrier_cond, &barrier_mutex);
+  }
+  pthread_mutex_unlock(&barrier_mutex);
+}
+
+static const char *css_selectors[] = {
+  "div", "span.c", "p > a", "#myid", "div span",
+};
+static const int num_selectors = sizeof(css_selectors) / sizeof(css_selectors[0]);
 
 typedef struct {
-    lxb_dom_node_t *root;
-    int             thread_id;
-    int             errors;
+  int thread_id;
+  int errors;
 } worker_args_t;
-
-/* Barrier to maximise contention — all threads start simultaneously */
-
-
-static const char *selectors_list[] = {
-    "div",
-    "span.valid",
-    "p > a",
-    "#myid",
-    "div span",
-};
-static const int num_selectors =
-    (int)(sizeof(selectors_list) / sizeof(selectors_list[0]));
 
 static void *
 worker(void *arg)
 {
-    worker_args_t *args = (worker_args_t *)arg;
+  worker_args_t *args = (worker_args_t *)arg;
+  barrier_wait();
 
-    /* Wait for all threads to be ready, then all start at once */
-    barrier_wait();
-
-    for (int i = 0; i < ITERATIONS; i++) {
-        const char *sel = selectors_list[i % num_selectors];
-        lxb_status_t status = nl_node_find_buggy(args->root, sel, strlen(sel));
-
-        /*
-         * LXB_STATUS_OK and LXB_STATUS_ERROR_NOT_EXISTS are both fine
-         * (the latter just means no nodes matched).
-         * LXB_STATUS_ERROR_WRONG_ARGS means the static parser was in
-         * LXB_CSS_PARSER_RUN state — the race was triggered.
-         */
-        if (status != LXB_STATUS_OK &&
-            status != LXB_STATUS_ERROR_NOT_EXISTS &&
-            status != 0x0017 /* LXB_STATUS_STOP */)
-        {
-            fprintf(stderr,
-                "Thread %d iter %d: unexpected status 0x%04x for '%s'\n",
-                args->thread_id, i, (unsigned)status, sel);
-            args->errors++;
-        }
+  for (int i = 0; i < ITERATIONS; i++) {
+    /* Parse a fresh document (exercises thread-local html_parser) */
+    const char *html = "<div id='myid'><p><a href='#'>link</a></p>"
+                       "<span class='c'>text</span></div>";
+    lxb_html_document_t *doc = parse_html(html, strlen(html));
+    if (doc == NULL) {
+      fprintf(stderr, "Thread %d iter %d: parse_html failed\n",
+              args->thread_id, i);
+      args->errors++;
+      continue;
     }
 
-    return NULL;
+    lxb_dom_node_t *root = lxb_dom_interface_node(doc);
+
+    /* Run CSS selectors (exercises thread-local css_parser/selectors) */
+    const char *sel = css_selectors[i % num_selectors];
+    int match_count = 0;
+    lxb_status_t status = nl_node_find(root, sel, strlen(sel), &match_count);
+    if (status != LXB_STATUS_OK) {
+      fprintf(stderr, "Thread %d iter %d: nl_node_find status 0x%04x for '%s'\n",
+              args->thread_id, i, (unsigned)status, sel);
+      args->errors++;
+    }
+
+    lxb_html_document_destroy(doc);
+  }
+
+  return NULL;
 }
 
 /* ------------------------------------------------------------------ */
@@ -246,67 +213,38 @@ worker(void *arg)
 int
 main(void)
 {
-    /* Build a simple HTML document to query against */
-    static const lxb_char_t html[] =
-        "<div id='myid'>"
-        "  <p><a href='#'>link</a></p>"
-        "  <span class='valid'>text</span>"
-        "  <span class='other'>other</span>"
-        "</div>";
+  pthread_key_create(&p_key_css_parser, free_css_parser);
+  pthread_key_create(&p_key_selectors, free_selectors);
+  pthread_key_create(&p_key_html_parser, free_html_parser);
 
-    lxb_html_document_t *document = lxb_html_document_create();
-    if (document == NULL) {
-        fprintf(stderr, "Failed to create HTML document\n");
-        return EXIT_FAILURE;
-    }
+  printf("TSan thread-local cache test: %d threads x %d iterations\n",
+         NUM_THREADS, ITERATIONS);
 
-    lxb_status_t status = lxb_html_document_parse(document, html,
-                              sizeof(html) / sizeof(lxb_char_t) - 1);
-    if (status != LXB_STATUS_OK) {
-        fprintf(stderr, "Failed to parse HTML\n");
-        return EXIT_FAILURE;
-    }
+  pthread_t threads[NUM_THREADS];
+  worker_args_t args[NUM_THREADS];
+  int total_errors = 0;
 
-    lxb_dom_node_t *root = lxb_dom_interface_node(document);
+  for (int i = 0; i < NUM_THREADS; i++) {
+    args[i].thread_id = i;
+    args[i].errors = 0;
+    pthread_create(&threads[i], NULL, worker, &args[i]);
+  }
 
-#ifdef FIXED
-    printf("Running FIXED version (thread-local storage)...\n");
+  for (int i = 0; i < NUM_THREADS; i++) {
+    pthread_join(threads[i], NULL);
+    total_errors += args[i].errors;
+  }
 
-    pthread_key_create(&p_key_css_parser, NULL);
-    pthread_key_create(&p_key_selectors, NULL);
-#else
-    printf("Running BUGGY version (static singletons)...\n");
-#endif
-    printf("%d threads x %d iterations each\n\n", NUM_THREADS, ITERATIONS);
+  /* Keys are destroyed here; destructors clean up per-thread caches */
+  pthread_key_delete(p_key_css_parser);
+  pthread_key_delete(p_key_selectors);
+  pthread_key_delete(p_key_html_parser);
 
-    barrier_init(NUM_THREADS);
+  if (total_errors > 0) {
+    printf("FAIL: %d errors detected\n", total_errors);
+    return EXIT_FAILURE;
+  }
 
-    pthread_t    threads[NUM_THREADS];
-    worker_args_t args[NUM_THREADS];
-    int total_errors = 0;
-
-    for (int i = 0; i < NUM_THREADS; i++) {
-        args[i].root      = root;
-        args[i].thread_id = i;
-        args[i].errors    = 0;
-        pthread_create(&threads[i], NULL, worker, &args[i]);
-    }
-
-    for (int i = 0; i < NUM_THREADS; i++) {
-        pthread_join(threads[i], NULL);
-        total_errors += args[i].errors;
-    }
-
-
-    lxb_html_document_destroy(document);
-
-    if (total_errors > 0) {
-        printf("RUNTIME ERRORS: %d (race triggered at application level)\n",
-               total_errors);
-    } else {
-        printf("No runtime errors detected.\n");
-        printf("(TSan instrumentation above is the definitive proof of races)\n");
-    }
-
-    return (total_errors > 0) ? EXIT_FAILURE : EXIT_SUCCESS;
+  printf("PASS: no errors, no TSan warnings expected\n");
+  return EXIT_SUCCESS;
 }
