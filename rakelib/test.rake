@@ -84,56 +84,26 @@ namespace :test do
     link_flags = RbConfig::CONFIG['host_os'].include?('linux') ? "-lpthread -lm" : "-lpthread"
 
     Dir.mktmpdir('tsan_test') do |tmpdir|
-      buggy_bin = File.join(tmpdir, 'tsan_buggy')
-      fixed_bin = File.join(tmpdir, 'tsan_fixed')
+      bin = File.join(tmpdir, 'tsan_test')
 
-      compile_buggy = "#{cc} #{tsan_flags} -I#{lexbor_include} -o #{buggy_bin} #{src} #{lexbor_static} #{link_flags}"
-      puts "Compiling buggy variant..."
-      unless system(compile_buggy)
-        abort "test:tsan: failed to compile buggy variant. Command:\n  #{compile_buggy}"
+      compile_cmd = "#{cc} #{tsan_flags} -I#{lexbor_include} -o #{bin} #{src} #{lexbor_static} #{link_flags}"
+      puts "Compiling..."
+      unless system(compile_cmd)
+        abort "test:tsan: failed to compile. Command:\n  #{compile_cmd}"
       end
 
-      compile_fixed = "#{cc} #{tsan_flags} -DFIXED -I#{lexbor_include} -o #{fixed_bin} #{src} #{lexbor_static} #{link_flags}"
-      puts "Compiling fixed variant..."
-      unless system(compile_fixed)
-        abort "test:tsan: failed to compile fixed variant. Command:\n  #{compile_fixed}"
-      end
+      puts "Running with ThreadSanitizer..."
+      _out, err, status = Open3.capture3(bin)
+      puts _out unless _out.empty?
 
-      # Run buggy — expect TSan warnings
-      puts "\nRunning buggy variant (expect TSan data race warnings)..."
-      buggy_err = ''
-      Open3.popen3(buggy_bin) do |_in, out, err, wait_thr|
-        _in.close
-        out_reader = Thread.new { out.read }
-        err_reader = Thread.new { err.read }
-        begin
-          Timeout.timeout(3) { wait_thr.value }
-        rescue Timeout::Error
-          Process.kill('KILL', wait_thr.pid) rescue nil
-        end
-        out_reader.value
-        buggy_err = err_reader.value
-      end
-      buggy_has_race = buggy_err.include?('ThreadSanitizer: data race')
-
-      # Run fixed — expect clean output
-      puts "Running fixed variant (expect no TSan warnings)..."
-      _fixed_out, fixed_err, fixed_status = Open3.capture3(fixed_bin)
-      fixed_has_race = fixed_err.include?('ThreadSanitizer: data race')
-
-      puts "\n--- TSan results ---"
-      if buggy_has_race
-        puts "PASS: buggy variant correctly shows data race(s)"
+      if err.include?('ThreadSanitizer: data race')
+        puts err
+        abort "test:tsan FAILED: TSan detected data race(s)"
+      elsif !status.success?
+        puts err unless err.empty?
+        abort "test:tsan FAILED: exit code #{status.exitstatus}"
       else
-        puts "WARN: buggy variant showed no TSan warnings (race not triggered this run)"
-      end
-
-      if fixed_has_race
-        puts "FAIL: fixed variant has TSan warnings — the fix is broken!"
-        puts fixed_err
-        abort "test:tsan failed: fixed variant has data races"
-      else
-        puts "PASS: fixed variant is clean (exit #{fixed_status.exitstatus})"
+        puts "PASS: no data races detected"
       end
     end
   end
