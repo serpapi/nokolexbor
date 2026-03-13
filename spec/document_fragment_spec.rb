@@ -35,6 +35,19 @@ describe Nokolexbor::DocumentFragment do
     _(fragment.document).must_be_instance_of Nokolexbor::Document
   end
 
+  it 'new with node as document' do
+    doc = Nokolexbor::HTML('<div></div>')
+    existing_node = doc.at_css('div')
+    fragment = Nokolexbor::DocumentFragment.new(existing_node)
+    _(fragment).must_be_instance_of Nokolexbor::DocumentFragment
+    _(fragment.document).must_be_instance_of Nokolexbor::Document
+    _(fragment.document).must_equal doc
+  end
+
+  it 'new with invalid argument raises' do
+    _{ Nokolexbor::DocumentFragment.new('not_a_node') }.must_raise ArgumentError
+  end
+
   describe 'search' do
     before do
       @fragment = Nokolexbor::DocumentFragment.parse('<div></div><div></div>')

@@ -9,6 +9,22 @@ describe Nokolexbor::Node do
     _(node.name).must_equal 'div'
   end
 
+  it 'new with node as document' do
+    doc = Nokolexbor::HTML('<div></div>')
+    existing_node = doc.at_css('div')
+    node = Nokolexbor::Node.new('span', existing_node)
+    _(node).must_be_instance_of Nokolexbor::Element
+    _(node.name).must_equal 'span'
+    _(node.document).must_be_instance_of Nokolexbor::Document
+    _(node.document).must_equal doc
+    existing_node.add_child(node)
+    _(existing_node.inner_html).must_equal '<span></span>'
+  end
+
+  it 'new with invalid argument raises' do
+    _{ Nokolexbor::Node.new('div', 'not a node') }.must_raise ArgumentError
+  end
+
   it 'content' do
     doc = Nokolexbor::HTML <<-HTML
       <div>
@@ -848,6 +864,21 @@ HTML
       _(node.to_html).must_equal 'this is a text'
     end
 
+    it 'can be newed with a node as document' do
+      doc = Nokolexbor::HTML('<div></div>')
+      existing_node = doc.at_css('div')
+      node = Nokolexbor::Text.new('hello', existing_node)
+      _(node).must_be_instance_of Nokolexbor::Text
+      _(node.document).must_be_instance_of Nokolexbor::Document
+      _(node.document).must_equal doc
+      existing_node.add_child(node)
+      _(existing_node.inner_html).must_equal 'hello'
+    end
+
+    it 'raises ArgumentError with invalid argument' do
+      _{ Nokolexbor::Text.new('text', 123) }.must_raise ArgumentError
+    end
+
     it 'can be added to html' do
       doc = Nokolexbor::HTML('')
       node = Nokolexbor::Text.new('this is a text', doc)
@@ -873,6 +904,21 @@ HTML
       _(node.to_html).must_equal '<!--this is a comment-->'
     end
 
+    it 'can be newed with a node as document' do
+      doc = Nokolexbor::HTML('<div></div>')
+      existing_node = doc.at_css('div')
+      node = Nokolexbor::Comment.new('a comment', existing_node)
+      _(node).must_be_instance_of Nokolexbor::Comment
+      _(node.document).must_be_instance_of Nokolexbor::Document
+      _(node.document).must_equal doc
+      existing_node.add_child(node)
+      _(existing_node.inner_html).must_equal '<!--a comment-->'
+    end
+
+    it 'raises ArgumentError with invalid argument' do
+      _{ Nokolexbor::Comment.new('comment', 123) }.must_raise ArgumentError
+    end
+
     it 'can be added to html' do
       doc = Nokolexbor::HTML('')
       node = Nokolexbor::Comment.new('this is a comment', doc)
@@ -896,6 +942,21 @@ HTML
       _(node).must_be_instance_of Nokolexbor::ProcessingInstruction
       _(node.processing_instruction?).must_equal true
       _(node.to_html).must_equal '<?pi_name pi_content>'
+    end
+
+    it 'can be newed with a node as document' do
+      doc = Nokolexbor::HTML('<div></div>')
+      existing_node = doc.at_css('div')
+      node = Nokolexbor::ProcessingInstruction.new('pi', 'data', existing_node)
+      _(node).must_be_instance_of Nokolexbor::ProcessingInstruction
+      _(node.document).must_be_instance_of Nokolexbor::Document
+      _(node.document).must_equal doc
+      existing_node.add_child(node)
+      _(existing_node.inner_html).must_equal '<?pi data>'
+    end
+
+    it 'raises ArgumentError with invalid argument' do
+      _{ Nokolexbor::ProcessingInstruction.new('pi', 'data', 123) }.must_raise ArgumentError
     end
 
     it 'can be added to html' do

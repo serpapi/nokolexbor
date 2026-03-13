@@ -13,6 +13,18 @@ describe Nokolexbor::Attribute do
     _(att.document).must_be_instance_of Nokolexbor::Document
   end
 
+  it 'new with node as document' do
+    att = Nokolexbor::Attribute.new(@node, 'a2')
+    _(att.name).must_equal 'a2'
+    _(att.value).must_equal ''
+    _(att.document).must_be_instance_of Nokolexbor::Document
+    _(att.document).must_equal @doc
+  end
+
+  it 'new with invalid argument raises' do
+    _{ Nokolexbor::Attribute.new('not_a_node', 'a1') }.must_raise ArgumentError
+  end
+
   it 'should be of correct class' do
     _(@node.attribute('attr1')).must_be_instance_of Nokolexbor::Attribute
   end
