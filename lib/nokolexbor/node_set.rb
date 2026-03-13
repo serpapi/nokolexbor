@@ -11,7 +11,13 @@ module Nokolexbor
     # @return [Document]
     def self.new(document, list = [])
       obj = allocate
-      obj.instance_variable_set(:@document, document)
+      if document.is_a?(Document)
+        obj.instance_variable_set(:@document, document)
+      elsif document.is_a?(Node)
+        obj.instance_variable_set(:@document, document.document)
+      else
+        raise ArgumentError, "Expected a Document or Node, got #{document.class}"
+      end
       list.each { |x| obj << x }
       yield obj if block_given?
       obj
