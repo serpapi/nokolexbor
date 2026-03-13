@@ -16,6 +16,27 @@ describe Nokolexbor::NodeSet do
     @nodes = @doc.css('div')
   end
 
+  describe 'new' do
+    it 'with document' do
+      node_set = Nokolexbor::NodeSet.new(@doc, [@doc.at_css('div'), @doc.at_css('h1')])
+      _(node_set.length).must_equal 2
+      _(node_set[0].name).must_equal 'div'
+      _(node_set[1].name).must_equal 'h1'
+    end
+
+    it 'with node as document' do
+      node = @doc.at_css('div')
+      node_set = Nokolexbor::NodeSet.new(node, [@doc.at_css('div'), @doc.at_css('h1')])
+      _(node_set.length).must_equal 2
+      _(node_set[0].name).must_equal 'div'
+      _(node_set[1].name).must_equal 'h1'
+    end
+
+    it 'raises ArgumentError with invalid argument' do
+      _{ Nokolexbor::NodeSet.new('not_a_node') }.must_raise ArgumentError
+    end
+  end
+
   describe 'css' do
     it 'searches direct children' do
       _(@nodes.css('.a').size).must_equal 1
