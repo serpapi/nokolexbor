@@ -125,7 +125,7 @@ describe Nokolexbor::Document do
 
     describe 'with invalid bytes' do
       it 'replaces invalid characters with �' do
-        html = "<div>\xF0</div>"
+        html = +"<div>\xF0</div>"
         html.force_encoding(Encoding::GBK)
         doc = Nokolexbor::Document.parse(html)
         _(doc.to_html).must_equal '<html><head></head><body><div>�</div></body></html>'

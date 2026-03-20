@@ -997,12 +997,12 @@ HTML
   describe 'inspect' do
     it 'Document' do
       inspect_str = Nokolexbor::HTML('<div></div>').inspect
-      _(inspect_str).must_match /#<Nokolexbor::Document:0x[0-9a-f]+>/
+      _(inspect_str).must_match(/#<Nokolexbor::Document:0x[0-9a-f]+>/)
     end
 
     it 'DocumentFragment' do
       inspect_str = Nokolexbor::HTML('').fragment('<div></div>').inspect
-      _(inspect_str).must_match /#<Nokolexbor::DocumentFragment:0x[0-9a-f]+ .+>/
+      _(inspect_str).must_match(/#<Nokolexbor::DocumentFragment:0x[0-9a-f]+ .+>/)
     end
 
     it 'Element' do
@@ -1017,7 +1017,7 @@ HTML
 
     it 'CDATA' do
       inspect_str = Nokolexbor::CDATA.new('123 abc', Nokolexbor::HTML('')).inspect
-      _(inspect_str).must_match /#<Nokolexbor::CDATA:0x[0-9a-f]+ .+>/
+      _(inspect_str).must_match(/#<Nokolexbor::CDATA:0x[0-9a-f]+ .+>/)
     end
 
     it 'Comment' do
