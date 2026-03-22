@@ -32,6 +32,14 @@ describe Nokolexbor::NodeSet do
       _(node_set[1].name).must_equal 'h1'
     end
 
+    it 'with nil' do
+      node_set = Nokolexbor::NodeSet.new(nil, [@doc.at_css('div'), @doc.at_css('h1')])
+      _(node_set.document).must_be_nil
+      _(node_set.length).must_equal 2
+      _(node_set[0].name).must_equal 'div'
+      _(node_set[1].name).must_equal 'h1'
+    end
+
     it 'raises ArgumentError with invalid argument' do
       _{ Nokolexbor::NodeSet.new('not_a_node') }.must_raise ArgumentError
     end

@@ -11,7 +11,7 @@ module Nokolexbor
     # @return [Document]
     def self.new(document, list = [])
       obj = allocate
-      if document.is_a?(Document)
+      if document.is_a?(Document) || document.nil?
         obj.instance_variable_set(:@document, document)
       elsif document.is_a?(Node)
         obj.instance_variable_set(:@document, document.document)
