@@ -28,6 +28,7 @@ require 'nokolexbor/node_set'
 require 'nokolexbor/document_fragment'
 require 'nokolexbor/xpath'
 require 'nokolexbor/xpath_context'
+require 'nokolexbor/builder'
 
 module Nokolexbor
   class << self
@@ -35,4 +36,20 @@ module Nokolexbor
       Document.parse(*args)
     end
   end
+end
+
+# Top-level entry point for the builder DSL.
+#
+#   Nokolexbor do
+#     body do
+#       h1 'Hello world'
+#     end
+#   end
+#
+# Returns the {Nokolexbor::DocumentFragment} that was built.
+# Without a block the method is a no-op and returns nil.
+def Nokolexbor(*args, &block)
+  return unless block
+
+  Nokolexbor::Builder.new(&block).parent
 end
