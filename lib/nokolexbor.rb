@@ -32,24 +32,19 @@ require 'nokolexbor/builder'
 
 module Nokolexbor
   class << self
-    def HTML(*args)
+    def parse(*args)
       Document.parse(*args)
     end
+
+    alias_method :HTML, :parse
   end
 end
 
-# Top-level entry point for the builder DSL.
-#
-#   Nokolexbor do
-#     body do
-#       h1 'Hello world'
-#     end
-#   end
-#
-# Returns the {Nokolexbor::DocumentFragment} that was built.
-# Without a block the method is a no-op and returns nil.
-def Nokolexbor(*args, &block)
-  return unless block
-
-  Nokolexbor::Builder.new(&block).parent
+# Parse an HTML document, or build one with the DSL when a block is given.
+def Nokolexbor(string_or_io = nil, &block)
+  if block
+    Nokolexbor::Builder.new(&block).parent
+  else
+    Nokolexbor.parse(string_or_io)
+  end
 end

@@ -2,13 +2,15 @@ require 'spec_helper'
 
 describe Nokolexbor::Builder do
   describe 'top-level Nokolexbor() method' do
-    it 'returns a DocumentFragment' do
+    it 'returns a DocumentFragment when given a block' do
       result = Nokolexbor { h1 'hi' }
       _(result).must_be_instance_of Nokolexbor::DocumentFragment
     end
 
-    it 'returns nil when called without a block' do
-      _(Nokolexbor()).must_be_nil
+    it 'returns a Document when called without a block' do
+      doc = Nokolexbor('<html><body><p>hello</p></body></html>')
+      _(doc).must_be_instance_of Nokolexbor::Document
+      _(doc.at_css('p').text).must_equal 'hello'
     end
   end
 
