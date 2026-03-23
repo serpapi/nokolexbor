@@ -42,6 +42,9 @@ module Nokolexbor
     # Arity of the outermost block (drives instance_eval vs yield dispatch)
     attr_accessor :arity
 
+    # A context object for use when the block has no arguments
+    attr_accessor :context
+
     # Build into an existing +root+ node.
     def self.with(root, &block)
       new(root, &block)
@@ -95,6 +98,12 @@ module Nokolexbor
     def <<(string)
       @doc.fragment(string).children.each { |x| insert(x) }
     end
+
+    # Serialize the built content to an HTML string.
+    def to_html
+      @parent.to_html
+    end
+    alias_method :to_s, :to_html
 
     # Ruby's Kernel#p, Kernel#pp, etc. are defined on Object and therefore on
     # Builder itself.  They must be overridden so they fall through to

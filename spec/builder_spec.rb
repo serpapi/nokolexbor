@@ -86,6 +86,19 @@ describe Nokolexbor::Builder do
     end
   end
 
+  describe '#to_html / #to_s' do
+    it 'serializes the built content' do
+      builder = Nokolexbor::Builder.new do
+        body do
+          h1 'Hello'
+        end
+      end
+      expected = '<body><h1>Hello</h1></body>'
+      _(builder.to_html).must_equal expected
+      _(builder.to_s).must_equal expected
+    end
+  end
+
   describe 'NodeBuilder chaining' do
     it 'adds a class via method chain' do
       result = Nokolexbor { div.container }
