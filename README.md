@@ -9,9 +9,9 @@ It's a performance-focused HTML5 parser for Ruby based on [Lexbor](https://githu
 ## Requirements
 
 Nokolexbor is shipped with pre-compiled gems on most common platforms:
-* Linux: `x86_64`, with glibc >= 2.17
+* Linux: `x86_64` and `aarch64`
 * macOS: `x86_64` and `arm64`
-* Windows: `ucrt64`, `mingw32` and `mingw64`
+* Windows: `ucrt64`
 
 If you are on a supported platform, just jump to the [Installation](#installation) section. Otherwise, you need to install CMake to compile C extensions:
 
