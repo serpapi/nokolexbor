@@ -119,7 +119,7 @@ CPU: Apple M1 Pro (macOS). Run with: `ruby bench/bench.rb`
 | css          | 14505.5       | 140.9        | 102.93x faster  |
 | at_xpath     | 149.9         | 146.4        | same-ish        |
 | xpath        | 149.7         | 146.2        | same-ish        |
-| inner_html=  | 281967.9      | 49365.2      | 5.71x faster    |
+| inner_html=  | 320384.1      | 49518.6      | 6.47x faster    |
 
 <details>
 <summary>Raw data</summary>
@@ -187,16 +187,16 @@ Comparison:
 
 Warming up --------------------------------------
 Nokolexbor inner_html=
-                        43.045k i/100ms
-Nokogiri inner_html=     5.335k i/100ms
+                        44.564k i/100ms
+Nokogiri inner_html=     5.992k i/100ms
 Calculating -------------------------------------
 Nokolexbor inner_html=
-                        281.968k (±16.8%) i/s    (3.55 μs/i) -      5.510M in  20.031263s
-Nokogiri inner_html=     49.365k (±46.1%) i/s   (20.26 μs/i) -    725.560k in  20.192729s
+                        320.384k (±10.3%) i/s    (3.12 μs/i) -      3.209M in  10.113889s
+Nokogiri inner_html=     49.519k (±35.9%) i/s   (20.19 μs/i) -    431.424k in  10.029376s
 
 Comparison:
-Nokolexbor inner_html=:   281967.9 i/s
-Nokogiri inner_html=:    49365.2 i/s - 5.71x  slower
+Nokolexbor inner_html=:   320384.1 i/s
+Nokogiri inner_html=:    49518.6 i/s - 6.47x  slower
 ```
 </details>
 
@@ -209,7 +209,7 @@ Nokogiri inner_html=:    49365.2 i/s - 5.71x  slower
 | css          | 15701.1       | 136.3        | 115.21x faster  |
 | at_xpath     | 149.1         | 142.1        | same-ish        |
 | xpath        | 149.1         | 142.8        | same-ish        |
-| inner_html=  | 427517.6      | 39887.9      | 10.72x faster   |
+| inner_html=  | 324666.9      | 39664.0      | 8.19x faster   |
 
 <details>
 <summary>Raw data</summary>
@@ -277,15 +277,15 @@ Comparison:
 
 Warming up --------------------------------------
 Nokolexbor inner_html=
-                        53.261k i/100ms
-Nokogiri inner_html=     5.338k i/100ms
+                        53.518k i/100ms
+Nokogiri inner_html=     5.170k i/100ms
 Calculating -------------------------------------
 Nokolexbor inner_html=
-                        427.518k (±13.9%) i/s    (2.34 μs/i) -      8.415M in  20.161527s
-Nokogiri inner_html=     39.888k (±33.0%) i/s   (25.07 μs/i) -    688.602k in  20.070862s
+                        324.667k (±24.0%) i/s    (3.08 μs/i) -      6.101M in  20.003530s
+Nokogiri inner_html=     39.664k (±32.0%) i/s   (25.21 μs/i) -    687.610k in  20.104162s
 
 Comparison:
-Nokolexbor inner_html=:   427517.6 i/s
-Nokogiri inner_html=:    39887.9 i/s - 10.72x  slower
+Nokolexbor inner_html=:   324666.9 i/s
+Nokogiri inner_html=:    39664.0 i/s - 8.19x  slower
 ```
 </details>
