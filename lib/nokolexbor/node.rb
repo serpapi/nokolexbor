@@ -276,16 +276,6 @@ module Nokolexbor
       self
     end
 
-    # Set the content of this Node.
-    #
-    # @param node [Node, DocumentFragment, NodeSet, String] The node to be added.
-    #
-    # @see #inner_html=
-    def children=(node)
-      children.remove
-      add_child(node)
-    end
-
     # Set the parent Node of this Node.
     #
     # @param parent_node [Node] The parent node.
@@ -315,7 +305,7 @@ module Nokolexbor
       Nokolexbor::DocumentFragment.new(document, tags, self)
     end
 
-    alias_method :inner_html=, :children=
+
 
     # Search this object for CSS +rules+. +rules+ must be one or more CSS
     # selectors.

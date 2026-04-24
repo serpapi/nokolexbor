@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/serpapi/nokolexbor/actions/workflows/ci.yml/badge.svg)](https://github.com/serpapi/nokolexbor/actions/workflows/ci.yml)
 
-Nokolexbor is a drop-in replacement for Nokogiri. It's 4.7x faster at parsing HTML and up to 1352x faster at CSS selectors.
+Nokolexbor is a drop-in replacement for Nokogiri. It's 5x faster at parsing HTML and up to 2393x faster at CSS selectors.
 
 It's a performance-focused HTML5 parser for Ruby based on [Lexbor](https://github.com/lexbor/lexbor/). It supports both CSS selectors and XPath. Nokolexbor's API is designed to be 1:1 compatible as much as possible with [Nokogiri's API](https://github.com/sparklemotion/nokogiri).
 
@@ -108,79 +108,184 @@ end
 
 Benchmarks of parsing Google search result page (367 KB) and finding nodes using CSS selectors and XPath.
 
-CPU: AMD Ryzen 5 5600 (Ubuntu 20.04 on Windows 10 WSL 2).
+CPU: Apple M1 Pro (macOS). Run with: `ruby bench/bench.rb`
 
-Run with: `ruby bench/bench.rb`
+### Ruby 3.4.6
 
-|            | Nokolexbor (iters/s) | Nokogiri (iters/s) | Diff |
-| ---------- | ------------- | ------------ | --------------- |
-| parsing    | 994.8         | 211.8        | 4.70x faster    |
-| at_css     | 202963.7      | 150.1        | 1352.33x faster |
-| css        | 9787.9        | 150.0        | 65.27x faster   |
-| at_xpath   | 154.6         | 153.2        | same-ish        |
-| xpath      | 154.3         | 153.2        | same-ish        |
+|              | Nokolexbor (iters/s) | Nokogiri (iters/s) | Diff |
+| ------------ | ------------- | ------------ | --------------- |
+| parsing      | 1422.2        | 321.5        | 4.42x faster    |
+| at_css       | 294440.7      | 141.0        | 2088.84x faster |
+| css          | 14505.5       | 140.9        | 102.93x faster  |
+| at_xpath     | 149.9         | 146.4        | same-ish        |
+| xpath        | 149.7         | 146.2        | same-ish        |
+| inner_html=  | 281967.9      | 49365.2      | 5.71x faster    |
 
 <details>
 <summary>Raw data</summary>
 
 ```
+ruby 3.4.6 (2025-09-16 revision dbd83256b1) +PRISM [arm64-darwin24]
 Warming up --------------------------------------
 Nokolexbor parse (367 KB)
-                       100.000  i/100ms
+                       146.000 i/100ms
 Nokogiri parse (367 KB)
-                        20.000  i/100ms
+                        32.000 i/100ms
 Calculating -------------------------------------
 Nokolexbor parse (367 KB)
-                        994.773  (± 0.9%) i/s -     19.900k in  20.006124s
+                          1.422k (± 1.5%) i/s  (703.16 μs/i) -     28.470k in  20.023416s
 Nokogiri parse (367 KB)
-                        211.793  (±12.3%) i/s -      4.180k in  20.093299s
+                        321.460 (± 5.3%) i/s    (3.11 ms/i) -      6.432k in  20.065421s
 
 Comparison:
-Nokolexbor parse (367 KB):      994.8 i/s
-Nokogiri parse (367 KB):      211.8 i/s - 4.70x  (± 0.00) slower
+Nokolexbor parse (367 KB):     1422.2 i/s
+Nokogiri parse (367 KB):      321.5 i/s - 4.42x  slower
 
 Warming up --------------------------------------
-   Nokolexbor at_css    20.195k i/100ms
-     Nokogiri at_css    15.000  i/100ms
+   Nokolexbor at_css    29.584k i/100ms
+     Nokogiri at_css    13.000 i/100ms
 Calculating -------------------------------------
-   Nokolexbor at_css    202.964k (± 0.7%) i/s -      4.059M in  20.000626s
-     Nokogiri at_css    150.084  (± 0.7%) i/s -      3.015k in  20.089207s
+   Nokolexbor at_css    294.441k (± 0.8%) i/s    (3.40 μs/i) -      5.917M in  20.096388s
+     Nokogiri at_css    140.959 (± 1.4%) i/s    (7.09 ms/i) -      2.821k in  20.016614s
 
 Comparison:
-   Nokolexbor at_css:   202963.7 i/s
-     Nokogiri at_css:      150.1 i/s - 1352.33x  (± 0.00) slower
+   Nokolexbor at_css:   294440.7 i/s
+     Nokogiri at_css:      141.0 i/s - 2088.84x  slower
 
 Warming up --------------------------------------
-      Nokolexbor css   977.000  i/100ms
-        Nokogiri css    15.000  i/100ms
+      Nokolexbor css     1.455k i/100ms
+        Nokogiri css    14.000 i/100ms
 Calculating -------------------------------------
-      Nokolexbor css      9.788k (± 0.4%) i/s -    196.377k in  20.063658s
-        Nokogiri css    149.956  (± 0.7%) i/s -      3.000k in  20.006363s
+      Nokolexbor css     14.506k (± 1.1%) i/s   (68.94 μs/i) -    291.000k in  20.063744s
+        Nokogiri css    140.921 (± 1.4%) i/s    (7.10 ms/i) -      2.828k in  20.073048s
 
 Comparison:
-      Nokolexbor css:     9787.9 i/s
-        Nokogiri css:      150.0 i/s - 65.27x  (± 0.00) slower
+      Nokolexbor css:    14505.5 i/s
+        Nokogiri css:      140.9 i/s - 102.93x  slower
 
 Warming up --------------------------------------
- Nokolexbor at_xpath    15.000  i/100ms
-   Nokogiri at_xpath    15.000  i/100ms
+ Nokolexbor at_xpath    15.000 i/100ms
+   Nokogiri at_xpath    14.000 i/100ms
 Calculating -------------------------------------
- Nokolexbor at_xpath    153.190  (± 0.7%) i/s -      3.075k in  20.073628s
-   Nokogiri at_xpath    154.588  (± 0.6%) i/s -      3.105k in  20.086664s
+ Nokolexbor at_xpath    149.877 (± 2.7%) i/s    (6.67 ms/i) -      3.000k in  20.029730s
+   Nokogiri at_xpath    146.385 (± 1.4%) i/s    (6.83 ms/i) -      2.940k in  20.088223s
 
 Comparison:
-   Nokogiri at_xpath:      154.6 i/s
- Nokolexbor at_xpath:      153.2 i/s - same-ish: difference falls within error
+ Nokolexbor at_xpath:      149.9 i/s
+   Nokogiri at_xpath:      146.4 i/s - same-ish: difference falls within error
 
 Warming up --------------------------------------
-    Nokolexbor xpath    15.000  i/100ms
-      Nokogiri xpath    15.000  i/100ms
+    Nokolexbor xpath    14.000 i/100ms
+      Nokogiri xpath    14.000 i/100ms
 Calculating -------------------------------------
-    Nokolexbor xpath    153.159  (± 0.7%) i/s -      3.075k in  20.077580s
-      Nokogiri xpath    154.322  (± 1.3%) i/s -      3.090k in  20.026288s
+    Nokolexbor xpath    149.654 (± 2.7%) i/s    (6.68 ms/i) -      2.996k in  20.032150s
+      Nokogiri xpath    146.179 (± 1.4%) i/s    (6.84 ms/i) -      2.926k in  20.020594s
 
 Comparison:
-      Nokogiri xpath:      154.3 i/s
-    Nokolexbor xpath:      153.2 i/s - same-ish: difference falls within error
+    Nokolexbor xpath:      149.7 i/s
+      Nokogiri xpath:      146.2 i/s - same-ish: difference falls within error
+
+Warming up --------------------------------------
+Nokolexbor inner_html=
+                        43.045k i/100ms
+Nokogiri inner_html=     5.335k i/100ms
+Calculating -------------------------------------
+Nokolexbor inner_html=
+                        281.968k (±16.8%) i/s    (3.55 μs/i) -      5.510M in  20.031263s
+Nokogiri inner_html=     49.365k (±46.1%) i/s   (20.26 μs/i) -    725.560k in  20.192729s
+
+Comparison:
+Nokolexbor inner_html=:   281967.9 i/s
+Nokogiri inner_html=:    49365.2 i/s - 5.71x  slower
+```
+</details>
+
+### Ruby 2.7.8
+
+|              | Nokolexbor (iters/s) | Nokogiri (iters/s) | Diff |
+| ------------ | ------------- | ------------ | --------------- |
+| parsing      | 1609.2        | 321.3        | 5.01x faster    |
+| at_css       | 329144.0      | 137.5        | 2393.44x faster |
+| css          | 15701.1       | 136.3        | 115.21x faster  |
+| at_xpath     | 149.1         | 142.1        | same-ish        |
+| xpath        | 149.1         | 142.8        | same-ish        |
+| inner_html=  | 427517.6      | 39887.9      | 10.72x faster   |
+
+<details>
+<summary>Raw data</summary>
+
+```
+ruby 2.7.8p225 (2023-03-30 revision 1f4d455848) [arm64-darwin24]
+Warming up --------------------------------------
+Nokolexbor parse (367 KB)
+                       162.000 i/100ms
+Nokogiri parse (367 KB)
+                        32.000 i/100ms
+Calculating -------------------------------------
+Nokolexbor parse (367 KB)
+                          1.609k (± 1.5%) i/s  (621.43 μs/i) -     32.238k in  20.038379s
+Nokogiri parse (367 KB)
+                        321.329 (± 8.7%) i/s    (3.11 ms/i) -      6.400k in  20.090350s
+
+Comparison:
+Nokolexbor parse (367 KB):     1609.2 i/s
+Nokogiri parse (367 KB):      321.3 i/s - 5.01x  slower
+
+Warming up --------------------------------------
+   Nokolexbor at_css    32.872k i/100ms
+     Nokogiri at_css    13.000 i/100ms
+Calculating -------------------------------------
+   Nokolexbor at_css    329.144k (± 0.6%) i/s    (3.04 μs/i) -      6.607M in  20.074781s
+     Nokogiri at_css    137.519 (± 0.7%) i/s    (7.27 ms/i) -      2.756k in  20.043157s
+
+Comparison:
+   Nokolexbor at_css:   329144.0 i/s
+     Nokogiri at_css:      137.5 i/s - 2393.44x  slower
+
+Warming up --------------------------------------
+      Nokolexbor css     1.571k i/100ms
+        Nokogiri css    13.000 i/100ms
+Calculating -------------------------------------
+      Nokolexbor css     15.701k (± 1.0%) i/s   (63.69 μs/i) -    314.200k in  20.013204s
+        Nokogiri css    136.285 (± 2.2%) i/s    (7.34 ms/i) -      2.730k in  20.039433s
+
+Comparison:
+      Nokolexbor css:    15701.1 i/s
+        Nokogiri css:      136.3 i/s - 115.21x  slower
+
+Warming up --------------------------------------
+ Nokolexbor at_xpath    14.000 i/100ms
+   Nokogiri at_xpath    14.000 i/100ms
+Calculating -------------------------------------
+ Nokolexbor at_xpath    149.054 (± 2.7%) i/s    (6.71 ms/i) -      2.982k in  20.020034s
+   Nokogiri at_xpath    142.148 (± 1.4%) i/s    (7.03 ms/i) -      2.856k in  20.097134s
+
+Comparison:
+ Nokolexbor at_xpath:      149.1 i/s
+   Nokogiri at_xpath:      142.1 i/s - 1.05x  slower
+
+Warming up --------------------------------------
+    Nokolexbor xpath    14.000 i/100ms
+      Nokogiri xpath    14.000 i/100ms
+Calculating -------------------------------------
+    Nokolexbor xpath    149.121 (± 2.0%) i/s    (6.71 ms/i) -      2.982k in  20.007593s
+      Nokogiri xpath    142.823 (± 2.1%) i/s    (7.00 ms/i) -      2.856k in  20.005681s
+
+Comparison:
+    Nokolexbor xpath:      149.1 i/s
+      Nokogiri xpath:      142.8 i/s - 1.04x  slower
+
+Warming up --------------------------------------
+Nokolexbor inner_html=
+                        53.261k i/100ms
+Nokogiri inner_html=     5.338k i/100ms
+Calculating -------------------------------------
+Nokolexbor inner_html=
+                        427.518k (±13.9%) i/s    (2.34 μs/i) -      8.415M in  20.161527s
+Nokogiri inner_html=     39.888k (±33.0%) i/s   (25.07 μs/i) -    688.602k in  20.070862s
+
+Comparison:
+Nokolexbor inner_html=:   427517.6 i/s
+Nokogiri inner_html=:    39887.9 i/s - 10.72x  slower
 ```
 </details>

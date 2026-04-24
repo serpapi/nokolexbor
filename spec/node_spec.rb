@@ -762,17 +762,17 @@ HTML
 
   describe 'children=' do
     before do
-      @doc = Nokolexbor::HTML('')
-      @node = @doc.at_css('body')
+      @doc = Nokolexbor::HTML('<div><span>old</span>text<a href="#">link</a></div>')
+      @node = @doc.at_css('div')
     end
 
     it 'with String' do
-      @node.children = '<section class="a"></section><div></div>'
-      _(@node.inner_html).must_equal '<section class="a"></section><div></div>'
+      @node.children = '<section class="a"></section><p>hello</p>'
+      _(@node.inner_html).must_equal '<section class="a"></section><p>hello</p>'
     end
 
     it 'with DocumentFragment' do
-      @node.children = @node.fragment('<section class="a"></section><section class="b"></section')
+      @node.children = @node.fragment('<section class="a"></section><section class="b"></section>')
       _(@node.inner_html).must_equal '<section class="a"></section><section class="b"></section>'
     end
 
@@ -782,8 +782,87 @@ HTML
     end
 
     it 'with NodeSet' do
-      @node.children = @node.fragment('<section class="a"></section><section class="b"></section').children
+      @node.children = @node.fragment('<section class="a"></section><section class="b"></section>').children
       _(@node.inner_html).must_equal '<section class="a"></section><section class="b"></section>'
+    end
+
+    it 'replaces existing children' do
+      _(@node.children.size).must_equal 3
+      @node.children = '<b>replaced</b>'
+      _(@node.children.size).must_equal 1
+      _(@node.inner_html).must_equal '<b>replaced</b>'
+    end
+
+    it 'on empty node' do
+      doc = Nokolexbor::HTML('<div></div>')
+      node = doc.at_css('div')
+      node.children = '<span>new</span>'
+      _(node.inner_html).must_equal '<span>new</span>'
+    end
+  end
+
+  describe 'inner_html=' do
+    before do
+      @doc = Nokolexbor::HTML('<div><span>old</span>text<a href="#">link</a></div>')
+      @node = @doc.at_css('div')
+    end
+
+    it 'replaces existing children with HTML string' do
+      @node.inner_html = '<p>new content</p><b>bold</b>'
+      _(@node.inner_html).must_equal '<p>new content</p><b>bold</b>'
+    end
+
+    it 'replaces existing children completely' do
+      _(@node.children.size).must_equal 3
+      @node.inner_html = '<em>single</em>'
+      _(@node.children.size).must_equal 1
+    end
+
+    it 'with empty string removes all children' do
+      @node.inner_html = ''
+      _(@node.inner_html).must_equal ''
+      _(@node.children.size).must_equal 0
+    end
+
+    it 'is aliased as children=' do
+      @node.children = '<p>via children=</p>'
+      _(@node.inner_html).must_equal '<p>via children=</p>'
+    end
+
+    it 'with nested HTML' do
+      @node.inner_html = '<ul><li>one</li><li>two</li></ul>'
+      _(@node.inner_html).must_equal '<ul><li>one</li><li>two</li></ul>'
+      _(@node.at_css('li').text).must_equal 'one'
+    end
+
+    it 'with plain text' do
+      @node.inner_html = 'just text'
+      _(@node.inner_html).must_equal 'just text'
+      _(@node.children.size).must_equal 1
+      _(@node.child.text?).must_equal true
+    end
+
+    it 'with malformed HTML' do
+      @node.inner_html = '<div><span>unclosed'
+      _(@node.children).wont_be_empty
+      _(@node.at_css('span').text).must_equal 'unclosed'
+    end
+
+    it 'with deeply nested HTML' do
+      deeply_nested = '<div>' * 100 + 'content' + '</div>' * 100
+      @node.inner_html = deeply_nested
+      _(@node.inner_html).wont_be_empty
+    end
+
+    it 'with special characters' do
+      @node.inner_html = '<p>&amp; &lt; &gt; "quotes"</p>'
+      _(@node.at_css('p').text).must_include '&'
+      _(@node.at_css('p').text).must_include '<'
+    end
+
+    it 'preserves encoding' do
+      @node.inner_html = '<p>日本語テキスト</p>'
+      _(@node.at_css('p').text).must_equal '日本語テキスト'
     end
   end
 

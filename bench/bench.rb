@@ -99,3 +99,22 @@ Benchmark.ips do |x|
   end
   x.compare!
 end
+
+nokolex_small = Nokolexbor::HTML(html_small)
+nokogiri_small = Nokogiri::HTML(html_small)
+inner_html_content = '<div><span>replaced</span><p>content</p></div>'
+
+Benchmark.ips do |x|
+  x.warmup = 5
+  x.time = 20
+
+  x.report("Nokolexbor inner_html=") do
+    node = nokolex_small.at_css('div')
+    node.inner_html = inner_html_content
+  end
+  x.report("Nokogiri inner_html=") do
+    node = nokogiri_small.at_css('div')
+    node.inner_html = inner_html_content
+  end
+  x.compare!
+end

@@ -1081,6 +1081,28 @@ nl_node_add_child(VALUE self, VALUE new)
 }
 
 /**
+ * Set the inner HTML of this node, replacing all existing children.
+ *
+ * @param new [Node, DocumentFragment, NodeSet, String] The content to set.
+ * @return The content that was set.
+ */
+static VALUE
+nl_node_set_inner_html(VALUE self, VALUE new)
+{
+  lxb_dom_node_t *node = nl_rb_node_unwrap(self);
+
+  while (node->first_child != NULL) {
+    lxb_dom_node_destroy_deep(node->first_child);
+  }
+
+  if (RB_TYPE_P(new, T_STRING) && RSTRING_LEN(new) == 0) {
+    return new;
+  }
+
+  return nl_node_add_child(self, new);
+}
+
+/**
  * Get the type of this Node
  *
  * @return {Integer}
@@ -1263,6 +1285,8 @@ void Init_nl_node(void)
   rb_define_method(cNokolexborNode, "parse", nl_node_parse, 1);
   rb_define_method(cNokolexborNode, "add_sibling", nl_node_add_sibling, 2);
   rb_define_method(cNokolexborNode, "add_child", nl_node_add_child, 1);
+  rb_define_method(cNokolexborNode, "inner_html=", nl_node_set_inner_html, 1);
+  rb_define_alias(cNokolexborNode, "children=", "inner_html=");
   rb_define_method(cNokolexborNode, "node_type", nl_node_get_type, 0);
   rb_define_method(cNokolexborNode, "first_element_child", nl_node_first_element_child, 0);
   rb_define_method(cNokolexborNode, "last_element_child", nl_node_last_element_child, 0);
