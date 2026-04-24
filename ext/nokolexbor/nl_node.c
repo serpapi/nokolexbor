@@ -1084,7 +1084,10 @@ nl_node_add_child(VALUE self, VALUE new)
  * Set the inner HTML of this node, replacing all existing children.
  *
  * @param new [Node, DocumentFragment, NodeSet, String] The content to set.
- * @return The content that was set.
+ * @return [Node,NodeSet,String] For non-empty content, returns the same value types as {#add_child}:
+ *   the reparented {Node} (if +new+ is a {Node}), or a {NodeSet} (if +new+ is a
+ *   {DocumentFragment}, {NodeSet}, or non-empty {String}). If +new+ is an empty
+ *   {String}, returns that empty string.
  */
 static VALUE
 nl_node_set_inner_html(VALUE self, VALUE new)
