@@ -1095,7 +1095,7 @@ nl_node_set_inner_html(VALUE self, VALUE new)
   lxb_dom_node_t *node = nl_rb_node_unwrap(self);
 
   while (node->first_child != NULL) {
-    lxb_dom_node_destroy_deep(node->first_child);
+    lxb_dom_node_remove(node->first_child);
   }
 
   if (RB_TYPE_P(new, T_STRING) && RSTRING_LEN(new) == 0) {
