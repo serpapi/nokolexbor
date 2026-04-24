@@ -824,6 +824,15 @@ HTML
       _(@node.children.size).must_equal 0
     end
 
+    it 'detached old children remain valid after replacement' do
+      old_child = @node.at_css('span')
+      @node.inner_html = '<em>new</em>'
+      _(@node.at_css('em')).wont_be_nil
+      _(old_child.parent).must_be_nil
+      _(old_child.name).must_equal 'span'
+      _(old_child.text).must_equal 'old'
+    end
+
     it 'is aliased as children=' do
       @node.children = '<p>via children=</p>'
       _(@node.inner_html).must_equal '<p>via children=</p>'
