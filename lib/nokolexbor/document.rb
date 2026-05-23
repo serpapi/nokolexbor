@@ -72,6 +72,13 @@ module Nokolexbor
       self
     end
 
+    # Get the namespaces in scope on the root element.
+    #
+    # @return [Hash{String => String}]
+    def namespaces
+      root&.namespaces || {}
+    end
+
     # Get the meta tag encoding for this document. If there is no meta tag, nil is returned.
     #
     # @return [String]

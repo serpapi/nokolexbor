@@ -1,6 +1,7 @@
 #include "nokolexbor.h"
 #include "config.h"
 #include "libxml/tree.h"
+#include <lexbor/ns/const.h>
 
 #ifdef HAVE_PTHREAD_H
 #include <pthread.h>
@@ -1202,6 +1203,70 @@ nl_node_path(VALUE self)
   return ret;
 }
 
+/**
+ * Get the namespace of this Node
+ *
+ * @return [String] The namespace of this Node
+ */
+static VALUE
+nl_node_namespace_href(VALUE self)
+{
+  lxb_dom_node_t *node = nl_rb_node_unwrap(self);
+  /* ns == 0 means no namespace; LXB_NS_HTML is the implicit HTML namespace
+   * which we do not expose (matches Nokogiri::HTML behaviour) */
+  if (node->ns == 0 || node->ns == LXB_NS_HTML) return Qnil;
+  size_t len;
+  const lxb_char_t *href = lxb_ns_by_id(node->owner_document->ns, node->ns, &len);
+  if (href == NULL || href[0] == '\0') return Qnil;
+  return rb_utf8_str_new((const char *)href, len);
+}
+
+static VALUE
+nl_node_namespace_prefix(VALUE self)
+{
+  lxb_dom_node_t *node = nl_rb_node_unwrap(self);
+  if (node->prefix == 0) return Qnil;
+  const lxb_char_t *prefix = NODE_NS_PREFIX(node);
+  if (prefix == NULL || prefix[0] == '\0') return Qnil;
+  return rb_utf8_str_new((const char *)prefix, tmp_len);
+}
+
+static VALUE
+nl_node_namespace_definitions(VALUE self)
+{
+  lxb_dom_node_t *node = nl_rb_node_unwrap(self);
+  VALUE ary = rb_ary_new();
+
+  if (node->type != LXB_DOM_NODE_TYPE_ELEMENT) return ary;
+
+  VALUE rb_doc = nl_rb_document_get(self);
+  VALUE cNamespace = rb_const_get(mNokolexbor, rb_intern("Namespace"));
+
+  lxb_dom_attr_t *attr = lxb_dom_element_first_attribute(lxb_dom_interface_element(node));
+  while (attr != NULL) {
+    size_t name_len;
+    const lxb_char_t *name = lxb_dom_attr_qualified_name(attr, &name_len);
+    if (name_len >= 5 && strncmp((const char *)name, "xmlns", 5) == 0) {
+      size_t val_len;
+      const lxb_char_t *val = lxb_dom_attr_value(attr, &val_len);
+      VALUE rb_href = val ? rb_utf8_str_new((const char *)val, val_len) : rb_str_new("", 0);
+      VALUE rb_prefix;
+      if (name_len == 5) {
+        rb_prefix = Qnil;
+      } else if (name[5] == ':') {
+        rb_prefix = rb_utf8_str_new((const char *)name + 6, name_len - 6);
+      } else {
+        attr = attr->next;
+        continue;
+      }
+      VALUE ns = rb_funcall(cNamespace, rb_intern("new"), 3, rb_doc, rb_prefix, rb_href);
+      rb_ary_push(ary, ns);
+    }
+    attr = attr->next;
+  }
+  return ary;
+}
+
 static void
 free_css_parser(void *data)
 {
@@ -1270,6 +1335,9 @@ void Init_nl_node(void)
   rb_define_method(cNokolexborNode, "inspect", nl_node_inspect, -1);
   rb_define_method(cNokolexborNode, "source_location", nl_node_source_location, 0);
   rb_define_method(cNokolexborNode, "path", nl_node_path, 0);
+  rb_define_method(cNokolexborNode, "namespace_href", nl_node_namespace_href, 0);
+  rb_define_method(cNokolexborNode, "namespace_prefix", nl_node_namespace_prefix, 0);
+  rb_define_method(cNokolexborNode, "namespace_definitions", nl_node_namespace_definitions, 0);
 
   rb_define_alias(cNokolexborNode, "attr", "[]");
   rb_define_alias(cNokolexborNode, "get_attribute", "[]");

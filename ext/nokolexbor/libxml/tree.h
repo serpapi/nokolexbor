@@ -24,7 +24,7 @@ extern "C" {
 
 static size_t tmp_len;
 #define NODE_NAME(node) lxb_dom_node_name_qualified((lxb_dom_node_t *)(node), &tmp_len)
-#define NODE_NS_HREF(node) ((node)->prefix ? lxb_ns_by_id((node)->owner_document->ns, (node)->ns, &tmp_len) : NULL)
+#define NODE_NS_HREF(node) (((node)->ns != 0 && (node)->ns != LXB_NS_HTML) ? lxb_ns_by_id((node)->owner_document->ns, (node)->ns, &tmp_len) : NULL)
 #define NODE_NS_PREFIX(node) lxb_ns_by_id((node)->owner_document->prefix, (node)->prefix, &tmp_len)
 
 /*
