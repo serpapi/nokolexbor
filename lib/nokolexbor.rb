@@ -22,6 +22,7 @@ rescue LoadError => e
 end
 
 require 'nokolexbor/version'
+require 'nokolexbor/namespace'
 require 'nokolexbor/node'
 require 'nokolexbor/document'
 require 'nokolexbor/node_set'

@@ -1053,4 +1053,137 @@ HTML
     _(doc.at_css('.a').path).must_equal '/html/body/div/span/a[1]'
     _(doc.at_css('.b').path).must_equal '/html/body/div/span/a[2]'
   end
+
+  describe 'namespace' do
+    it 'returns nil for plain HTML elements' do
+      doc = Nokolexbor::HTML('<div></div>')
+      _(doc.at_css('div').namespace).must_be_nil
+    end
+
+    it 'returns Namespace for SVG elements' do
+      doc = Nokolexbor::HTML('<html><body><svg><circle/></svg></body></html>')
+      svg = doc.at_css('svg')
+      ns = svg.namespace
+      _(ns).must_be_instance_of Nokolexbor::Namespace
+      _(ns.href).must_equal 'http://www.w3.org/2000/svg'
+      _(ns.prefix).must_be_nil
+    end
+
+    it 'SVG children inherit SVG namespace' do
+      doc = Nokolexbor::HTML('<html><body><svg><circle/></svg></body></html>')
+      circle = doc.at_css('circle')
+      _(circle.namespace_href).must_equal 'http://www.w3.org/2000/svg'
+    end
+
+    it 'returns Namespace for MathML elements' do
+      doc = Nokolexbor::HTML('<html><body><math><mi>x</mi></math></body></html>')
+      math = doc.at_css('math')
+      ns = math.namespace
+      _(ns).must_be_instance_of Nokolexbor::Namespace
+      _(ns.href).must_equal 'http://www.w3.org/1998/Math/MathML'
+    end
+  end
+
+  describe 'namespace_definitions' do
+    it 'returns empty array for node without xmlns attributes' do
+      doc = Nokolexbor::HTML('<div></div>')
+      _(doc.at_css('div').namespace_definitions).must_equal []
+    end
+
+    it 'returns Namespace objects for xmlns:prefix attributes' do
+      doc = Nokolexbor::HTML('<div xmlns:foo="http://example.com/foo"><span></span></div>')
+      defs = doc.at_css('div').namespace_definitions
+      _(defs.size).must_equal 1
+      _(defs.first).must_be_instance_of Nokolexbor::Namespace
+      _(defs.first.prefix).must_equal 'foo'
+      _(defs.first.href).must_equal 'http://example.com/foo'
+    end
+
+    it 'returns Namespace with nil prefix for default xmlns attribute' do
+      doc = Nokolexbor::HTML('<div xmlns="http://example.com/default"></div>')
+      defs = doc.at_css('div').namespace_definitions
+      _(defs.size).must_equal 1
+      _(defs.first.prefix).must_be_nil
+      _(defs.first.href).must_equal 'http://example.com/default'
+    end
+
+    it 'returns empty array for non-element nodes' do
+      doc = Nokolexbor::HTML('<div>text</div>')
+      _(doc.at_css('div').children.first.namespace_definitions).must_equal []
+    end
+  end
+
+  describe 'namespaces' do
+    it 'returns empty hash for plain node' do
+      doc = Nokolexbor::HTML('<div></div>')
+      _(doc.at_css('div').namespaces).must_equal({})
+    end
+
+    it 'returns hash with xmlns: keys for prefixed namespaces' do
+      doc = Nokolexbor::HTML('<div xmlns:foo="http://example.com/foo"></div>')
+      _(doc.at_css('div').namespaces).must_equal('xmlns:foo' => 'http://example.com/foo')
+    end
+
+    it 'returns xmlns key for default namespace' do
+      doc = Nokolexbor::HTML('<div xmlns="http://example.com/default"></div>')
+      _(doc.at_css('div').namespaces).must_equal('xmlns' => 'http://example.com/default')
+    end
+
+    it 'includes ancestor namespaces' do
+      doc = Nokolexbor::HTML('<div xmlns:foo="http://example.com/foo"><span xmlns:bar="http://example.com/bar"></span></div>')
+      ns = doc.at_css('span').namespaces
+      _(ns['xmlns:foo']).must_equal 'http://example.com/foo'
+      _(ns['xmlns:bar']).must_equal 'http://example.com/bar'
+    end
+
+    it 'child namespace does not override ancestor namespace with same prefix' do
+      doc = Nokolexbor::HTML('<div xmlns:foo="http://ancestor.com"><span xmlns:foo="http://child.com"></span></div>')
+      ns = doc.at_css('span').namespaces
+      _(ns['xmlns:foo']).must_equal 'http://child.com'
+    end
+  end
+
+  describe 'add_namespace_definition' do
+    it 'adds xmlns attribute and returns Namespace object' do
+      doc = Nokolexbor::HTML('<div></div>')
+      node = doc.at_css('div')
+      ns = node.add_namespace_definition('foo', 'http://example.com/foo')
+      _(ns).must_be_instance_of Nokolexbor::Namespace
+      _(ns.prefix).must_equal 'foo'
+      _(ns.href).must_equal 'http://example.com/foo'
+      _(node['xmlns:foo']).must_equal 'http://example.com/foo'
+    end
+
+    it 'adds default namespace with nil prefix' do
+      doc = Nokolexbor::HTML('<div></div>')
+      node = doc.at_css('div')
+      ns = node.add_namespace_definition(nil, 'http://example.com/default')
+      _(ns.prefix).must_be_nil
+      _(node['xmlns']).must_equal 'http://example.com/default'
+    end
+  end
+
+  describe 'Namespace class' do
+    it 'has prefix, href and document' do
+      doc = Nokolexbor::HTML('<div></div>')
+      ns = Nokolexbor::Namespace.new(doc, 'foo', 'http://example.com')
+      _(ns.prefix).must_equal 'foo'
+      _(ns.href).must_equal 'http://example.com'
+      _(ns.document).must_equal doc
+    end
+
+    it 'inspect includes prefix and href' do
+      doc = Nokolexbor::HTML('<div></div>')
+      ns = Nokolexbor::Namespace.new(doc, 'foo', 'http://example.com')
+      _(ns.inspect).must_include 'prefix="foo"'
+      _(ns.inspect).must_include 'href="http://example.com"'
+    end
+
+    it 'inspect without prefix' do
+      doc = Nokolexbor::HTML('<div></div>')
+      ns = Nokolexbor::Namespace.new(doc, nil, 'http://example.com')
+      _(ns.inspect).wont_include 'prefix'
+      _(ns.inspect).must_include 'href="http://example.com"'
+    end
+  end
 end

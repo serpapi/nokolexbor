@@ -58,6 +58,52 @@ module Nokolexbor
       is_a?(Nokolexbor::Document)
     end
 
+    # Get the {Namespace} of this node, or +nil+ if there is no namespace.
+    #
+    # @return [Namespace, nil]
+    def namespace
+      href = namespace_href
+      return nil if href.nil?
+      Nokolexbor::Namespace.new(document, namespace_prefix, href)
+    end
+
+    # Get the namespaces in scope for this node — those defined on the node
+    # itself and its ancestors.
+    #
+    # @return [Array<Namespace>]
+    def namespace_scopes
+      result = {}
+      node = self
+      while node && !node.document?
+        node.namespace_definitions.each do |ns|
+          result[ns.prefix] ||= ns
+        end
+        node = node.respond_to?(:parent) ? node.parent : nil
+      end
+      result.values
+    end
+
+    # Get the namespaces in scope for this node as a Hash.
+    #
+    # @return [Hash{String => String}] e.g. <tt>{"xmlns:foo" => "http://example.com"}</tt>
+    def namespaces
+      namespace_scopes.each_with_object({}) do |ns, hash|
+        key = ns.prefix ? "xmlns:#{ns.prefix}" : "xmlns"
+        hash[key] = ns.href
+      end
+    end
+
+    # Add a namespace definition to this node.
+    #
+    # @param prefix [String, nil] The namespace prefix, or +nil+ for the default namespace.
+    # @param href [String] The namespace URI.
+    # @return [Namespace]
+    def add_namespace_definition(prefix, href)
+      attr_name = prefix ? "xmlns:#{prefix}" : "xmlns"
+      set_attr(attr_name, href)
+      Nokolexbor::Namespace.new(document, prefix, href)
+    end
+
     # Get the path to this node as a CSS expression
     def css_path
       path.split(%r{/}).filter_map do |part|
@@ -764,8 +810,7 @@ module Nokolexbor
       end
       ns, binds = hashes.reverse
 
-      # ns ||= (document.root&.namespaces || {})
-      ns ||= {}
+      ns ||= (document.root&.namespaces || {})
 
       [params, handler, ns, binds]
     end
