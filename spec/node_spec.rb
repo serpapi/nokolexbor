@@ -1053,4 +1053,73 @@ HTML
     _(doc.at_css('.a').path).must_equal '/html/body/div/span/a[1]'
     _(doc.at_css('.b').path).must_equal '/html/body/div/span/a[2]'
   end
+
+  describe 'hash and eql?' do
+    it 'eql? returns true for same node' do
+      doc = Nokolexbor::HTML('<html><body><div id="x"></div></body></html>')
+      a = doc.at_css('#x')
+      b = doc.at_css('#x')
+      _(a.eql?(b)).must_equal true
+    end
+
+    it 'hash is consistent across wrappers' do
+      doc = Nokolexbor::HTML('<html><body><div id="x"></div></body></html>')
+      a = doc.at_css('#x')
+      b = doc.at_css('#x')
+      _(a.hash == b.hash).must_equal true
+    end
+
+    it 'works as Hash key' do
+      doc = Nokolexbor::HTML('<html><body><div id="x"></div></body></html>')
+      a = doc.at_css('#x')
+      b = doc.at_css('#x')
+      map = { a => 'value' }
+      _(map[b]).must_equal 'value'
+    end
+
+    it 'uniq removes duplicate node wrappers' do
+      doc = Nokolexbor::HTML('<html><body><div id="x"></div><p></p></body></html>')
+      a = doc.at_css('#x')
+      b = doc.at_css('#x')
+      c = doc.at_css('p')
+      _(([a, b, c].uniq.size)).must_equal 2
+    end
+
+    it 'hash is stable across DOM mutations' do
+      doc = Nokolexbor::HTML('<html><body><div><p id="y"></p></div></body></html>')
+      el = doc.at_css('#y')
+      h1 = el.hash
+
+      # Move the element
+      new_div = Nokolexbor::Element.new('section', doc)
+      doc.at_css('body').add_child(new_div)
+      new_div.add_child(el)
+
+      h2 = doc.at_css('section #y').hash
+      _(h1 == h2).must_equal true
+    end
+
+    it 'different nodes have different hashes' do
+      doc = Nokolexbor::HTML('<html><body><div id="x"></div><p></p></body></html>')
+      a = doc.at_css('#x')
+      p_el = doc.at_css('p')
+      _(a.hash == p_el.hash).must_equal false
+    end
+
+    it 'eql? returns false for different nodes' do
+      doc = Nokolexbor::HTML('<html><body><div id="x"></div><p></p></body></html>')
+      a = doc.at_css('#x')
+      b = doc.at_css('p')
+      _(a.eql?(b)).must_equal false
+    end
+
+    it 'equal? and eql? are different' do
+      doc = Nokolexbor::HTML('<html><body><div id="x"></div></body></html>')
+      a = doc.at_css('#x')
+      b = doc.at_css('#x')
+      _(a == b).must_equal true
+      _(a.eql?(b)).must_equal true
+      _(a.equal?(b)).must_equal false
+    end
+  end
 end
