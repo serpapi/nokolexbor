@@ -921,6 +921,19 @@ nl_node_equals(VALUE self, VALUE other)
   return node1 == node2 ? Qtrue : Qfalse;
 }
 
+static VALUE
+nl_node_hash(VALUE self)
+{
+  lxb_dom_node_t *node = nl_rb_node_unwrap(self);
+  return ULL2NUM((unsigned long long)(uintptr_t)node);
+}
+
+static VALUE
+nl_node_eql(VALUE self, VALUE other)
+{
+  return nl_node_equals(self, other);
+}
+
 const lxb_char_t *
 lxb_dom_node_name_qualified(lxb_dom_node_t *node, size_t *len)
 {
@@ -1241,6 +1254,8 @@ void Init_nl_node(void)
   rb_define_method(cNokolexborNode, "[]=", nl_node_set_attr, 2);
   rb_define_method(cNokolexborNode, "remove_attr", nl_node_remove_attr, 1);
   rb_define_method(cNokolexborNode, "==", nl_node_equals, 1);
+  rb_define_method(cNokolexborNode, "eql?", nl_node_eql, 1);
+  rb_define_method(cNokolexborNode, "hash", nl_node_hash, 0);
   rb_define_method(cNokolexborNode, "css_impl", nl_node_css, 1);
   rb_define_method(cNokolexborNode, "at_css_impl", nl_node_at_css, 1);
   rb_define_method(cNokolexborNode, "inner_html", nl_node_inner_html, -1);
