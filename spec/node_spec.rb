@@ -1053,4 +1053,34 @@ HTML
     _(doc.at_css('.a').path).must_equal '/html/body/div/span/a[1]'
     _(doc.at_css('.b').path).must_equal '/html/body/div/span/a[2]'
   end
+
+  describe 'pointer_id' do
+    it 'returns an Integer' do
+      doc = Nokolexbor::HTML('<div></div>')
+      node = doc.at_css('div')
+      _(node.pointer_id).must_be_kind_of Integer
+    end
+
+    it 'is the same for two wrappers of the same node' do
+      doc = Nokolexbor::HTML('<div></div>')
+      n1 = doc.at_css('div')
+      n2 = doc.at_css('div')
+      _(n1.pointer_id).must_equal n2.pointer_id
+    end
+
+    it 'differs for different nodes' do
+      doc = Nokolexbor::HTML('<div></div><p></p>')
+      div = doc.at_css('div')
+      p_node = doc.at_css('p')
+      _(div.pointer_id).wont_equal p_node.pointer_id
+    end
+
+    it 'is stable across DOM mutations' do
+      doc = Nokolexbor::HTML('<div><p></p></div>')
+      p_node = doc.at_css('p')
+      id_before = p_node.pointer_id
+      doc.at_css('body').add_child(p_node)
+      _(doc.at_css('body > p').pointer_id).must_equal id_before
+    end
+  end
 end
