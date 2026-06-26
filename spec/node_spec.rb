@@ -829,6 +829,26 @@ HTML
     it 'raises if expression is invalid' do
       _{ @root.xpath('.//text1()') }.must_raise Nokolexbor::XPath::SyntaxError
     end
+
+    it 'preceding axis from attribute node does not crash' do
+      doc = Nokolexbor::HTML('<html><body><a>x</a><b id="y">y</b></body></html>')
+      result = doc.xpath('//@id[preceding::*]')
+      _(result.size).must_equal 1
+      _(result.first.to_s).must_equal 'y'
+
+      result = doc.xpath('//@id/preceding::*')
+      _(result.size).must_be :>=, 1
+      _(result.map(&:name)).must_include 'a'
+
+      result = doc.xpath('//@*[preceding::*]')
+      _(result.size).must_equal 1
+
+      # Ensure other axes from attribute nodes still work
+      _(doc.xpath('//@id[following::*]')).wont_be_nil
+      _(doc.xpath('//@id[ancestor::*]')).wont_be_nil
+      _(doc.xpath('//@id[parent::*]').size).must_equal 1
+      _(doc.xpath('//@id/self::node()').size).must_equal 1
+    end
   end
 
   describe "Element" do

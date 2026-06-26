@@ -7998,7 +7998,7 @@ nl_xmlXPathNextParent(xmlXPathParserContextPtr ctxt, lxb_dom_node_t_ptr cur) {
             case LXB_DOM_NODE_TYPE_ATTRIBUTE: {
 		lxb_dom_attr_t_ptr att = (lxb_dom_attr_t_ptr) ctxt->context->node;
 
-		return(att->node.parent);
+		return((lxb_dom_node_t_ptr) att->owner);
 	    }
             case LXB_DOM_NODE_TYPE_DOCUMENT:
             case LXB_DOM_NODE_TYPE_DOCUMENT_TYPE:
@@ -8068,7 +8068,7 @@ nl_xmlXPathNextAncestor(xmlXPathParserContextPtr ctxt, lxb_dom_node_t_ptr cur) {
             case LXB_DOM_NODE_TYPE_ATTRIBUTE: {
 		lxb_dom_attr_t_ptr tmp = (lxb_dom_attr_t_ptr) ctxt->context->node;
 
-		return(tmp->node.parent);
+		return((lxb_dom_node_t_ptr) tmp->owner);
 	    }
             case LXB_DOM_NODE_TYPE_DOCUMENT:
             case LXB_DOM_NODE_TYPE_DOCUMENT_TYPE:
@@ -8235,7 +8235,7 @@ nl_xmlXPathNextFollowing(xmlXPathParserContextPtr ctxt, lxb_dom_node_t_ptr cur) 
     if (cur == NULL) {
         cur = ctxt->context->node;
         if (cur->type == LXB_DOM_NODE_TYPE_ATTRIBUTE) {
-            cur = cur->parent;
+            cur = (lxb_dom_node_t_ptr)((lxb_dom_attr_t *)cur)->owner;
         } else if (cur->type == XML_NAMESPACE_DECL) {
             xmlNsPtr ns = (xmlNsPtr) cur;
 
@@ -8305,7 +8305,7 @@ nl_xmlXPathNextPreceding(xmlXPathParserContextPtr ctxt, lxb_dom_node_t_ptr cur)
     if (cur == NULL) {
         cur = ctxt->context->node;
         if (cur->type == LXB_DOM_NODE_TYPE_ATTRIBUTE) {
-            cur = cur->parent;
+            cur = (lxb_dom_node_t_ptr)((lxb_dom_attr_t *)cur)->owner;
         } else if (cur->type == XML_NAMESPACE_DECL) {
             xmlNsPtr ns = (xmlNsPtr) cur;
 
@@ -8359,7 +8359,7 @@ xmlXPathNextPrecedingInternal(xmlXPathParserContextPtr ctxt,
         if (cur == NULL)
             return (NULL);
         if (cur->type == LXB_DOM_NODE_TYPE_ATTRIBUTE) {
-            cur = cur->parent;
+            cur = (lxb_dom_node_t_ptr)((lxb_dom_attr_t *)cur)->owner;
         } else if (cur->type == XML_NAMESPACE_DECL) {
             xmlNsPtr ns = (xmlNsPtr) cur;
 
@@ -8452,9 +8452,22 @@ nl_xmlXPathNextAttribute(xmlXPathParserContextPtr ctxt, lxb_dom_node_t_ptr cur) 
     if (cur == NULL) {
         if (ctxt->context->node == (lxb_dom_node_t_ptr) ctxt->context->doc)
 	    return(NULL);
-        return (lxb_dom_node_t_ptr)lxb_dom_element_first_attribute((lxb_dom_element_t *)ctxt->context->node);
+        cur = (lxb_dom_node_t_ptr)lxb_dom_element_first_attribute((lxb_dom_element_t *)ctxt->context->node);
+    } else {
+        cur = (lxb_dom_node_t_ptr)(((lxb_dom_attr_t *)cur)->next);
     }
-    return (lxb_dom_node_t_ptr)(((lxb_dom_attr_t *)cur)->next);
+    /*
+     * In Lexbor, attr->owner is not set during tree construction.
+     * Set it here so axis traversal functions that need to find the
+     * owning element (preceding::, following::, ancestor::, parent::)
+     * can use attr->owner when attributes are context nodes.
+     */
+    if (cur != NULL) {
+        lxb_dom_attr_t *attr = (lxb_dom_attr_t *)cur;
+        if (attr->owner == NULL)
+            attr->owner = (lxb_dom_element_t *)ctxt->context->node;
+    }
+    return cur;
 }
 
 /************************************************************************
