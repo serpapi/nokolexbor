@@ -159,4 +159,52 @@ describe "Patches to lexbor" do
       end
     end
   end
+
+  describe "sibling combinators inside pseudo-class functions" do
+    before do
+      @doc = Nokolexbor::HTML <<-HTML
+        <div>
+          <div class="newscard position1"></div>
+          <div class="newscard position2"></div>
+          <div class="more-news"></div>
+          <div class="newscard position3"></div>
+          <div class="newscard position4"></div>
+        </div>
+      HTML
+    end
+
+    it "~ inside :not() excludes following siblings" do
+      nodes = @doc.css(".newscard:not(.more-news ~ .newscard)")
+      _(nodes.size).must_equal 2
+      _(nodes[0]['class']).must_include 'position1'
+      _(nodes[1]['class']).must_include 'position2'
+    end
+
+    it "+ inside :not() excludes adjacent sibling" do
+      nodes = @doc.css(".newscard:not(.more-news + .newscard)")
+      _(nodes.size).must_equal 3
+      _(nodes.map { |n| n['class'] }).wont_include 'newscard position3'
+    end
+
+    it "~ inside :is() matches following siblings" do
+      nodes = @doc.css(":is(.more-news ~ .newscard)")
+      _(nodes.size).must_equal 2
+      _(nodes[0]['class']).must_include 'position3'
+      _(nodes[1]['class']).must_include 'position4'
+    end
+
+    it "> inside :not() checks parent correctly" do
+      doc = Nokolexbor::HTML('<div id="a"><div id="b"><span></span></div></div>')
+      # span IS a direct child of #b
+      _(doc.css("span:not(#b > span)").size).must_equal 0
+      # span is NOT a direct child of #a
+      _(doc.css("span:not(#a > span)").size).must_equal 1
+    end
+
+    it "descendant inside :not() checks ancestors correctly" do
+      doc = Nokolexbor::HTML('<div id="a"><div id="b"><span></span></div></div>')
+      # span IS a descendant of #a
+      _(doc.css("span:not(#a span)").size).must_equal 0
+    end
+  end
 end
