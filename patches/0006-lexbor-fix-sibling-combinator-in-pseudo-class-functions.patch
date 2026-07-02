@@ -1,11 +1,16 @@
 diff --git a/source/lexbor/selectors/selectors.c b/source/lexbor/selectors/selectors.c
-index fef05d3..3917b2b 100644
+index 37b825e..3fec327 100644
 --- a/source/lexbor/selectors/selectors.c
 +++ b/source/lexbor/selectors/selectors.c
-@@ -87,6 +87,11 @@ static lxb_status_t
+@@ -87,6 +87,16 @@ static lxb_status_t
  lxb_selectors_first_match(lxb_dom_node_t *node,
                            lxb_css_selector_specificity_t *spec, void *ctx);
  
++static bool
++lxb_selectors_match_chain_rtl(lxb_selectors_t *selectors,
++                              lxb_css_selector_t *selector,
++                              lxb_dom_node_t *node);
++
 +static bool
 +lxb_selectors_match_node_rtl(lxb_selectors_t *selectors,
 +                             lxb_dom_node_t *node,
@@ -14,10 +19,85 @@ index fef05d3..3917b2b 100644
  
  lxb_selectors_t *
  lxb_selectors_create(void)
-@@ -1224,6 +1229,133 @@ lxb_selectors_pseudo_class(lxb_css_selector_t *selector, lxb_dom_node_t *node)
+@@ -1254,6 +1264,106 @@ lxb_selectors_pseudo_class(lxb_css_selector_t *selector, lxb_dom_node_t *node)
      return false;
  }
  
++/*
++ * Recursively match a selector chain (right-to-left) anchored at `node`,
++ * with backtracking: when a combinator has multiple candidate elements
++ * (descendant, following sibling), each candidate is tried until the rest
++ * of the chain matches.
++ */
++static bool
++lxb_selectors_match_chain_rtl(lxb_selectors_t *selectors,
++                              lxb_css_selector_t *selector,
++                              lxb_dom_node_t *node)
++{
++    lxb_css_selector_t *prev;
++    lxb_dom_node_t *cur;
++    lxb_selectors_entry_t tmp_entry;
++
++    memset(&tmp_entry, 0, sizeof(tmp_entry));
++    tmp_entry.selector = selector;
++
++    if (!lxb_selectors_match(selectors, &tmp_entry, selector, node)) {
++        return false;
++    }
++
++    prev = selector->prev;
++    if (prev == NULL) {
++        return true;
++    }
++
++    switch (selector->combinator) {
++        case LXB_CSS_SELECTOR_COMBINATOR_CLOSE:
++            /* Same node - check prev selector on same element. */
++            return lxb_selectors_match_chain_rtl(selectors, prev, node);
++
++        case LXB_CSS_SELECTOR_COMBINATOR_DESCENDANT:
++            /* node is a descendant of prev - try each ancestor. */
++            for (cur = node->parent; cur != NULL; cur = cur->parent) {
++                if (cur->type == LXB_DOM_NODE_TYPE_ELEMENT
++                    && lxb_selectors_match_chain_rtl(selectors, prev, cur))
++                {
++                    return true;
++                }
++            }
++            return false;
++
++        case LXB_CSS_SELECTOR_COMBINATOR_CHILD:
++            /* node is a child of prev - check parent. */
++            cur = node->parent;
++            return cur != NULL
++                   && cur->type == LXB_DOM_NODE_TYPE_ELEMENT
++                   && lxb_selectors_match_chain_rtl(selectors, prev, cur);
++
++        case LXB_CSS_SELECTOR_COMBINATOR_SIBLING:
++            /* node is adjacent to prev (+) - preceding element. */
++            cur = node->prev;
++            while (cur != NULL && cur->type != LXB_DOM_NODE_TYPE_ELEMENT) {
++                cur = cur->prev;
++            }
++            return cur != NULL
++                   && lxb_selectors_match_chain_rtl(selectors, prev, cur);
++
++        case LXB_CSS_SELECTOR_COMBINATOR_FOLLOWING:
++            /* node follows prev (~) - try each preceding sibling. */
++            for (cur = node->prev; cur != NULL; cur = cur->prev) {
++                if (cur->type == LXB_DOM_NODE_TYPE_ELEMENT
++                    && lxb_selectors_match_chain_rtl(selectors, prev, cur))
++                {
++                    return true;
++                }
++            }
++            return false;
++
++        default:
++            return false;
++    }
++}
++
 +/*
 + * Match a node against a selector list using right-to-left evaluation.
 + * This is needed for :not(), :is(), :where() etc. where we test a specific
@@ -32,113 +112,11 @@ index fef05d3..3917b2b 100644
 +                             lxb_dom_node_t *node,
 +                             lxb_css_selector_list_t *list)
 +{
-+    lxb_css_selector_t *selector, *prev;
-+    lxb_dom_node_t *cur;
-+    lxb_selectors_entry_t tmp_entry;
-+
 +    while (list != NULL) {
-+        /* Try to match this selector list entry (right-to-left). */
-+        selector = list->last;
-+        cur = node;
-+
-+        memset(&tmp_entry, 0, sizeof(tmp_entry));
-+        tmp_entry.selector = selector;
-+
-+        /* First, check if the node matches the rightmost selector. */
-+        if (!lxb_selectors_match(selectors, &tmp_entry, selector, cur)) {
-+            goto next_list;
++        if (lxb_selectors_match_chain_rtl(selectors, list->last, node)) {
++            return true;
 +        }
 +
-+        /* Walk leftward through the selector chain. */
-+        while (selector->prev != NULL) {
-+            prev = selector->prev;
-+
-+            memset(&tmp_entry, 0, sizeof(tmp_entry));
-+            tmp_entry.selector = prev;
-+
-+            switch (selector->combinator) {
-+                case LXB_CSS_SELECTOR_COMBINATOR_CLOSE:
-+                    /* Same node - check prev selector on same element. */
-+                    if (!lxb_selectors_match(selectors, &tmp_entry,
-+                                             prev, cur))
-+                    {
-+                        goto next_list;
-+                    }
-+                    break;
-+
-+                case LXB_CSS_SELECTOR_COMBINATOR_DESCENDANT:
-+                    /* cur is a descendant of prev - find ancestor. */
-+                    cur = cur->parent;
-+                    while (cur != NULL) {
-+                        if (cur->type == LXB_DOM_NODE_TYPE_ELEMENT
-+                            && lxb_selectors_match(selectors, &tmp_entry,
-+                                                   prev, cur))
-+                        {
-+                            break;
-+                        }
-+                        cur = cur->parent;
-+                    }
-+                    if (cur == NULL) {
-+                        goto next_list;
-+                    }
-+                    break;
-+
-+                case LXB_CSS_SELECTOR_COMBINATOR_CHILD:
-+                    /* cur is a child of prev - check parent. */
-+                    cur = cur->parent;
-+                    if (cur == NULL
-+                        || cur->type != LXB_DOM_NODE_TYPE_ELEMENT
-+                        || !lxb_selectors_match(selectors, &tmp_entry,
-+                                                prev, cur))
-+                    {
-+                        goto next_list;
-+                    }
-+                    break;
-+
-+                case LXB_CSS_SELECTOR_COMBINATOR_SIBLING:
-+                    /* cur is adjacent to prev (+) - preceding element. */
-+                    cur = cur->prev;
-+                    while (cur != NULL
-+                           && cur->type != LXB_DOM_NODE_TYPE_ELEMENT)
-+                    {
-+                        cur = cur->prev;
-+                    }
-+                    if (cur == NULL
-+                        || !lxb_selectors_match(selectors, &tmp_entry,
-+                                                prev, cur))
-+                    {
-+                        goto next_list;
-+                    }
-+                    break;
-+
-+                case LXB_CSS_SELECTOR_COMBINATOR_FOLLOWING:
-+                    /* cur follows prev (~) - find preceding sibling. */
-+                    cur = cur->prev;
-+                    while (cur != NULL) {
-+                        if (cur->type == LXB_DOM_NODE_TYPE_ELEMENT
-+                            && lxb_selectors_match(selectors, &tmp_entry,
-+                                                   prev, cur))
-+                        {
-+                            break;
-+                        }
-+                        cur = cur->prev;
-+                    }
-+                    if (cur == NULL) {
-+                        goto next_list;
-+                    }
-+                    break;
-+
-+                default:
-+                    goto next_list;
-+            }
-+
-+            selector = prev;
-+        }
-+
-+        /* All selectors in the chain matched. */
-+        return true;
-+
-+    next_list:
 +        list = list->next;
 +    }
 +
@@ -148,7 +126,7 @@ index fef05d3..3917b2b 100644
  static bool
  lxb_selectors_pseudo_class_function(lxb_selectors_t *selectors,
                                      lxb_css_selector_t *selector,
-@@ -1238,14 +1370,7 @@ lxb_selectors_pseudo_class_function(lxb_selectors_t *selectors,
+@@ -1268,14 +1378,7 @@ lxb_selectors_pseudo_class_function(lxb_selectors_t *selectors,
  
      switch (pseudo->type) {
          case LXB_CSS_SELECTOR_PSEUDO_CLASS_FUNCTION_CURRENT:
@@ -164,7 +142,7 @@ index fef05d3..3917b2b 100644
  
          case LXB_CSS_SELECTOR_PSEUDO_CLASS_FUNCTION_DIR:
              break;
-@@ -1261,27 +1386,13 @@ lxb_selectors_pseudo_class_function(lxb_selectors_t *selectors,
+@@ -1291,27 +1394,13 @@ lxb_selectors_pseudo_class_function(lxb_selectors_t *selectors,
              return found;
  
          case LXB_CSS_SELECTOR_PSEUDO_CLASS_FUNCTION_IS:
