@@ -206,5 +206,32 @@ describe "Patches to lexbor" do
       # span IS a descendant of #a
       _(doc.css("span:not(#a span)").size).must_equal 0
     end
+
+    describe "backtracking" do
+      it "retries farther ancestor when nearest candidate fails (.a > .b .c)" do
+        # Two .b ancestors: only the outer one is a child of .a.
+        doc = Nokolexbor::HTML('<div class="a"><div class="b"><div class="x"><div class="b"><span class="c"></span></div></div></div></div>')
+        _(doc.css(":is(.a > .b .c)").size).must_equal 1
+        _(doc.css("span:not(.a > .b .c)").size).must_equal 0
+      end
+
+      it "retries farther preceding sibling when nearest candidate fails (.a + .b ~ .c)" do
+        # Two .b siblings before .c: only the first is adjacent to .a.
+        doc = Nokolexbor::HTML('<div><i class="a"></i><i class="b"></i><i class="x"></i><i class="b"></i><i class="c"></i></div>')
+        _(doc.css(":is(.a + .b ~ .c)").size).must_equal 1
+        _(doc.css(".c:not(.a + .b ~ .c)").size).must_equal 0
+      end
+
+      it "does not match when no candidate satisfies the full chain" do
+        doc = Nokolexbor::HTML('<div class="z"><div class="b"><div class="x"><div class="b"><span class="c"></span></div></div></div></div>')
+        _(doc.css(":is(.a > .b .c)").size).must_equal 0
+        _(doc.css("span:not(.a > .b .c)").size).must_equal 1
+      end
+
+      it "works with nested pseudo-class functions" do
+        doc = Nokolexbor::HTML('<div><div class="newscard"></div><div class="more-news"></div><div class="newscard"></div></div>')
+        _(doc.css(".newscard:not(:is(.more-news ~ .newscard))").size).must_equal 1
+      end
+    end
   end
 end
