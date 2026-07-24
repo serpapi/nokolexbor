@@ -1119,5 +1119,13 @@ HTML
       doc.at_css('body').add_child(p_node)
       _(doc.at_css('body > p').pointer_id).must_equal id_before
     end
+
+    it 'supports grouping node wrappers by identity' do
+      doc = Nokolexbor::HTML('<section id="a"><i></i><b></b></section><section id="b"><u></u></section>')
+      groups = doc.css('i, b, u').group_by(&:parent)
+
+      _(groups.keys.map { |parent| parent['id'] }).must_equal ['a', 'b']
+      _(groups.values.map { |nodes| nodes.map(&:name) }).must_equal [['i', 'b'], ['u']]
+    end
   end
 end
