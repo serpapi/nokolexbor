@@ -1297,4 +1297,6 @@ void Init_nl_node(void)
   rb_define_alias(cNokolexborNode, "unlink", "remove");
   rb_define_alias(cNokolexborNode, "type", "node_type");
   rb_define_alias(cNokolexborNode, "dup", "clone");
+  rb_define_alias(cNokolexborNode, "eql?", "==");
+  rb_define_alias(cNokolexborNode, "hash", "pointer_id");
 }
