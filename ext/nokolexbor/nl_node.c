@@ -237,9 +237,23 @@ nl_node_content_set(VALUE self, VALUE content)
 
   const char *c_content = StringValuePtr(content);
   size_t content_len = RSTRING_LEN(content);
-  lxb_status_t status = lxb_dom_node_text_content_set(node, (const lxb_char_t *)c_content, content_len);
-  if (status != LXB_STATUS_OK) {
-    nl_raise_lexbor_error(status);
+
+  if (node->type == LXB_DOM_NODE_TYPE_DOCUMENT_FRAGMENT || node->type == LXB_DOM_NODE_TYPE_ELEMENT) {
+    lxb_dom_text_t *text = lxb_dom_document_create_text_node(node->owner_document, (const lxb_char_t *)c_content, content_len);
+    if (text == NULL) {
+      nl_raise_lexbor_error(LXB_STATUS_ERROR_MEMORY_ALLOCATION);
+    }
+
+    // Ruby wrappers may still reference replaced nodes, so detach rather than destroy them.
+    while (node->first_child != NULL) {
+      lxb_dom_node_remove(node->first_child);
+    }
+    lxb_dom_node_insert_child(node, lxb_dom_interface_node(text));
+  } else {
+    lxb_status_t status = lxb_dom_node_text_content_set(node, (const lxb_char_t *)c_content, content_len);
+    if (status != LXB_STATUS_OK) {
+      nl_raise_lexbor_error(status);
+    }
   }
   return content;
 }

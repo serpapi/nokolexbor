@@ -239,6 +239,21 @@ HTML
     _(reversed_nodes.first['class']).must_equal 'f'
   end
 
+  it 'remains valid when content replacement detaches selected nodes' do
+    head = Nokolexbor.HTML("<title>!</title>\n").at('head')
+    nodes = head.xpath('.//text()')
+    yielded_text = []
+
+    nodes.each do |node|
+      yielded_text << node.text
+      head.content = '?'
+    end
+
+    _(yielded_text).must_equal ["!", "\n"]
+    _(nodes.map(&:text)).must_equal ["!", "\n"]
+    _(head.inner_html).must_equal '?'
+  end
+
   describe 'wrap' do
     before do
       @doc = Nokolexbor::HTML('<span>123</span><span>456</span>')
