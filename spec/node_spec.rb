@@ -787,6 +787,23 @@ HTML
     end
   end
 
+  describe 'inner_html=' do
+    before do
+      @doc = Nokolexbor::HTML('<div id="a"></div>')
+      @node = @doc.at_css('#a')
+    end
+
+    it 'preserves colgroup elements' do
+      @node.inner_html = '<colgroup><col class="a"></colgroup>'
+      _(@node.inner_html).must_equal '<colgroup><col class="a"></colgroup>'
+    end
+
+    it 'preserves table section elements' do
+      @node.inner_html = '<tbody><tr><th><span>a</span></th><td><div>b</div></td></tr></tbody>'
+      _(@node.inner_html).must_equal '<tbody><tr><th><span>a</span></th><td><div>b</div></td></tr></tbody>'
+    end
+  end
+
   it 'is enumerable' do
     doc = Nokolexbor::HTML('<div attr1="1" attr2="2" attr3="3"></div>')
     node = doc.at_css('div')

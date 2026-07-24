@@ -958,7 +958,7 @@ nl_node_parse_fragment(lxb_dom_document_t *doc, lxb_dom_element_t *element, lxb_
   size_t tag_name_len;
   lxb_html_document_t *html_doc = lxb_html_interface_document(doc);
   if (element == NULL) {
-    const lxb_char_t *tag_name = lxb_tag_name_by_id(lxb_html_document_tags(html_doc), LXB_TAG__UNDEF, &tag_name_len);
+    const lxb_char_t *tag_name = lxb_tag_name_by_id(lxb_html_document_tags(html_doc), LXB_TAG_TEMPLATE, &tag_name_len);
     if (tag_name == NULL) {
       rb_raise(rb_eRuntimeError, "Error getting tag name");
     }
