@@ -175,6 +175,11 @@ HTML
       doc = Nokolexbor::HTML('<span><div><div class="a"></div></div></span>')
       _(doc.at_css('span').inner_html).must_equal '<div><div class="a"></div></div>'
     end
+
+    it 'for template contents' do
+      doc = Nokolexbor::HTML('<template><br></template>')
+      _(doc.at_css('template').inner_html).must_equal '<br>'
+    end
   end
 
   describe 'outer_html' do

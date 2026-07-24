@@ -575,11 +575,18 @@ static VALUE
 nl_node_inner_html(int argc, VALUE *argv, VALUE self)
 {
   lxb_dom_node_t *node = nl_rb_node_unwrap(self);
+  lxb_dom_node_t *serialization_root = node;
   lexbor_str_t str = {0};
   VALUE options;
   lxb_status_t status;
   size_t indent = 0;
   rb_scan_args(argc, argv, "01", &options);
+
+  if (node->type == LXB_DOM_NODE_TYPE_ELEMENT
+      && node->local_name == LXB_TAG_TEMPLATE
+      && node->ns == LXB_NS_HTML) {
+    serialization_root = &lxb_html_interface_template(node)->content->node;
+  }
 
   if (TYPE(options) == T_HASH) {
     VALUE rb_indent = rb_hash_aref(options, ID2SYM(rb_intern("indent")));
@@ -588,9 +595,9 @@ nl_node_inner_html(int argc, VALUE *argv, VALUE self)
     }
   }
   if (indent > 0) {
-    status = lxb_html_serialize_pretty_deep_str(node, 0, 0, &str);
+    status = lxb_html_serialize_pretty_deep_str(serialization_root, 0, 0, &str);
   } else {
-    status = lxb_html_serialize_deep_str(node, &str);
+    status = lxb_html_serialize_deep_str(serialization_root, &str);
   }
   if (status != LXB_STATUS_OK) {
     if (str.data != NULL) {
