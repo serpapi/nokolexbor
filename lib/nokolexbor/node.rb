@@ -22,6 +22,31 @@ module Nokolexbor
 
     LOOKS_LIKE_XPATH = %r{^(\./|/|\.\.|\.$)}
 
+    CDATA_WRAPPER_PATTERNS = [
+      /\A[[:space:]]*<!\[CDATA\[(.*?)\]\]>[[:space:]]*\z/m,
+      /\A[[:space:]]*\/\/[[:blank:]]*<!\[CDATA\[(.*?)\/\/[[:blank:]]*\]\]>[[:space:]]*\z/m,
+      /\A[[:space:]]*\/\*[[:blank:]]*<!\[CDATA\[[[:blank:]]*\*\/(.*?)\/\*[[:blank:]]*\]\]>[[:blank:]]*\*\/[[:space:]]*\z/m,
+      /\A[[:space:]]*\/\*[[:blank:]]*<!\[CDATA\[[[:blank:]]*\/\*[[:blank:]]*\*\/(.*?)\/\*[[:blank:]]*\]\]>[[:blank:]]*\/\*[[:blank:]]*\*\/[[:space:]]*\z/m,
+    ].freeze
+    private_constant :CDATA_WRAPPER_PATTERNS
+
+    # Return this node's text with one complete legacy CDATA wrapper removed.
+    #
+    # This does not modify the node or change {#content}. Incomplete, mismatched,
+    # and embedded wrappers are returned unchanged.
+    #
+    # @return [String]
+    def unwrapped_text
+      raw_text = content
+
+      CDATA_WRAPPER_PATTERNS.each do |pattern|
+        match = pattern.match(raw_text)
+        return match[1].strip if match
+      end
+
+      raw_text
+    end
+
     # @return true if this is a {Comment}
     def comment?
       type == COMMENT_NODE
