@@ -1,0 +1,22 @@
+diff --git a/source/lexbor/selectors/selectors.c b/source/lexbor/selectors/selectors.c
+index 2032432..6794a94 100644
+--- a/source/lexbor/selectors/selectors.c
++++ b/source/lexbor/selectors/selectors.c
+@@ -1310,7 +1310,7 @@ lxb_selectors_match(lxb_selectors_t *selectors, lxb_selectors_entry_t *entry,
+             }
+ 
+             return lxb_selectors_match_class(element->attr_class->value,
+-                                             &entry->selector->name, true);
++                                             &entry->selector->name, false);
+ 
+         case LXB_CSS_SELECTOR_TYPE_ATTRIBUTE:
+             return lxb_selectors_match_attribute(entry->selector, node, entry);
+@@ -1369,7 +1369,7 @@ lxb_selectors_match_id(const lxb_css_selector_t *selector, lxb_dom_node_t *node)
+     src = &selector->name;
+ 
+     return trg->length == src->length
+-           && lexbor_str_data_ncasecmp(trg->data, src->data, src->length);
++           && lexbor_str_data_ncmp(trg->data, src->data, src->length);
+ }
+ 
+ static bool
