@@ -22,13 +22,13 @@ module Nokolexbor
 
     LOOKS_LIKE_XPATH = %r{^(\./|/|\.\.|\.$)}
 
-    CDATA_WRAPPER_PATTERNS = [
-      /\A(?<before>[[:space:]]*)<!\[CDATA\[(?<text>.*?)\]\]>(?<after>[[:space:]]*)\z/m,
-      /\A(?<before>[[:space:]]*)\/\/[[:blank:]]*<!\[CDATA\[(?<text>.*?)\/\/[[:blank:]]*\]\]>(?<after>[[:space:]]*)\z/m,
-      /\A(?<before>[[:space:]]*)\/\*[[:blank:]]*<!\[CDATA\[[[:blank:]]*\*\/(?<text>.*?)\/\*[[:blank:]]*\]\]>[[:blank:]]*\*\/(?<after>[[:space:]]*)\z/m,
-      /\A(?<before>[[:space:]]*)\/\*[[:blank:]]*<!\[CDATA\[[[:blank:]]*\/\*[[:blank:]]*\*\/(?<text>.*?)\/\*[[:blank:]]*\]\]>[[:blank:]]*\/\*[[:blank:]]*\*\/(?<after>[[:space:]]*)\z/m,
+    CDATA_GUARD_PATTERNS = [
+      %r{\A(?<before>[[:space:]]*)<!\[CDATA\[(?<text>.*)\]\]>(?<after>[[:space:]]*)\z}m,
+      %r{\A(?<before>[[:space:]]*)//[[:blank:]]*<!\[CDATA\[(?<text>.*)//[[:blank:]]*\]\]>(?<after>[[:space:]]*)\z}m,
+      %r{\A(?<before>[[:space:]]*)/\*[[:blank:]]*<!\[CDATA\[[[:blank:]]*\*/(?<text>.*)/\*[[:blank:]]*\]\]>[[:blank:]]*\*/(?<after>[[:space:]]*)\z}m,
+      %r{\A(?<before>[[:space:]]*)/\*[[:blank:]]*<!\[CDATA\[[[:blank:]]*/\*[[:blank:]]*\*/(?<text>.*)/\*[[:blank:]]*\]\]>[[:blank:]]*/\*[[:blank:]]*\*/(?<after>[[:space:]]*)\z}m,
     ].freeze
-    private_constant :CDATA_WRAPPER_PATTERNS
+    private_constant :CDATA_GUARD_PATTERNS
 
     # Return this node's text with one complete legacy CDATA guard removed.
     #
@@ -40,7 +40,7 @@ module Nokolexbor
     def unwrap_cdata_text
       raw_text = content
 
-      CDATA_WRAPPER_PATTERNS.each do |pattern|
+      CDATA_GUARD_PATTERNS.each do |pattern|
         match = pattern.match(raw_text)
         return match[:before] + match[:text] + match[:after] if match
       end

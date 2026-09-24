@@ -59,12 +59,18 @@ describe Nokolexbor::Node do
         "/* <![CDATA[ */\n  payload\n/* ]]> */" => "\n  payload\n",
         "/*<![CDATA[*/\n  payload\n/*]]>*/" => "\n  payload\n",
         "/*<![CDATA[/* */\n  payload\n/*]]>/* */" => "\n  payload\n",
-        " \t<![CDATA[payload]]>\r\n" => " \tpayload\n",
       }
 
       wrapped_text.each do |text, expected|
         _(script_with(text).unwrap_cdata_text).must_equal expected
       end
+    end
+
+    it 'preserves whitespace from the node content' do
+      node = script_with('')
+      node.content = " \t<![CDATA[payload]]>\r\n"
+
+      _(node.unwrap_cdata_text).must_equal " \tpayload\r\n"
     end
 
     it 'composes with String#strip for generic surrounding whitespace cleanup' do
