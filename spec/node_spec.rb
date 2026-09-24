@@ -47,29 +47,42 @@ describe Nokolexbor::Node do
     _{ node.content = 1 }.must_raise TypeError
   end
 
-  describe 'unwrapped_text' do
+  describe 'unwrap_cdata_text' do
     def script_with(content)
       Nokolexbor::HTML("<script>#{content}</script>").at_css('script')
     end
 
-    it 'removes recognized complete CDATA wrappers' do
-      wrapped_text = [
+    it 'removes recognized complete CDATA guards and preserves whitespace' do
+      wrapped_text = {
+        "<![CDATA[\n  payload\n]]>" => "\n  payload\n",
+        "//<![CDATA[\n  payload\n//]]>" => "\n  payload\n",
+        "/* <![CDATA[ */\n  payload\n/* ]]> */" => "\n  payload\n",
+        "/*<![CDATA[*/\n  payload\n/*]]>*/" => "\n  payload\n",
+        "/*<![CDATA[/* */\n  payload\n/*]]>/* */" => "\n  payload\n",
+        " \t<![CDATA[payload]]>\r\n" => " \tpayload\n",
+      }
+
+      wrapped_text.each do |text, expected|
+        _(script_with(text).unwrap_cdata_text).must_equal expected
+      end
+    end
+
+    it 'composes with String#strip for generic surrounding whitespace cleanup' do
+      text_values = [
+        "  payload  ",
         "<![CDATA[\n  payload\n]]>",
-        "//<![CDATA[\n  payload\n//]]>",
-        "/* <![CDATA[ */\n  payload\n/* ]]> */",
-        "/*<![CDATA[*/\n  payload\n/*]]>*/",
-        "/*<![CDATA[/* */\n  payload\n/*]]>/* */",
+        "  /* <![CDATA[ */\n  payload\n/* ]]> */  ",
       ]
 
-      wrapped_text.each do |text|
-        _(script_with(text).unwrapped_text).must_equal 'payload'
+      text_values.each do |text|
+        _(script_with(text).unwrap_cdata_text.strip).must_equal 'payload'
       end
     end
 
     it 'does not change the node content' do
       node = script_with('<![CDATA[payload]]>')
 
-      _(node.unwrapped_text).must_equal 'payload'
+      _(node.unwrap_cdata_text).must_equal 'payload'
       _(node.content).must_equal '<![CDATA[payload]]>'
     end
 
@@ -84,7 +97,7 @@ describe Nokolexbor::Node do
       ]
 
       text_values.each do |text|
-        _(script_with(text).unwrapped_text).must_equal text
+        _(script_with(text).unwrap_cdata_text).must_equal text
       end
     end
   end
