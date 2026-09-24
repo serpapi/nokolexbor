@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="<%= abs_url('css', 'style.css') %>?<%= mtime('css/style.css') %>" type="text/css" media="screen" charset="utf-8">
+    <link rel="stylesheet" href="<%= abs_url('css', 'custom.css') %>?<%= mtime('css/custom.css') %>" type="text/css" media="screen" charset="utf-8">
+    <script type="text/javascript" charset="utf-8">
+      function checkPage(process) {
+        fetch("<%= router.request.path %>" + (process ? "?process=true" : ""), { cache: "no-store" })
+          .then(function(response) {
+            if (response.status === 200) window.location.reload();
+          });
+        setTimeout(checkPage, 2000);
+      }
+      function setFade() {
+        centerMessage();
+        window.addEventListener("resize", centerMessage);
+        document.getElementById('fade').style.display = 'block';
+        document.getElementById('processing').style.display = 'block';
+      }
+      function centerMessage() {
+        var fade = document.getElementById('fade');
+        var processing = document.getElementById('processing');
+        var fadeTop = parseInt(window.getComputedStyle(fade).top, 10) || 0;
+        fade.style.width = window.innerWidth + 'px';
+        fade.style.height = (window.innerHeight - fadeTop) + 'px';
+        processing.style.left = (window.innerWidth / 2 - processing.offsetWidth / 2) + 'px';
+        processing.style.top = (window.innerHeight / 2 - processing.offsetHeight / 2) + 'px';
+      }
+      document.addEventListener("DOMContentLoaded", function() {
+        checkPage(true);
+        setFade();
+      });
+    </script>
+    <style type="text/css" media="screen">
+      body { overflow: hidden; margin: 12px; display: block; }
+      #menu { margin-top: 0 !important; padding-top: 0 !important; }
+    </style>
+    <title>Processing <%= @library.to_s(false) %></title>
+  </head>
+  <body>
+    <div id="menu">
+      <% unless @single_library %>
+        <a href="<%= abs_url(router.docs_prefix) %>" target="_top">Libraries</a> &raquo;
+        <span class="title"><%= @library.name %> <% if @library.version %><small>(<%= @library.version %>)</small><% end %></span>
+      <% end %>
+    </div>
+    <div id="fade"></div>
+    <div id="processing">
+      <h1>Processing <%= @library.name %></h1>
+      <p>
+        <strong><%= @library.name %></strong> <% if @library.version %>(<%= @library.version %>)<% end %> is being processed.
+        You'll be redirected when the pages are built, it shouldn't take much longer.
+      </p>
+      <img src="<%= abs_url('images', 'processing.gif') %>?<%= mtime('images/processing.gif') %>" align="center">
+    </div>
+  </body>
+</html>

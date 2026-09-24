@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="<%= charset %>">
+    <title><%= defined?(@title) ? @title : '' %></title>
+    <%= erb(:headers) %>
+  </head>
+  <body>
+    <div id="content">
+      <h1><%= defined?(@title) ? @title : '' %></h1>
+      <%= yieldall %>
+    </div>
+
+    <%= erb(:footer) %>
+  </body>
+</html>

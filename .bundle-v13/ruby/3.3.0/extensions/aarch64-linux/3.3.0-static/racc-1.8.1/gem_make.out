@@ -1,0 +1,24 @@
+current directory: /var/apps/nokolexbor/.bundle-v13/ruby/3.3.0/gems/racc-1.8.1/ext/racc/cparse
+/usr/local/bin/ruby extconf.rb
+creating Makefile
+
+current directory: /var/apps/nokolexbor/.bundle-v13/ruby/3.3.0/gems/racc-1.8.1/ext/racc/cparse
+make DESTDIR\= sitearchdir\=./.gem.20260924-3-itn3tk sitelibdir\=./.gem.20260924-3-itn3tk clean
+make: Warning: File 'Makefile' has modification time 0.055 s in the future
+make: warning:  Clock skew detected.  Your build may be incomplete.
+
+current directory: /var/apps/nokolexbor/.bundle-v13/ruby/3.3.0/gems/racc-1.8.1/ext/racc/cparse
+make DESTDIR\= sitearchdir\=./.gem.20260924-3-itn3tk sitelibdir\=./.gem.20260924-3-itn3tk
+make: Warning: File 'Makefile' has modification time 0.05 s in the future
+compiling cparse.c
+linking shared-object racc/cparse.so
+make: warning:  Clock skew detected.  Your build may be incomplete.
+
+current directory: /var/apps/nokolexbor/.bundle-v13/ruby/3.3.0/gems/racc-1.8.1/ext/racc/cparse
+make DESTDIR\= sitearchdir\=./.gem.20260924-3-itn3tk sitelibdir\=./.gem.20260924-3-itn3tk install
+make: Warning: File 'cparse.so' has modification time 0.055 s in the future
+/usr/bin/install -c -m 0755 cparse.so ./.gem.20260924-3-itn3tk/racc
+make: warning:  Clock skew detected.  Your build may be incomplete.
+
+current directory: /var/apps/nokolexbor/.bundle-v13/ruby/3.3.0/gems/racc-1.8.1/ext/racc/cparse
+make DESTDIR\= sitearchdir\=./.gem.20260924-3-itn3tk sitelibdir\=./.gem.20260924-3-itn3tk clean

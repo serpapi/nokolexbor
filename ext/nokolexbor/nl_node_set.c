@@ -7,8 +7,8 @@ extern rb_data_type_t nl_document_type;
 
 lxb_status_t nl_node_find(VALUE self, VALUE selector, lxb_selectors_cb_f cb, void *ctx);
 void nl_sort_nodes_if_necessary(VALUE selector, lxb_dom_document_t *doc, lexbor_array_t *array);
-lxb_status_t nl_node_at_css_callback(lxb_dom_node_t *node, lxb_css_selector_specificity_t *spec, void *ctx);
-lxb_status_t nl_node_css_callback(lxb_dom_node_t *node, lxb_css_selector_specificity_t *spec, void *ctx);
+lxb_status_t nl_node_at_css_callback(lxb_dom_node_t *node, lxb_css_selector_specificity_t spec, void *ctx);
+lxb_status_t nl_node_css_callback(lxb_dom_node_t *node, lxb_css_selector_specificity_t spec, void *ctx);
 
 lxb_status_t
 lexbor_array_push_unique(lexbor_array_t *array, void *value)

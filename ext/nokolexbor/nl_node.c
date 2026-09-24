@@ -360,7 +360,7 @@ nl_node_remove_attr(VALUE self, VALUE rb_attr)
 }
 
 lxb_status_t
-nl_node_at_css_callback(lxb_dom_node_t *node, lxb_css_selector_specificity_t *spec, void *ctx)
+nl_node_at_css_callback(lxb_dom_node_t *node, lxb_css_selector_specificity_t spec, void *ctx)
 {
   lexbor_array_t *array = (lexbor_array_t *)ctx;
   lxb_status_t status = lexbor_array_push_unique(array, node);
@@ -372,7 +372,7 @@ nl_node_at_css_callback(lxb_dom_node_t *node, lxb_css_selector_specificity_t *sp
 }
 
 lxb_status_t
-nl_node_css_callback(lxb_dom_node_t *node, lxb_css_selector_specificity_t *spec, void *ctx)
+nl_node_css_callback(lxb_dom_node_t *node, lxb_css_selector_specificity_t spec, void *ctx)
 {
   lexbor_array_t *array = (lexbor_array_t *)ctx;
   lxb_status_t status = lexbor_array_push_unique(array, node);
@@ -403,9 +403,32 @@ nl_node_find(VALUE self, VALUE selector, lxb_selectors_cb_f cb, void *ctx)
   /* CSS parser. */
   if (css_parser == NULL) {
     css_parser = lxb_css_parser_create();
-    status = lxb_css_parser_init(css_parser, NULL, NULL);
+    status = lxb_css_parser_init(css_parser, NULL);
     if (status != LXB_STATUS_OK) {
       goto init_error;
+    }
+
+    /*
+     * lexbor >= 2.x: the parser is reused across calls (thread-local), so it
+     * must own an explicit memory arena and selectors object; parsed lists are
+     * released per call with lxb_css_memory_clean() instead of
+     * lxb_css_selector_list_destroy_memory(), which would destroy the arena the
+     * cached parser still points at (use-after-free on the next call).
+     */
+    {
+      lxb_css_memory_t *css_memory = lxb_css_memory_create();
+      status = lxb_css_memory_init(css_memory, 128);
+      if (status != LXB_STATUS_OK) {
+        goto init_error;
+      }
+      lxb_css_parser_memory_set(css_parser, css_memory);
+
+      lxb_css_selectors_t *css_selectors = lxb_css_selectors_create();
+      status = lxb_css_selectors_init(css_selectors);
+      if (status != LXB_STATUS_OK) {
+        goto init_error;
+      }
+      lxb_css_parser_selectors_set(css_parser, css_selectors);
     }
 #ifdef HAVE_PTHREAD_H
     pthread_setspecific(p_key_css_parser, css_parser);
@@ -443,8 +466,13 @@ cleanup:
   (void)lxb_css_parser_destroy(css_parser, true);
 #endif
 
-  /* Destroy all object for all CSS Selector List. */
+  /* Release this call's selector list; the parser's arena/selectors are reused. */
+#ifdef HAVE_PTHREAD_H
+  lxb_css_memory_clean(css_parser->memory);
+  lxb_css_selectors_clean(css_parser->selectors);
+#else
   lxb_css_selector_list_destroy_memory(list);
+#endif
 
   return status;
 
@@ -979,7 +1007,7 @@ nl_node_parse_fragment(lxb_dom_document_t *doc, lxb_dom_element_t *element, lxb_
   size_t tag_name_len;
   lxb_html_document_t *html_doc = lxb_html_interface_document(doc);
   if (element == NULL) {
-    const lxb_char_t *tag_name = lxb_tag_name_by_id(lxb_html_document_tags(html_doc), LXB_TAG_TEMPLATE, &tag_name_len);
+    const lxb_char_t *tag_name = lxb_tag_name_by_id(LXB_TAG_TEMPLATE, &tag_name_len);
     if (tag_name == NULL) {
       rb_raise(rb_eRuntimeError, "Error getting tag name");
     }
@@ -1235,7 +1263,15 @@ free_css_parser(void *data)
 {
   lxb_css_parser_t *css_parser = (lxb_css_parser_t *)data;
   if (css_parser != NULL) {
+    lxb_css_memory_t *css_memory = css_parser->memory;
+    lxb_css_selectors_t *css_selectors = css_parser->selectors;
     lxb_css_parser_destroy(css_parser, true);
+    if (css_selectors != NULL) {
+      lxb_css_selectors_destroy(css_selectors, true);
+    }
+    if (css_memory != NULL) {
+      lxb_css_memory_destroy(css_memory, true);
+    }
   }
 }
 
