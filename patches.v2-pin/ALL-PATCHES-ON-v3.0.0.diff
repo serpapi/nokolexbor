@@ -1,8 +1,8 @@
 diff --git a/source/lexbor/css/selectors/pseudo_const.h b/source/lexbor/css/selectors/pseudo_const.h
-index 9fa5bb2..6e27bfc 100644
+index 2b19f18..5e56181 100644
 --- a/source/lexbor/css/selectors/pseudo_const.h
 +++ b/source/lexbor/css/selectors/pseudo_const.h
-@@ -96,7 +96,8 @@ typedef enum {
+@@ -95,7 +95,8 @@ typedef enum {
      LXB_CSS_SELECTOR_PSEUDO_ELEMENT_SELECTION          = 0x000a,
      LXB_CSS_SELECTOR_PSEUDO_ELEMENT_SPELLING_ERROR     = 0x000b,
      LXB_CSS_SELECTOR_PSEUDO_ELEMENT_TARGET_TEXT        = 0x000c,
@@ -13,10 +13,10 @@ index 9fa5bb2..6e27bfc 100644
  lxb_css_selector_pseudo_element_id_t;
  
 diff --git a/source/lexbor/css/selectors/pseudo_res.h b/source/lexbor/css/selectors/pseudo_res.h
-index 1082574..fae1e64 100644
+index 398d1bb..ddd5f3e 100644
 --- a/source/lexbor/css/selectors/pseudo_res.h
 +++ b/source/lexbor/css/selectors/pseudo_res.h
-@@ -142,7 +142,8 @@ static const lxb_css_selectors_pseudo_data_t lxb_css_selectors_pseudo_data_pseud
+@@ -124,7 +124,8 @@ static const lxb_css_selectors_pseudo_data_t lxb_css_selectors_pseudo_data_pseud
      {(lxb_char_t *) "placeholder", 11, LXB_CSS_SELECTOR_PSEUDO_ELEMENT_PLACEHOLDER},
      {(lxb_char_t *) "selection", 9, LXB_CSS_SELECTOR_PSEUDO_ELEMENT_SELECTION},
      {(lxb_char_t *) "spelling-error", 14, LXB_CSS_SELECTOR_PSEUDO_ELEMENT_SPELLING_ERROR},
@@ -26,7 +26,7 @@ index 1082574..fae1e64 100644
  };
  
  static const lxb_css_selectors_pseudo_data_func_t lxb_css_selectors_pseudo_data_pseudo_element_function[LXB_CSS_SELECTOR_PSEUDO_ELEMENT_FUNCTION__LAST_ENTRY] = 
-@@ -291,7 +292,7 @@ static const lexbor_shs_entry_t lxb_css_selectors_pseudo_element_shs[24] =
+@@ -268,7 +269,7 @@ static const lexbor_shs_entry_t lxb_css_selectors_pseudo_element_shs[24] =
      {"placeholder", (void *) &lxb_css_selectors_pseudo_data_pseudo_element[LXB_CSS_SELECTOR_PSEUDO_ELEMENT_PLACEHOLDER], 11, 0}, 
      {"after", (void *) &lxb_css_selectors_pseudo_data_pseudo_element[LXB_CSS_SELECTOR_PSEUDO_ELEMENT_AFTER], 5, 0}, 
      {"first-letter", (void *) &lxb_css_selectors_pseudo_data_pseudo_element[LXB_CSS_SELECTOR_PSEUDO_ELEMENT_FIRST_LETTER], 12, 0}, 
@@ -36,7 +36,7 @@ index 1082574..fae1e64 100644
      {"grammar-error", (void *) &lxb_css_selectors_pseudo_data_pseudo_element[LXB_CSS_SELECTOR_PSEUDO_ELEMENT_GRAMMAR_ERROR], 13, 0}, 
      {"before", (void *) &lxb_css_selectors_pseudo_data_pseudo_element[LXB_CSS_SELECTOR_PSEUDO_ELEMENT_BEFORE], 6, 0}, 
 diff --git a/source/lexbor/dom/interfaces/document.c b/source/lexbor/dom/interfaces/document.c
-index 8e7e234..3f5dc50 100644
+index a2153f4..09147c2 100755
 --- a/source/lexbor/dom/interfaces/document.c
 +++ b/source/lexbor/dom/interfaces/document.c
 @@ -12,6 +12,7 @@
@@ -46,8 +46,8 @@ index 8e7e234..3f5dc50 100644
 +#include "lexbor/html/interfaces/template_element.h"
  
  
- static const lxb_dom_document_mutation_cb_t lxb_dom_document_mutation_cbs =
-@@ -487,6 +488,11 @@ lxb_dom_document_import_node(lxb_dom_document_t *doc, lxb_dom_node_t *node,
+ lxb_dom_document_t *
+@@ -449,6 +450,11 @@ lxb_dom_document_import_node(lxb_dom_document_t *doc, lxb_dom_node_t *node,
              return NULL;
          }
  
@@ -60,10 +60,10 @@ index 8e7e234..3f5dc50 100644
  
          if (node->first_child != NULL) {
 diff --git a/source/lexbor/dom/interfaces/node.c b/source/lexbor/dom/interfaces/node.c
-index edebf38..276a3f9 100644
+index cf6475d..9f1cf75 100755
 --- a/source/lexbor/dom/interfaces/node.c
 +++ b/source/lexbor/dom/interfaces/node.c
-@@ -156,6 +156,7 @@ lxb_dom_node_interface_copy(lxb_dom_node_t *dst,
+@@ -85,6 +85,7 @@ lxb_dom_node_interface_copy(lxb_dom_node_t *dst,
  
      dst->type = src->type;
      dst->user = src->user;
@@ -72,10 +72,10 @@ index edebf38..276a3f9 100644
      if (dst->owner_document == src->owner_document) {
          dst->local_name = src->local_name;
 diff --git a/source/lexbor/dom/interfaces/node.h b/source/lexbor/dom/interfaces/node.h
-index bdd95a4..d93b6f7 100644
+index acd0c1c..f436257 100755
 --- a/source/lexbor/dom/interfaces/node.h
 +++ b/source/lexbor/dom/interfaces/node.h
-@@ -90,6 +90,8 @@ struct lxb_dom_node {
+@@ -46,6 +46,8 @@ struct lxb_dom_node {
      uintptr_t              prefix;     /* lowercase: lalala */
      uintptr_t              ns;         /* namespace */
  
@@ -85,7 +85,7 @@ index bdd95a4..d93b6f7 100644
  
      lxb_dom_node_t         *next;
 diff --git a/source/lexbor/html/interfaces/template_element.c b/source/lexbor/html/interfaces/template_element.c
-index 7d1e36e..47a89f7 100644
+index 884fede..29c1e69 100755
 --- a/source/lexbor/html/interfaces/template_element.c
 +++ b/source/lexbor/html/interfaces/template_element.c
 @@ -29,6 +29,8 @@ lxb_html_template_element_interface_create(lxb_html_document_t *document)
@@ -98,7 +98,7 @@ index 7d1e36e..47a89f7 100644
      element->content->host = lxb_dom_interface_element(element);
  
 diff --git a/source/lexbor/html/serialize.c b/source/lexbor/html/serialize.c
-index d45c5f2..c1bd984 100644
+index df9689d..5e2ff91 100755
 --- a/source/lexbor/html/serialize.c
 +++ b/source/lexbor/html/serialize.c
 @@ -272,7 +272,7 @@ lxb_html_serialize_node_cb(lxb_dom_node_t *node,
@@ -111,10 +111,10 @@ index d45c5f2..c1bd984 100644
          if (skip_it == false && node->first_child != NULL) {
              node = node->first_child;
 diff --git a/source/lexbor/html/tokenizer.c b/source/lexbor/html/tokenizer.c
-index 22b88ed..6b1b980 100644
+index 741bced..6343c65 100755
 --- a/source/lexbor/html/tokenizer.c
 +++ b/source/lexbor/html/tokenizer.c
-@@ -568,6 +568,7 @@ lxb_html_tokenizer_chunk(lxb_html_tokenizer_t *tkz, const lxb_char_t *data,
+@@ -309,6 +309,7 @@ lxb_html_tokenizer_chunk(lxb_html_tokenizer_t *tkz, const lxb_char_t *data,
  
      tkz->is_eof = false;
      tkz->status = LXB_STATUS_OK;
@@ -123,10 +123,10 @@ index 22b88ed..6b1b980 100644
  
      while (data < end) {
 diff --git a/source/lexbor/html/tokenizer.h b/source/lexbor/html/tokenizer.h
-index 12b7c81..2233eee 100644
+index ba9602f..08d0d9a 100755
 --- a/source/lexbor/html/tokenizer.h
 +++ b/source/lexbor/html/tokenizer.h
-@@ -78,6 +78,7 @@ struct lxb_html_tokenizer {
+@@ -72,6 +72,7 @@ struct lxb_html_tokenizer {
      lxb_char_t                       *pos;
      const lxb_char_t                 *end;
      const lxb_char_t                 *begin;
@@ -135,7 +135,7 @@ index 12b7c81..2233eee 100644
  
      /* Entities */
 diff --git a/source/lexbor/html/tree.c b/source/lexbor/html/tree.c
-index fb3eda9..7a538c3 100644
+index 8c42990..28c97cc 100755
 --- a/source/lexbor/html/tree.c
 +++ b/source/lexbor/html/tree.c
 @@ -484,6 +484,7 @@ lxb_html_tree_append_attributes(lxb_html_tree_t *tree,
@@ -147,10 +147,10 @@ index fb3eda9..7a538c3 100644
          /* Fix for adjust MathML/SVG attributes */
          if (tree->before_append_attr != NULL) {
 diff --git a/source/lexbor/html/tree.h b/source/lexbor/html/tree.h
-index 2fed4c4..4bc2455 100644
+index 231239d..f833223 100755
 --- a/source/lexbor/html/tree.h
 +++ b/source/lexbor/html/tree.h
-@@ -273,8 +273,10 @@ lxb_inline lxb_dom_node_t *
+@@ -266,8 +266,10 @@ lxb_inline lxb_dom_node_t *
  lxb_html_tree_create_node(lxb_html_tree_t *tree,
                            lxb_tag_id_t tag_id, lxb_ns_id_t ns)
  {
@@ -163,94 +163,276 @@ index 2fed4c4..4bc2455 100644
  
  lxb_inline bool
 diff --git a/source/lexbor/selectors/selectors.c b/source/lexbor/selectors/selectors.c
-index 2032432..50603ea 100644
+index fef05d3..3fec327 100644
 --- a/source/lexbor/selectors/selectors.c
 +++ b/source/lexbor/selectors/selectors.c
-@@ -355,7 +355,9 @@ lxb_selectors_descendant_forward(lxb_selectors_t *selectors,
-             node = node->next;
-         }
+@@ -87,6 +87,16 @@ static lxb_status_t
+ lxb_selectors_first_match(lxb_dom_node_t *node,
+                           lxb_css_selector_specificity_t *spec, void *ctx);
  
--        if (node->type != LXB_DOM_NODE_TYPE_ELEMENT) {
-+        if (node->type != LXB_DOM_NODE_TYPE_ELEMENT
-+            && node->type != LXB_DOM_NODE_TYPE_TEXT)
-+        {
-             goto next;
-         }
- 
-@@ -585,7 +587,9 @@ lxb_selectors_match_node(lxb_selectors_t *selectors, lxb_dom_node_t *node,
-     lxb_selectors_entry_t *entry;
-     lxb_selectors_nested_t nested;
- 
--    if (node->type != LXB_DOM_NODE_TYPE_ELEMENT) {
-+    if (node->type != LXB_DOM_NODE_TYPE_ELEMENT
-+        && node->type != LXB_DOM_NODE_TYPE_TEXT)
-+    {
-         return LXB_STATUS_OK;
-     }
- 
-@@ -642,7 +646,10 @@ lxb_selectors_tree(lxb_selectors_t *selectors, lxb_dom_node_t *root)
-     }
- 
-     do {
--        if (node->type != LXB_DOM_NODE_TYPE_ELEMENT) {
-+        /* SerpApi: text nodes are candidates too, for `::text`. */
-+        if (node->type != LXB_DOM_NODE_TYPE_ELEMENT
-+            && node->type != LXB_DOM_NODE_TYPE_TEXT)
-+        {
-             goto next;
-         }
- 
-@@ -1290,6 +1297,16 @@ lxb_selectors_match(lxb_selectors_t *selectors, lxb_selectors_entry_t *entry,
- {
-     lxb_dom_element_t *element;
- 
-+    /*
-+     * SerpApi: text nodes are visited by the tree walk so that the `::text`
-+     * pseudo-element can select them; nothing but `::text` may match a text
-+     * node (element-only accessors below must not see one).
-+     */
-+    if (node->type != LXB_DOM_NODE_TYPE_ELEMENT) {
-+        return entry->selector->type == LXB_CSS_SELECTOR_TYPE_PSEUDO_ELEMENT
-+               && lxb_selectors_pseudo_element(entry->selector, node);
-+    }
++static bool
++lxb_selectors_match_chain_rtl(lxb_selectors_t *selectors,
++                              lxb_css_selector_t *selector,
++                              lxb_dom_node_t *node);
 +
-     switch (entry->selector->type) {
-         case LXB_CSS_SELECTOR_TYPE_ANY:
-             return true;
-@@ -1310,7 +1327,7 @@ lxb_selectors_match(lxb_selectors_t *selectors, lxb_selectors_entry_t *entry,
++static bool
++lxb_selectors_match_node_rtl(lxb_selectors_t *selectors,
++                             lxb_dom_node_t *node,
++                             lxb_css_selector_list_t *list);
++
+ 
+ lxb_selectors_t *
+ lxb_selectors_create(void)
+@@ -156,6 +166,12 @@ lxb_selectors_descendant(lxb_selectors_t *selectors, lxb_selectors_entry_t *entr
+         {
+             return node;
+         }
++        else if (selector->type == LXB_CSS_SELECTOR_TYPE_PSEUDO_ELEMENT &&
++            node->type == LXB_DOM_NODE_TYPE_TEXT &&
++            lxb_selectors_pseudo_element(selectors, selector, node))
++        {
++            return node;
++        }
+ 
+         if (node->first_child != NULL) {
+             node = node->first_child;
+@@ -201,6 +217,12 @@ lxb_selectors_descendant_next(lxb_selectors_t *selectors, lxb_selectors_entry_t
+         {
+             return node;
+         }
++        else if (selector->type == LXB_CSS_SELECTOR_TYPE_PSEUDO_ELEMENT &&
++            node->type == LXB_DOM_NODE_TYPE_TEXT &&
++            lxb_selectors_pseudo_element(selectors, selector, node))
++        {
++            return node;
++        }
+     }
+     while (true);
+ }
+@@ -229,6 +251,12 @@ lxb_selectors_child(lxb_selectors_t *selectors, lxb_selectors_entry_t *entry,
+         {
+             return node;
+         }
++        else if (selector->type == LXB_CSS_SELECTOR_TYPE_PSEUDO_ELEMENT &&
++            node->type == LXB_DOM_NODE_TYPE_TEXT &&
++            lxb_selectors_pseudo_element(selectors, selector, node))
++        {
++            return node;
++        }
+ 
+         node = node->next;
+     }
+@@ -249,6 +277,12 @@ lxb_selectors_child_next(lxb_selectors_t *selectors, lxb_selectors_entry_t *entr
+         {
+             return node;
+         }
++        else if (selector->type == LXB_CSS_SELECTOR_TYPE_PSEUDO_ELEMENT &&
++            node->type == LXB_DOM_NODE_TYPE_TEXT &&
++            lxb_selectors_pseudo_element(selectors, selector, node))
++        {
++            return node;
++        }
+ 
+         node = node->next;
+     }
+@@ -289,6 +323,12 @@ lxb_selectors_following(lxb_selectors_t *selectors, lxb_selectors_entry_t *entry
+         {
+             return node;
+         }
++        else if (selector->type == LXB_CSS_SELECTOR_TYPE_PSEUDO_ELEMENT &&
++            node->type == LXB_DOM_NODE_TYPE_TEXT &&
++            lxb_selectors_pseudo_element(selectors, selector, node))
++        {
++            return node;
++        }
+ 
+         node = node->next;
+     }
+@@ -750,7 +790,7 @@ lxb_selectors_match(lxb_selectors_t *selectors, lxb_selectors_entry_t *entry,
+             src = &selector->name;
+ 
+             if (trg->length == src->length
+-                && lexbor_str_data_ncasecmp(trg->data, src->data, src->length))
++                && lexbor_str_data_ncmp(trg->data, src->data, src->length))
+             {
+                 return true;
+             }
+@@ -765,7 +805,7 @@ lxb_selectors_match(lxb_selectors_t *selectors, lxb_selectors_entry_t *entry,
              }
  
              return lxb_selectors_match_class(element->attr_class->value,
--                                             &entry->selector->name, true);
-+                                             &entry->selector->name, false);
+-                                             &selector->name, true);
++                                             &selector->name, false);
  
          case LXB_CSS_SELECTOR_TYPE_ATTRIBUTE:
-             return lxb_selectors_match_attribute(entry->selector, node, entry);
-@@ -1369,7 +1386,7 @@ lxb_selectors_match_id(const lxb_css_selector_t *selector, lxb_dom_node_t *node)
-     src = &selector->name;
- 
-     return trg->length == src->length
--           && lexbor_str_data_ncasecmp(trg->data, src->data, src->length);
-+           && lexbor_str_data_ncmp(trg->data, src->data, src->length);
+             element = lxb_dom_interface_element(node);
+@@ -1224,6 +1264,106 @@ lxb_selectors_pseudo_class(lxb_css_selector_t *selector, lxb_dom_node_t *node)
+     return false;
  }
  
- static bool
-@@ -2087,6 +2104,10 @@ lxb_selectors_pseudo_element(const lxb_css_selector_t *selector,
-         case LXB_CSS_SELECTOR_PSEUDO_ELEMENT_SPELLING_ERROR:
-         case LXB_CSS_SELECTOR_PSEUDO_ELEMENT_TARGET_TEXT:
-             break;
++/*
++ * Recursively match a selector chain (right-to-left) anchored at `node`,
++ * with backtracking: when a combinator has multiple candidate elements
++ * (descendant, following sibling), each candidate is tried until the rest
++ * of the chain matches.
++ */
++static bool
++lxb_selectors_match_chain_rtl(lxb_selectors_t *selectors,
++                              lxb_css_selector_t *selector,
++                              lxb_dom_node_t *node)
++{
++    lxb_css_selector_t *prev;
++    lxb_dom_node_t *cur;
++    lxb_selectors_entry_t tmp_entry;
 +
-+        /* SerpApi: `::text` selects text nodes (patch 0001). */
-+        case LXB_CSS_SELECTOR_PSEUDO_ELEMENT_TEXT:
-+            return node->type == LXB_DOM_NODE_TYPE_TEXT;
-     }
++    memset(&tmp_entry, 0, sizeof(tmp_entry));
++    tmp_entry.selector = selector;
++
++    if (!lxb_selectors_match(selectors, &tmp_entry, selector, node)) {
++        return false;
++    }
++
++    prev = selector->prev;
++    if (prev == NULL) {
++        return true;
++    }
++
++    switch (selector->combinator) {
++        case LXB_CSS_SELECTOR_COMBINATOR_CLOSE:
++            /* Same node - check prev selector on same element. */
++            return lxb_selectors_match_chain_rtl(selectors, prev, node);
++
++        case LXB_CSS_SELECTOR_COMBINATOR_DESCENDANT:
++            /* node is a descendant of prev - try each ancestor. */
++            for (cur = node->parent; cur != NULL; cur = cur->parent) {
++                if (cur->type == LXB_DOM_NODE_TYPE_ELEMENT
++                    && lxb_selectors_match_chain_rtl(selectors, prev, cur))
++                {
++                    return true;
++                }
++            }
++            return false;
++
++        case LXB_CSS_SELECTOR_COMBINATOR_CHILD:
++            /* node is a child of prev - check parent. */
++            cur = node->parent;
++            return cur != NULL
++                   && cur->type == LXB_DOM_NODE_TYPE_ELEMENT
++                   && lxb_selectors_match_chain_rtl(selectors, prev, cur);
++
++        case LXB_CSS_SELECTOR_COMBINATOR_SIBLING:
++            /* node is adjacent to prev (+) - preceding element. */
++            cur = node->prev;
++            while (cur != NULL && cur->type != LXB_DOM_NODE_TYPE_ELEMENT) {
++                cur = cur->prev;
++            }
++            return cur != NULL
++                   && lxb_selectors_match_chain_rtl(selectors, prev, cur);
++
++        case LXB_CSS_SELECTOR_COMBINATOR_FOLLOWING:
++            /* node follows prev (~) - try each preceding sibling. */
++            for (cur = node->prev; cur != NULL; cur = cur->prev) {
++                if (cur->type == LXB_DOM_NODE_TYPE_ELEMENT
++                    && lxb_selectors_match_chain_rtl(selectors, prev, cur))
++                {
++                    return true;
++                }
++            }
++            return false;
++
++        default:
++            return false;
++    }
++}
++
++/*
++ * Match a node against a selector list using right-to-left evaluation.
++ * This is needed for :not(), :is(), :where() etc. where we test a specific
++ * node against a selector that may contain sibling/following combinators.
++ *
++ * The left-to-right algorithm (lxb_selectors_next) can't correctly test
++ * whether a node matches "A ~ B" because it searches forward from the node
++ * for A, but A should be BEFORE the node.
++ */
++static bool
++lxb_selectors_match_node_rtl(lxb_selectors_t *selectors,
++                             lxb_dom_node_t *node,
++                             lxb_css_selector_list_t *list)
++{
++    while (list != NULL) {
++        if (lxb_selectors_match_chain_rtl(selectors, list->last, node)) {
++            return true;
++        }
++
++        list = list->next;
++    }
++
++    return false;
++}
++
+ static bool
+ lxb_selectors_pseudo_class_function(lxb_selectors_t *selectors,
+                                     lxb_css_selector_t *selector,
+@@ -1238,14 +1378,7 @@ lxb_selectors_pseudo_class_function(lxb_selectors_t *selectors,
  
-     return false;
+     switch (pseudo->type) {
+         case LXB_CSS_SELECTOR_PSEUDO_CLASS_FUNCTION_CURRENT:
+-            entry->child = lxb_selectors_next(selectors, node, entry->child,
+-                                              pseudo->data,
+-                                              lxb_selectors_first_match, &found);
+-            if (entry->child == NULL) {
+-                return false;
+-            }
+-
+-            return found;
++            return lxb_selectors_match_node_rtl(selectors, node, pseudo->data);
+ 
+         case LXB_CSS_SELECTOR_PSEUDO_CLASS_FUNCTION_DIR:
+             break;
+@@ -1261,27 +1394,13 @@ lxb_selectors_pseudo_class_function(lxb_selectors_t *selectors,
+             return found;
+ 
+         case LXB_CSS_SELECTOR_PSEUDO_CLASS_FUNCTION_IS:
+-            entry->child = lxb_selectors_next(selectors, node, entry->child,
+-                                              pseudo->data,
+-                                              lxb_selectors_first_match, &found);
+-            if (entry->child == NULL) {
+-                return false;
+-            }
+-
+-            return found;
++            return lxb_selectors_match_node_rtl(selectors, node, pseudo->data);
+ 
+         case LXB_CSS_SELECTOR_PSEUDO_CLASS_FUNCTION_LANG:
+             break;
+ 
+         case LXB_CSS_SELECTOR_PSEUDO_CLASS_FUNCTION_NOT:
+-            entry->child = lxb_selectors_next(selectors, node, entry->child,
+-                                              pseudo->data,
+-                                              lxb_selectors_first_match, &found);
+-            if (entry->child == NULL) {
+-                return false;
+-            }
+-
+-            return !found;
++            return !lxb_selectors_match_node_rtl(selectors, node, pseudo->data);
+ 
+         case LXB_CSS_SELECTOR_PSEUDO_CLASS_FUNCTION_NTH_CHILD:
+             index = 0;
+@@ -1428,6 +1547,8 @@ lxb_selectors_pseudo_element(lxb_selectors_t *selectors,
+     lxb_css_selector_pseudo_t *pseudo = &selector->u.pseudo;
+ 
+     switch (pseudo->type) {
++        case LXB_CSS_SELECTOR_PSEUDO_ELEMENT_TEXT:
++            return node->local_name == LXB_TAG__TEXT;
+         case LXB_CSS_SELECTOR_PSEUDO_ELEMENT_AFTER:
+         case LXB_CSS_SELECTOR_PSEUDO_ELEMENT_BACKDROP:
+         case LXB_CSS_SELECTOR_PSEUDO_ELEMENT_BEFORE:
 diff --git a/utils/lexbor/css/selectors/pseudo.py b/utils/lexbor/css/selectors/pseudo.py
-index 1a3071f..c096816 100755
+index 57e2b7b..bf3bc01 100755
 --- a/utils/lexbor/css/selectors/pseudo.py
 +++ b/utils/lexbor/css/selectors/pseudo.py
-@@ -50,7 +50,7 @@ pseudo_elements = [
+@@ -49,7 +49,7 @@ pseudo_elements = [
      # https://drafts.csswg.org/css-pseudo-4/#index
      "after", "before", "first-letter", "first-line", "grammar-error",
      "inactive-selection", "marker", "placeholder", "selection",

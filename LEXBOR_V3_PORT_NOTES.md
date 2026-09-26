@@ -53,3 +53,14 @@ Conclusion: the lexbor upgrade is a maintenance/security decision, not a perform
 lever inside nokolexbor would be **caching/indexing at the binding level** (e.g. an id/class index per
 document so `css(".Ab")` doesn't walk the tree; ~45 % of CPU is repeated tree walks) — an app/gem-level
 project outside the OS-image scope.
+
+## How to reproduce this branch's lexbor state
+`vendor/lexbor` is checked out at upstream `v3.0.0` (2ae88a1); the SerpApi changes are **uncommitted edits in the
+submodule**, captured in full as `patches.v2-pin/ALL-PATCHES-ON-v3.0.0.diff`. To rebuild:
+```
+git submodule update --init && git -C vendor/lexbor checkout v3.0.0 && git -C vendor/lexbor apply ../../patches.v2-pin/ALL-PATCHES-ON-v3.0.0.diff
+bundle exec rake compile && bundle exec rake test   # 305/307 (2 <template> content specs pending)
+```
+Before this can replace `patches/`, split the diff back into per-feature patches (::text, case-sensitive id/class,
+template content ×2, source location, relative-selector scope) and add a serializer option to keep bare empty
+attributes (`x` not `x=""`) for downstream parity.
