@@ -246,9 +246,35 @@ HTML
   describe 'outer_html' do
     it 'with indent' do
       doc = Nokolexbor::HTML('<div><div class="a"></div></div>')
-      [:outer_html, :to_html, :to_s].each do |method|
+      [:outer_html, :to_html, :to_s, :serialize].each do |method|
         _(doc.at_css('div').send(method, indent: 2)).must_equal "<div>\n  <div class=\"a\">\n  </div>\n</div>\n"
       end
+    end
+
+    it 'does not quote text nodes with indent' do
+      doc = Nokolexbor::HTML('<h1>Hello, World!</h1> ')
+      expected = "<html>\n  <head>\n  </head>\n  <body>\n    <h1>\n      Hello, World!\n    </h1>\n     \n  </body>\n</html>\n"
+      _(doc.to_html(indent: 2)).must_equal expected
+    end
+
+    it 'preserves text content and escaping with indent' do
+      doc = Nokolexbor::HTML("<p> Hello\nWorld &amp; goodbye &lt;end&gt; \"quoted\" </p>")
+      expected = "<p>\n   Hello\n  World &amp; goodbye &lt;end&gt; \"quoted\" \n</p>\n"
+      _(doc.at_css('p').to_html(indent: 2)).must_equal expected
+    end
+
+    it 'preserves raw text with indent' do
+      doc = Nokolexbor::HTML('<main><script>if (a < b) console.log("x")</script><style>.a > .b { color: red; }</style></main>')
+      _(doc.at_css('main').to_html(indent: 2)).must_equal <<-HTML
+<main>
+  <script>
+    if (a < b) console.log("x")
+  </script>
+  <style>
+    .a > .b { color: red; }
+  </style>
+</main>
+HTML
     end
 
     it 'without indent' do

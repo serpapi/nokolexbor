@@ -1,0 +1,78 @@
+diff --git a/source/lexbor/html/serialize.c b/source/lexbor/html/serialize.c
+index df9689d1..b3361034 100755
+--- a/source/lexbor/html/serialize.c
++++ b/source/lexbor/html/serialize.c
+@@ -126,2 +126,3 @@ lxb_html_serialize_pretty_send_escaping_string(const lxb_char_t *data, size_t le
+                                                size_t indent, bool with_indent,
++                                               bool with_quotes,
+                                                lxb_html_serialize_cb_f cb, void *ctx);
+@@ -131,2 +132,3 @@ lxb_html_serialize_pretty_send_string(const lxb_char_t *data, size_t len,
+                                       size_t indent, bool with_indent,
++                                      bool with_quotes,
+                                       lxb_html_serialize_cb_f cb, void *ctx);
+@@ -1123,2 +1125,3 @@ lxb_html_serialize_pretty_text_cb(lxb_dom_text_t *text,
+     bool with_indent = (opt & LXB_HTML_SERIALIZE_OPT_WITHOUT_TEXT_INDENT) == 0;
++    bool with_quotes = (opt & LXB_HTML_SERIALIZE_OPT_WITHOUT_TEXT_QUOTES) == 0;
+ 
+@@ -1154,2 +1157,3 @@ lxb_html_serialize_pretty_text_cb(lxb_dom_text_t *text,
+                                                                with_indent,
++                                                               with_quotes,
+                                                                cb, ctx);
+@@ -1163,2 +1167,3 @@ lxb_html_serialize_pretty_text_cb(lxb_dom_text_t *text,
+                                                                    with_indent,
++                                                                   with_quotes,
+                                                                    cb, ctx);
+@@ -1177,2 +1182,3 @@ lxb_html_serialize_pretty_text_cb(lxb_dom_text_t *text,
+                                                        indent, with_indent,
++                                                       with_quotes,
+                                                        cb, ctx);
+@@ -1184,2 +1190,3 @@ lxb_html_serialize_pretty_text_cb(lxb_dom_text_t *text,
+                                                                 with_indent,
++                                                                with_quotes,
+                                                                 cb, ctx);
+@@ -1352,2 +1359,3 @@ lxb_html_serialize_pretty_send_escaping_string(const lxb_char_t *data, size_t le
+                                                size_t indent, bool with_indent,
++                                               bool with_quotes,
+                                                lxb_html_serialize_cb_f cb, void *ctx)
+@@ -1359,3 +1367,5 @@ lxb_html_serialize_pretty_send_escaping_string(const lxb_char_t *data, size_t le
+     lxb_html_serialize_send_indent(indent, ctx);
+-    lxb_html_serialize_send("\"", 1, ctx);
++    if (with_quotes) {
++        lxb_html_serialize_send("\"", 1, ctx);
++    }
+ 
+@@ -1458,3 +1468,5 @@ lxb_html_serialize_pretty_send_escaping_string(const lxb_char_t *data, size_t le
+ 
+-    lxb_html_serialize_send("\"", 1, ctx);
++    if (with_quotes) {
++        lxb_html_serialize_send("\"", 1, ctx);
++    }
+ 
+@@ -1466,2 +1478,3 @@ lxb_html_serialize_pretty_send_string(const lxb_char_t *data, size_t len,
+                                       size_t indent, bool with_indent,
++                                      bool with_quotes,
+                                       lxb_html_serialize_cb_f cb, void *ctx)
+@@ -1471,3 +1484,5 @@ lxb_html_serialize_pretty_send_string(const lxb_char_t *data, size_t len,
+     lxb_html_serialize_send_indent(indent, ctx);
+-    lxb_html_serialize_send("\"", 1, ctx);
++    if (with_quotes) {
++        lxb_html_serialize_send("\"", 1, ctx);
++    }
+ 
+@@ -1506,3 +1521,5 @@ lxb_html_serialize_pretty_send_string(const lxb_char_t *data, size_t len,
+ 
+-    lxb_html_serialize_send("\"", 1, ctx);
++    if (with_quotes) {
++        lxb_html_serialize_send("\"", 1, ctx);
++    }
+ 
+diff --git a/source/lexbor/html/serialize.h b/source/lexbor/html/serialize.h
+index 5ca6811e..248897a2 100755
+--- a/source/lexbor/html/serialize.h
++++ b/source/lexbor/html/serialize.h
+@@ -29,3 +29,4 @@ enum lxb_html_serialize_opt {
+     LXB_HTML_SERIALIZE_OPT_WITHOUT_TEXT_INDENT = 0x20,
+-    LXB_HTML_SERIALIZE_OPT_FULL_DOCTYPE        = 0x40
++    LXB_HTML_SERIALIZE_OPT_FULL_DOCTYPE        = 0x40,
++    LXB_HTML_SERIALIZE_OPT_WITHOUT_TEXT_QUOTES = 0x100
+ };

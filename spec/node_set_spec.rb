@@ -148,13 +148,13 @@ describe Nokolexbor::NodeSet do
     it 'with indent' do
       _(@nodes.inner_html(indent: 2)).must_equal <<-HTML
 <span>
-  "A"
+  A
 </span>
-"B"
-"C"
-"D"
-"E"
-"F"
+B
+C
+D
+E
+F
 HTML
     end
 
@@ -164,28 +164,28 @@ HTML
   end
 
   describe 'outer_html' do
-    it 'without indent' do
+    it 'with indent' do
       [:outer_html, :to_s, :to_html, :serialize].each do |method|
         _(@nodes.send(method, indent: 2)).must_equal <<-HTML
 <div class="a">
   <span>
-    "A"
+    A
   </span>
 </div>
 <div class="b">
-  "B"
+  B
 </div>
 <div class="c">
-  "C"
+  C
 </div>
 <div class="d">
-  "D"
+  D
 </div>
 <div class="e">
-  "E"
+  E
 </div>
 <div class="f">
-  "F"
+  F
 </div>
 HTML
       end

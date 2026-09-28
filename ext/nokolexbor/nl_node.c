@@ -595,7 +595,8 @@ nl_node_inner_html(int argc, VALUE *argv, VALUE self)
     }
   }
   if (indent > 0) {
-    status = lxb_html_serialize_pretty_deep_str(serialization_root, 0, 0, &str);
+    status = lxb_html_serialize_pretty_deep_str(
+      serialization_root, LXB_HTML_SERIALIZE_OPT_WITHOUT_TEXT_QUOTES, 0, &str);
   } else {
     status = lxb_html_serialize_deep_str(serialization_root, &str);
   }
@@ -637,7 +638,8 @@ nl_node_outer_html(int argc, VALUE *argv, VALUE self)
     }
   }
   if (indent > 0) {
-    status = lxb_html_serialize_pretty_tree_str(node, 0, 0, &str);
+    status = lxb_html_serialize_pretty_tree_str(
+      node, LXB_HTML_SERIALIZE_OPT_WITHOUT_TEXT_QUOTES, 0, &str);
   } else {
     status = lxb_html_serialize_tree_str(node, &str);
   }

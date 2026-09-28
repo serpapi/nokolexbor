@@ -78,6 +78,19 @@ describe Nokolexbor::DocumentFragment do
     end
   end
 
+  it 'outer_html with indent' do
+    fragment = Nokolexbor::DocumentFragment.parse('<div>foo<br>bar</div>')
+    [:outer_html, :to_html, :to_s, :serialize].each do |method|
+      _(fragment.send(method, indent: 2)).must_equal <<-HTML
+<div>
+  foo
+  <br>
+  bar
+</div>
+HTML
+    end
+  end
+
   it 'can be inserted to doc' do
     doc = Nokolexbor::HTML('')
     frag = Nokolexbor::DocumentFragment.parse('<div></div><span></span>')
