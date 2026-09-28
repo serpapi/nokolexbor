@@ -75,6 +75,33 @@ jobs:
     - name: Run TSan test
       run: bundle exec rake test:tsan
 
+  # Source build + full test suite on aarch64-linux (Graviton / Apple silicon
+  # containers). The cross-compiled aarch64-linux gem is covered in gem-build.yml.
+  aarch64-linux-source:
+    runs-on: ubuntu-24.04-arm
+    strategy:
+      matrix:
+        ruby-version: ['3.3', '4.0']
+    steps:
+    - uses: actions/checkout@v6
+      with:
+        submodules: true
+    - name: Set up Ruby
+      uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: ${{ matrix.ruby-version }}
+        bundler-cache: true
+    - name: Build from source
+      run: bundle exec rake compile
+    - name: Run tests
+      run: bundle exec rake test
+    - name: ASAN leak check
+      if: matrix.ruby-version == '4.0'
+      run: |
+        bundle exec rake clean
+        NOKOLEXBOR_ASAN=1 bundle exec rake compile
+        bundle exec rake test:asan
+
   install-gem-and-test:
     needs: ['build', 'memory-check', 'tsan-check']
     strategy:

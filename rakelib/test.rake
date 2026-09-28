@@ -22,7 +22,11 @@ class ASanTestTask < Rake::TestTask
     end
 
     asan_so = `gcc -print-file-name=libasan.so`.strip
-    env = {"LD_PRELOAD" => asan_so}
+    # use_sigaltstack=0: on aarch64 ASAN's alternate signal stack collides with
+    # Ruby's own sigaltstack and every run dies with "ERROR: Failed to munmap"
+    # before printing results (Ruby 3.3.10 / libasan8, Debian 13 arm64). Harmless
+    # on x86_64, where the option only disables ASAN's stack-overflow reporting.
+    env = {"LD_PRELOAD" => asan_so, "ASAN_OPTIONS" => [ENV["ASAN_OPTIONS"], "use_sigaltstack=0"].compact.join(":")}
     if args.length > 1
       stdout, stderr, status = Open3.capture3(env, FileUtils::RUBY, *args, **options, &block)
     else

@@ -16,3 +16,4 @@ rdoc/
 ext/nokolexbor/build/
 ext/nokolexbor/config.h
 ext/nokolexbor/libxml/xmlversion.h
+.bundle-v13/

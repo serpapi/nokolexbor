@@ -64,9 +64,46 @@ jobs:
         name: "${{ matrix.platform }}-gem"
         path: pkg/*.gem
 
+  # Install the cross-compiled native gems on their real target and run the
+  # test suite against them (catches broken prebuilt binaries such as missing
+  # symbols or glibc mismatches before publish).
+  test-native:
+    needs: ['build-native']
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: aarch64-linux
+            os: ubuntu-24.04-arm
+          - platform: x86_64-linux
+            os: ubuntu-latest
+          - platform: arm64-darwin
+            os: macos-latest
+    name: "test ${{ matrix.platform }}"
+    runs-on: ${{ matrix.os }}
+    steps:
+    - uses: actions/checkout@v6
+      with:
+        submodules: true
+    - name: Set up Ruby
+      uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: '3.3'
+    - uses: actions/download-artifact@v8
+      with:
+        name: "${{ matrix.platform }}-gem"
+        path: pkg
+    - name: Install native gem
+      run: |
+        gem install --local pkg/*-${{ matrix.platform }}.gem
+        gem contents nokolexbor | grep -E 'nokolexbor\.(so|bundle)$'
+        bundle install
+    - name: Run tests against installed gem
+      run: rake test:gem
+
   publish:
     if: startsWith(github.ref, 'refs/tags/v')
-    needs: ['build-ruby', 'build-native']
+    needs: ['build-ruby', 'build-native', 'test-native']
     runs-on: ubuntu-latest
     steps:
     - uses: actions/download-artifact@v8
