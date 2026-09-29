@@ -75,6 +75,32 @@ jobs:
     - name: Run TSan test
       run: bundle exec rake test:tsan
 
+  code-coverage:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v6
+      with:
+        submodules: true
+    - name: Set up Ruby
+      uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: '4.0'
+        bundler-cache: true
+    - name: Install gcovr
+      run: sudo apt-get update && sudo apt-get install --yes gcovr
+    - name: Run tests with coverage
+      run: bundle exec rake
+      env:
+        NOKOLEXBOR_COVERAGE: '1'
+    - name: Generate C coverage report
+      run: mkdir -p coverage/c && gcovr --root . --filter 'ext/nokolexbor/[^/]+\.c$' --html-details coverage/c/index.html --print-summary
+    - uses: actions/upload-artifact@v6
+      if: always()
+      with:
+        name: code-coverage
+        path: coverage/
+        if-no-files-found: error
+
   install-gem-and-test:
     needs: ['build', 'memory-check', 'tsan-check']
     strategy:

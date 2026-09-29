@@ -74,6 +74,11 @@ if ENV['NOKOLEXBOR_ASAN']
   lexbor_cmake_flags << "-DLEXBOR_BUILD_WITH_ASAN=ON"
 end
 
+if ENV['NOKOLEXBOR_COVERAGE']
+  $CFLAGS << " --coverage"
+  $LDFLAGS << " --coverage"
+end
+
 append_cflags("-DLEXBOR_STATIC")
 append_cflags("-DLIBXML_STATIC")
 
