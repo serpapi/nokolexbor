@@ -27,16 +27,17 @@
  
  
  static lxb_selectors_entry_t *
-@@ -87,7 +89,539 @@
+@@ -86,8 +88,540 @@
+ static lxb_status_t
  lxb_selectors_first_match(lxb_dom_node_t *node,
                            lxb_css_selector_specificity_t *spec, void *ctx);
- 
++
 +typedef struct {
 +    lxb_dom_node_t *node;
 +    size_t         end;
 +}
 +lxb_selectors_index_node_t;
- 
++
 +typedef struct {
 +    uint64_t hash;
 +    size_t   *positions;
@@ -527,7 +528,7 @@
 +    if (key == NULL) {
 +        return false;
 +    }
-+
+ 
 +    root_pos = lxb_selectors_index_position(index, root);
 +    node_pos = lxb_selectors_index_position(index, node);
 +    if (root_pos == SIZE_MAX || node_pos == SIZE_MAX
@@ -535,7 +536,7 @@
 +    {
 +        return false;
 +    }
-+
+ 
 +    first = 0;
 +    last = key->length;
 +    size_t start = node_pos + (include_node ? 0 : 1);
@@ -621,18 +622,24 @@
      do {
          if (node->first_child != NULL) {
              node = node->first_child;
-@@ -352,6 +905,14 @@
+@@ -352,7 +905,20 @@
                     lxb_css_selector_list_t *list, lxb_selectors_cb_f cb, void *ctx)
  {
      lxb_selectors_entry_t *child;
 +    lxb_status_t status;
 +
++    if (selectors->index != NULL) {
++        /* An interrupted search can leave its index and matcher entries behind. */
++        lxb_selectors_clean(selectors);
++    }
+ 
 +    if (selectors->use_index) {
 +        status = lxb_selectors_index_create(root, list, &selectors->index);
 +        if (status != LXB_STATUS_OK) {
 +            return status;
 +        }
 +    }
- 
++
      while (list != NULL) {
          child = lxb_selectors_next_by_selector(selectors, root, NULL,
+                                                list->first, cb, ctx);
