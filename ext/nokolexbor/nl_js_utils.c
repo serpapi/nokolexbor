@@ -49,6 +49,7 @@ typedef struct {
   char *data;
   size_t len;
   size_t cap;
+  size_t hint; /* the argument's length: enough for any pass, see below */
 } nl_buf;
 
 typedef struct {
@@ -65,26 +66,30 @@ nl_buf_free(nl_buf *buf)
   buf->cap = 0;
 }
 
+/* No pass can grow its input: \NNN and \xHH shrink to at most two bytes, \xH to
+ * one, a \uXXXX run to at most half its length (a surrogate pair is twelve bytes
+ * in and four out), \\uXXXX to at most one, the control passes to nothing, and
+ * the final /\\./ keeps \u and \x and shrinks everything else. So one allocation
+ * of the argument's length is always enough; growing by doubling would only hand
+ * the allocator a churn of odd sizes to retain. */
 static int
 nl_buf_reserve(nl_buf *buf, size_t extra)
 {
   size_t need = buf->len + extra;
-  size_t cap;
   char *data;
 
   if (need <= buf->cap) {
     return 1;
   }
-  cap = buf->cap ? buf->cap : 64;
-  while (cap < need) {
-    cap *= 2;
+  if (need < buf->hint) {
+    need = buf->hint;
   }
-  data = (char *)realloc(buf->data, cap);
+  data = (char *)realloc(buf->data, need);
   if (data == NULL) {
     return 0;
   }
   buf->data = data;
-  buf->cap = cap;
+  buf->cap = need;
   return 1;
 }
 
@@ -617,6 +622,7 @@ typedef struct {
   nl_buf ubuf;       /* the \u pass writes here so stage3 survives */
   nl_buf stage3;     /* the caller's string keeps this when the \u branch runs */
   nl_slice cur;
+  nl_slice stage3_slice;
   int reassigned;    /* the \u branch produced a new string */
   int broken;        /* Onigmo raises ArgumentError on the \u result */
 } nl_js_state;
@@ -628,6 +634,45 @@ nl_js_state_free(nl_js_state *st)
   nl_buf_free(&st->buf[1]);
   nl_buf_free(&st->ubuf);
   nl_buf_free(&st->stage3);
+}
+
+/* Scratch buffers reused across calls. Allocating three buffers per call, each
+ * the size of that call's argument, hands the allocator a different size class
+ * every time and it keeps the regions: 83,226 real inputs left 29.7 MB of RSS
+ * behind that the Ruby passes did not. Reusing one set of buffers makes the
+ * steady state a handful of allocations instead of a quarter of a million.
+ *
+ * One global set is enough because the passes never release the GVL, so two
+ * Ruby threads cannot be inside them at once; a Ractor would break that, as it
+ * would break reading the argument in place. The largest input a Google page
+ * has produced is 375 KB, so NL_SCRATCH_KEEP bounds the idle cost at 4 MB and
+ * still returns anything pathological instead of pinning it.
+ */
+#define NL_SCRATCH_KEEP (1024 * 1024)
+
+static nl_js_state nl_scratch;
+static int nl_scratch_busy;
+
+static void
+nl_js_state_release(nl_js_state *st)
+{
+  if (st != &nl_scratch) {
+    nl_js_state_free(st);
+    return;
+  }
+  if (st->buf[0].cap > NL_SCRATCH_KEEP) {
+    nl_buf_free(&st->buf[0]);
+  }
+  if (st->buf[1].cap > NL_SCRATCH_KEEP) {
+    nl_buf_free(&st->buf[1]);
+  }
+  if (st->ubuf.cap > NL_SCRATCH_KEEP) {
+    nl_buf_free(&st->ubuf);
+  }
+  if (st->stage3.cap > NL_SCRATCH_KEEP) {
+    nl_buf_free(&st->stage3);
+  }
+  nl_scratch_busy = 0;
 }
 
 static void
@@ -658,7 +703,16 @@ nl_unescape_js_run(nl_js_state *st, const char *src, size_t src_len)
     nl_slice stage = st->cur;
 
     st->reassigned = 1;
-    nl_buf_cat(&st->stage3, stage.data, stage.len);
+    /* The argument keeps `stage`. When no pass touched it, that is still the
+     * argument's own buffer, so there is nothing to copy and nothing to write
+     * back; otherwise copy it out of the ping-pong buffers before reusing them. */
+    if (stage.data == src) {
+      st->stage3_slice = stage;
+    } else {
+      nl_buf_cat(&st->stage3, stage.data, stage.len);
+      st->stage3_slice.data = st->stage3.data;
+      st->stage3_slice.len = st->stage3.len;
+    }
 
     lookbehind = 1;
     if (nl_pass_u(stage.data, stage.len, &st->ubuf, lookbehind)) {
@@ -672,18 +726,15 @@ nl_unescape_js_run(nl_js_state *st, const char *src, size_t src_len)
         st->cur.data = st->ubuf.data;
         st->cur.len = st->ubuf.len;
       } else {
-        st->cur = stage;
+        st->cur = st->stage3_slice;
       }
       if (!nl_utf8_valid(st->cur.data, st->cur.len)) {
         st->broken = 1;
         return;
       }
     }
-    /* stage3 now owns the bytes the caller keeps, so both ping-pong buffers
-     * are free again even though `cur` may still point at one of them. */
     if (st->cur.data != st->ubuf.data) {
-      st->cur.data = st->stage3.data;
-      st->cur.len = st->stage3.len;
+      st->cur = st->stage3_slice;
     }
     st->buf[0].len = 0;
     st->buf[1].len = 0;
@@ -718,9 +769,10 @@ nl_str_set(VALUE str, const char *data, size_t len)
 static VALUE
 nl_js_utils_unescape_js(VALUE self, VALUE rb_str)
 {
-  nl_js_state st;
+  nl_js_state local;
+  nl_js_state *st;
   VALUE result;
-  char *src = NULL;
+  const char *src;
   size_t src_len;
 
   Check_Type(rb_str, T_STRING);
@@ -732,35 +784,58 @@ nl_js_utils_unescape_js(VALUE self, VALUE rb_str)
     rb_raise(rb_eArgError, "invalid byte sequence in UTF-8");
   }
 
-  memset(&st, 0, sizeof(st));
-  src_len = (size_t)RSTRING_LEN(rb_str);
-  if (src_len > 0) {
-    src = (char *)malloc(src_len);
-    if (src == NULL) {
-      rb_raise(rb_eNoMemError, "failed to allocate %lu bytes", (unsigned long)src_len);
-    }
-    memcpy(src, RSTRING_PTR(rb_str), src_len);
+  if (nl_scratch_busy) {
+    st = &local;
+    memset(st, 0, sizeof(*st));
+  } else {
+    st = &nl_scratch;
+    nl_scratch_busy = 1;
+    st->buf[0].len = 0;
+    st->buf[1].len = 0;
+    st->ubuf.len = 0;
+    st->stage3.len = 0;
+    st->cur.data = NULL;
+    st->cur.len = 0;
+    st->stage3_slice.data = NULL;
+    st->stage3_slice.len = 0;
+    st->reassigned = 0;
+    st->broken = 0;
   }
 
-  nl_unescape_js_run(&st, src, src_len);
+  /* The passes call no Ruby API, so nothing can move or free the argument's
+   * buffer while they run and they can read it in place. Reinstate a copy here
+   * before ever releasing the GVL. */
+  src = RSTRING_PTR(rb_str);
+  src_len = (size_t)RSTRING_LEN(rb_str);
+  st->buf[0].hint = src_len;
+  st->buf[1].hint = src_len;
+  st->ubuf.hint = src_len;
+  st->stage3.hint = src_len;
 
-  if (st.broken) {
-    nl_str_set(rb_str, st.stage3.data, st.stage3.len);
-    nl_js_state_free(&st);
-    free(src);
+  nl_unescape_js_run(st, src, src_len);
+
+  if (st->broken) {
+    if (st->stage3_slice.data != src) {
+      nl_str_set(rb_str, st->stage3_slice.data, st->stage3_slice.len);
+    }
+    nl_js_state_release(st);
     rb_raise(rb_eArgError, "invalid byte sequence in UTF-8");
   }
 
-  if (st.reassigned) {
-    nl_str_set(rb_str, st.stage3.data, st.stage3.len);
-    result = rb_utf8_str_new(st.cur.data, (long)st.cur.len);
+  if (st->reassigned) {
+    result = rb_utf8_str_new(st->cur.data, (long)st->cur.len);
+    if (st->stage3_slice.data != src) {
+      nl_str_set(rb_str, st->stage3_slice.data, st->stage3_slice.len);
+    }
   } else {
-    nl_str_set(rb_str, st.cur.data, st.cur.len);
+    /* gsub! leaves the string alone when nothing matched, coderange included. */
+    if (st->cur.data != src) {
+      nl_str_set(rb_str, st->cur.data, st->cur.len);
+    }
     result = rb_str;
   }
 
-  nl_js_state_free(&st);
-  free(src);
+  nl_js_state_release(st);
   return result;
 }
 
