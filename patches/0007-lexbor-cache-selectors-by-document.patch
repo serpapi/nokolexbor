@@ -1,6 +1,8 @@
+diff --git a/source/lexbor/dom/interfaces/document.h b/source/lexbor/dom/interfaces/document.h
+index 3c2724f..901d71f 100755
 --- a/source/lexbor/dom/interfaces/document.h
 +++ b/source/lexbor/dom/interfaces/document.h
-@@ -32,6 +32,8 @@
+@@ -32,6 +32,8 @@ typedef enum {
  }
  lxb_dom_document_dtype_t;
  
@@ -9,7 +11,7 @@
  struct lxb_dom_document {
      lxb_dom_node_t              node;
  
-@@ -58,6 +60,11 @@
+@@ -58,6 +60,11 @@ struct lxb_dom_document {
      bool                        ns_inherited;
  
      bool                        scripting;
@@ -21,34 +23,11 @@
  };
  
  
---- a/source/lexbor/selectors/selectors.h
-+++ b/source/lexbor/selectors/selectors.h
-@@ -29,9 +29,11 @@
-     lexbor_dobject_t *objs;
-     lexbor_dobject_t *chld;
-     lxb_selectors_index_t *index;
-+    lxb_dom_document_t *document;
- 
-     lxb_status_t     status;
-     bool             use_index;
-+    bool             index_owned;
- }
- lxb_selectors_t;
- 
-@@ -66,7 +68,10 @@
- lxb_selectors_find(lxb_selectors_t *selectors, lxb_dom_node_t *root,
-                    lxb_css_selector_list_t *list, lxb_selectors_cb_f cb, void *ctx);
- 
-+LXB_API void
-+lxb_selectors_index_invalidate(lxb_dom_document_t *document);
- 
-+
- #ifdef __cplusplus
- } /* extern "C" */
- #endif
+diff --git a/source/lexbor/selectors/selectors.c b/source/lexbor/selectors/selectors.c
+index c2124a7..afc3004 100644
 --- a/source/lexbor/selectors/selectors.c
 +++ b/source/lexbor/selectors/selectors.c
-@@ -118,13 +118,15 @@
+@@ -128,13 +128,15 @@ struct lxb_selectors_index {
      size_t                     *key_slots;
      size_t                     key_slots_size;
      unsigned int               kinds;
@@ -66,12 +45,10 @@
  
      while (size < length) {
          if (size > SIZE_MAX / 2) {
-@@ -225,6 +227,25 @@
-     free(index->stack);
-     free(index->node_slots);
+@@ -237,6 +239,25 @@ lxb_selectors_index_destroy(lxb_selectors_index_t *index)
      free(index);
-+}
-+
+ }
+ 
 +static void
 +lxb_selectors_index_drop(lxb_dom_document_t *document)
 +{
@@ -89,10 +66,12 @@
 +    document->selector_version++;
 +    lxb_selectors_index_drop(document);
 +    document->selector_index_unavailable = false;
- }
- 
++}
++
  static bool
-@@ -266,13 +287,12 @@
+ lxb_selectors_index_large_tree(lxb_dom_node_t *root)
+ {
+@@ -276,13 +297,12 @@ lxb_selectors_index_want(lxb_selectors_index_t *index, uint64_t hash,
      }
  
      lxb_status_t status = lxb_selectors_index_grow((void **) &index->keys,
@@ -107,10 +86,11 @@
      return LXB_STATUS_OK;
  }
  
-@@ -317,10 +337,63 @@
+@@ -326,11 +346,64 @@ lxb_selectors_index_key(lxb_selectors_index_t *index, uint64_t hash)
+     return NULL;
  }
  
- static lxb_status_t
++static lxb_status_t
 +lxb_selectors_index_want_dynamic(lxb_selectors_index_t *index, uint64_t hash)
 +{
 +    lxb_status_t status;
@@ -156,7 +136,7 @@
 +    return LXB_STATUS_OK;
 +}
 +
-+static lxb_status_t
+ static lxb_status_t
  lxb_selectors_index_append(lxb_selectors_index_t *index, uint64_t hash,
                             size_t position)
  {
@@ -171,7 +151,7 @@
      if (key == NULL || (key->length != 0
                          && key->positions[key->length - 1] == position))
      {
-@@ -328,7 +401,8 @@
+@@ -338,7 +411,8 @@ lxb_selectors_index_append(lxb_selectors_index_t *index, uint64_t hash,
      }
  
      lxb_status_t status = lxb_selectors_index_grow((void **) &key->positions,
@@ -181,7 +161,7 @@
      if (status != LXB_STATUS_OK) {
          return status;
      }
-@@ -436,6 +510,7 @@
+@@ -446,6 +520,7 @@ lxb_selectors_index_position(lxb_selectors_index_t *index,
  static lxb_status_t
  lxb_selectors_index_create(lxb_dom_node_t *root,
                             lxb_css_selector_list_t *list,
@@ -189,7 +169,7 @@
                             lxb_selectors_index_t **result)
  {
      lxb_status_t status;
-@@ -445,12 +520,15 @@
+@@ -455,12 +530,15 @@ lxb_selectors_index_create(lxb_dom_node_t *root,
      uint64_t hash;
  
      *result = NULL;
@@ -210,11 +190,31 @@
          return LXB_STATUS_OK;
      }
  
-@@ -459,40 +537,54 @@
+@@ -469,40 +547,54 @@ lxb_selectors_index_create(lxb_dom_node_t *root,
          return LXB_STATUS_ERROR_MEMORY_ALLOCATION;
      }
      index->document = root->owner_document;
 +    index->all_keys = all_keys;
++
++    if (all_keys) {
++        index->kinds = (1u << LXB_CSS_SELECTOR_TYPE_ELEMENT)
++                       | (1u << LXB_CSS_SELECTOR_TYPE_ATTRIBUTE)
++                       | (1u << LXB_CSS_SELECTOR_TYPE_ID)
++                       | (1u << LXB_CSS_SELECTOR_TYPE_CLASS);
++        status = lxb_selectors_index_slots(&index->key_slots,
++                                            &index->key_slots_size, 1);
++        if (status != LXB_STATUS_OK) {
++            goto failed;
++        }
++    }
++    else {
++        for (lxb_css_selector_list_t *item = list; item != NULL; item = item->next) {
++            for (lxb_css_selector_t *sel = item->first; sel != NULL; sel = sel->next) {
++                if (sel->combinator != LXB_CSS_SELECTOR_COMBINATOR_DESCENDANT
++                    || !lxb_selectors_index_selector_key(index->document, sel, &hash))
++                {
++                    continue;
++                }
  
 -    for (lxb_css_selector_list_t *item = list; item != NULL; item = item->next) {
 -        for (lxb_css_selector_t *sel = item->first; sel != NULL; sel = sel->next) {
@@ -227,36 +227,21 @@
 -            status = lxb_selectors_index_want(index, hash, sel->type);
 -            if (status != LXB_STATUS_OK) {
 -                goto failed;
--            }
-+    if (all_keys) {
-+        index->kinds = (1u << LXB_CSS_SELECTOR_TYPE_ELEMENT)
-+                       | (1u << LXB_CSS_SELECTOR_TYPE_ATTRIBUTE)
-+                       | (1u << LXB_CSS_SELECTOR_TYPE_ID)
-+                       | (1u << LXB_CSS_SELECTOR_TYPE_CLASS);
-+        status = lxb_selectors_index_slots(&index->key_slots,
-+                                            &index->key_slots_size, 1);
-+        if (status != LXB_STATUS_OK) {
-+            goto failed;
-         }
-     }
-+    else {
-+        for (lxb_css_selector_list_t *item = list; item != NULL; item = item->next) {
-+            for (lxb_css_selector_t *sel = item->first; sel != NULL; sel = sel->next) {
-+                if (sel->combinator != LXB_CSS_SELECTOR_COMBINATOR_DESCENDANT
-+                    || !lxb_selectors_index_selector_key(index->document, sel, &hash))
-+                {
-+                    continue;
++                status = lxb_selectors_index_want(index, hash, sel->type);
++                if (status != LXB_STATUS_OK) {
++                    goto failed;
 +                }
+             }
+         }
+-    }
  
 -    if (index->keys_length < 2) {
 -        lxb_selectors_index_destroy(index);
 -        return LXB_STATUS_OK;
 -    }
-+                status = lxb_selectors_index_want(index, hash, sel->type);
-+                if (status != LXB_STATUS_OK) {
-+                    goto failed;
-+                }
-+            }
++        if (index->keys_length < 2) {
++            lxb_selectors_index_destroy(index);
++            return LXB_STATUS_OK;
 +        }
  
 -    status = lxb_selectors_index_slots(&index->key_slots,
@@ -270,12 +255,6 @@
 -            & (index->key_slots_size - 1);
 -        while (index->key_slots[slot] != 0) {
 -            slot = (slot + 1) & (index->key_slots_size - 1);
-+        if (index->keys_length < 2) {
-+            lxb_selectors_index_destroy(index);
-+            return LXB_STATUS_OK;
-         }
--        index->key_slots[slot] = i + 1;
-+
 +        status = lxb_selectors_index_slots(&index->key_slots,
 +                                            &index->key_slots_size,
 +                                            index->keys_length);
@@ -289,11 +268,12 @@
 +                slot = (slot + 1) & (index->key_slots_size - 1);
 +            }
 +            index->key_slots[slot] = i + 1;
-+        }
+         }
+-        index->key_slots[slot] = i + 1;
      }
  
      node = root;
-@@ -504,12 +596,12 @@
+@@ -514,12 +606,12 @@ lxb_selectors_index_create(lxb_dom_node_t *root,
  
          status = lxb_selectors_index_grow((void **) &index->nodes,
              &index->nodes_capacity, index->nodes_length + 1,
@@ -308,7 +288,7 @@
          if (status != LXB_STATUS_OK) {
              goto failed;
          }
-@@ -582,7 +674,7 @@
+@@ -592,7 +684,7 @@ lxb_selectors_index_descendant(lxb_selectors_t *selectors,
          return false;
      }
      key = lxb_selectors_index_key(index, hash);
@@ -316,20 +296,8 @@
 +    if (key == NULL && !index->all_keys) {
          return false;
      }
- 
-@@ -592,6 +684,11 @@
-         || node_pos < root_pos || node_pos >= index->nodes[root_pos].end)
-     {
-         return false;
-+    }
-+
-+    if (key == NULL) {
-+        *result = NULL;
-+        return true;
-     }
- 
-     first = 0;
-@@ -638,6 +735,8 @@
+     root_pos = lxb_selectors_index_position(index, root);
+@@ -648,6 +740,8 @@ lxb_selectors_init(lxb_selectors_t *selectors)
      }
  
      selectors->index = NULL;
@@ -338,7 +306,7 @@
      selectors->use_index = false;
      selectors->objs = lexbor_dobject_create();
      status = lexbor_dobject_init(selectors->objs,
-@@ -659,8 +758,11 @@
+@@ -669,8 +763,11 @@ lxb_selectors_init(lxb_selectors_t *selectors)
  void
  lxb_selectors_clean(lxb_selectors_t *selectors)
  {
@@ -351,7 +319,7 @@
      lexbor_dobject_clean(selectors->objs);
      lexbor_dobject_clean(selectors->chld);
  }
-@@ -672,7 +774,9 @@
+@@ -682,7 +779,9 @@ lxb_selectors_destroy(lxb_selectors_t *selectors, bool self_destroy)
          return NULL;
      }
  
@@ -362,7 +330,7 @@
      selectors->objs = lexbor_dobject_destroy(selectors->objs, true);
      selectors->chld = lexbor_dobject_destroy(selectors->chld, true);
  
-@@ -913,10 +1017,48 @@
+@@ -923,9 +1022,47 @@ lxb_selectors_find(lxb_selectors_t *selectors, lxb_dom_node_t *root,
      }
  
      if (selectors->use_index) {
@@ -401,7 +369,7 @@
 +            {
 +                selectors->index = document->selector_index;
 +            }
-         }
++        }
 +
 +        if (selectors->index == NULL) {
 +            status = lxb_selectors_index_create(root, list, false,
@@ -410,7 +378,32 @@
 +                return status;
 +            }
 +            selectors->index_owned = selectors->index != NULL;
-+        }
+         }
      }
  
-     while (list != NULL) {
+diff --git a/source/lexbor/selectors/selectors.h b/source/lexbor/selectors/selectors.h
+index 1cff3da..ea236ac 100644
+--- a/source/lexbor/selectors/selectors.h
++++ b/source/lexbor/selectors/selectors.h
+@@ -29,9 +29,11 @@ typedef struct {
+     lexbor_dobject_t *objs;
+     lexbor_dobject_t *chld;
+     lxb_selectors_index_t *index;
++    lxb_dom_document_t *document;
+ 
+     lxb_status_t     status;
+     bool             use_index;
++    bool             index_owned;
+ }
+ lxb_selectors_t;
+ 
+@@ -66,6 +68,9 @@ LXB_API lxb_status_t
+ lxb_selectors_find(lxb_selectors_t *selectors, lxb_dom_node_t *root,
+                    lxb_css_selector_list_t *list, lxb_selectors_cb_f cb, void *ctx);
+ 
++LXB_API void
++lxb_selectors_index_invalidate(lxb_dom_document_t *document);
++
+ 
+ #ifdef __cplusplus
+ } /* extern "C" */
