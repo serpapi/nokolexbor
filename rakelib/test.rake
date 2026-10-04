@@ -65,6 +65,22 @@ namespace :test do
     t.pattern = 'spec/**/*_spec.rb'
   end
 
+  task :selector_index_recovery do
+    lexbor_static = File.expand_path('vendor/lexbor/dist/lib/liblexbor_static.a')
+    lexbor_include = File.expand_path('vendor/lexbor/dist/include')
+    src = File.expand_path('test/selector_index_recovery_test.c')
+    abort "test:selector_index_recovery requires a built vendor/lexbor/dist" unless File.exist?(lexbor_static)
+
+    cc = ENV['CC'] || (system('which clang > /dev/null 2>&1') ? 'clang' : 'gcc')
+    Dir.mktmpdir('selector_index_recovery') do |tmpdir|
+      bin = File.join(tmpdir, 'selector_index_recovery_test')
+      abort "failed to compile selector index recovery test" unless system(
+        cc, "-I#{lexbor_include}", '-o', bin, src, lexbor_static, '-lpthread', '-lm'
+      )
+      abort "selector index recovery test failed" unless system(bin)
+    end
+  end
+
   task :tsan do
     if RbConfig::CONFIG['host_os'].match?(/mingw|mswin|cygwin/)
       puts 'Skipping test:tsan — ThreadSanitizer is not supported on Windows.'
