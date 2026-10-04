@@ -7,6 +7,7 @@
 #include <lexbor/html/html.h>
 #include <lexbor/selectors/selectors.h>
 
+extern VALUE mNokolexbor;
 extern VALUE cNokolexborDocument;
 
 void Init_nl_error(void);
@@ -20,6 +21,7 @@ void Init_nl_node_set(void);
 void Init_nl_document_fragment(void);
 void Init_nl_attribute(void);
 void Init_nl_xpath_context(void);
+void Init_nl_js_utils(void);
 
 void nl_raise_lexbor_error(lxb_status_t error);
 lxb_dom_node_t *nl_rb_node_unwrap(VALUE rb_node);

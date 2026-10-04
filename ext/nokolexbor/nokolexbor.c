@@ -19,4 +19,5 @@ void Init_nokolexbor(void)
   Init_nl_document_fragment();
   Init_nl_attribute();
   Init_nl_xpath_context();
+  Init_nl_js_utils();
 }
