@@ -239,6 +239,7 @@ nl_node_content_set(VALUE self, VALUE content)
 
   const char *c_content = StringValuePtr(content);
   size_t content_len = RSTRING_LEN(content);
+  lxb_selectors_index_invalidate(node->owner_document);
   lxb_status_t status = lxb_dom_node_text_content_set(node, (const lxb_char_t *)c_content, content_len);
   if (status != LXB_STATUS_OK) {
     nl_raise_lexbor_error(status);
@@ -309,6 +310,7 @@ nl_node_set_attr(VALUE self, VALUE rb_attr, VALUE rb_value)
 
   lxb_dom_element_t *element = lxb_dom_interface_element(node);
 
+  lxb_selectors_index_invalidate(node->owner_document);
   lxb_dom_element_set_attribute(element, (const lxb_char_t *)attr_c, attr_len, (const lxb_char_t *)value_c, value_len);
 
   return rb_value;
@@ -339,6 +341,7 @@ nl_node_remove_attr(VALUE self, VALUE rb_attr)
 
   lxb_dom_element_t *element = lxb_dom_interface_element(node);
 
+  lxb_selectors_index_invalidate(node->owner_document);
   lxb_status_t status = lxb_dom_element_remove_attribute(element, (const lxb_char_t *)attr_c, attr_len);
   if (status != LXB_STATUS_OK) {
     nl_raise_lexbor_error(status);
@@ -380,6 +383,7 @@ typedef struct {
   lxb_status_t status;
   bool use_index;
   bool shadow;
+  lxb_dom_document_t *document;
 } nl_node_find_args_t;
 
 typedef struct {
@@ -453,6 +457,7 @@ nl_node_find_native(void *data)
     pthread_setspecific(p_key_selectors, selectors);
 #endif
   }
+  selectors->document = args->document;
 
   /* Parse and get the log. */
   list = lxb_css_selectors_parse_relative_list(css_parser, args->selector, args->selector_len);
@@ -555,6 +560,9 @@ lxb_status_t
 nl_node_find(VALUE self, VALUE selector, lxb_selectors_cb_f cb, void *ctx)
 {
   StringValue(selector);
+  VALUE rb_document = nl_rb_document_get(self);
+  lxb_dom_document_t *document = nl_rb_document_unwrap(rb_document);
+  size_t builds_before = document->selector_index_builds;
   const char *index_env = getenv("NOKOLEXBOR_SELECTOR_INDEX");
   const char *shadow_env = getenv("NOKOLEXBOR_SELECTOR_SHADOW");
 
@@ -569,10 +577,18 @@ nl_node_find(VALUE self, VALUE selector, lxb_selectors_cb_f cb, void *ctx)
   args.status = LXB_STATUS_OK;
   args.use_index = index_env == NULL || strcmp(index_env, "0") != 0;
   args.shadow = shadow_env != NULL && strcmp(shadow_env, "1") == 0;
+  args.document = document;
   nl_node_find_native(&args);
 
   RB_GC_GUARD(self);
   RB_GC_GUARD(selector);
+  if (document->selector_index_builds != builds_before
+      && getenv("NOKOLEXBOR_SELECTOR_INDEX_STATS") != NULL)
+  {
+    rb_iv_set(rb_document, "@selector_index_rebuilds",
+              ULL2NUM((unsigned long long)document->selector_index_builds));
+  }
+  RB_GC_GUARD(rb_document);
   return args.status;
 }
 
@@ -1013,6 +1029,7 @@ static VALUE
 nl_node_remove(VALUE self)
 {
   lxb_dom_node_t *node = nl_rb_node_unwrap(self);
+  lxb_selectors_index_invalidate(node->owner_document);
   lxb_dom_node_remove(node);
   return self;
 }
@@ -1028,6 +1045,7 @@ static VALUE
 nl_node_destroy(VALUE self)
 {
   lxb_dom_node_t *node = nl_rb_node_unwrap(self);
+  lxb_selectors_index_invalidate(node->owner_document);
   lxb_dom_node_destroy(node);
   return Qnil;
 }
@@ -1074,6 +1092,7 @@ static lxb_dom_node_t *
 nl_node_parse_fragment(lxb_dom_document_t *doc, lxb_dom_element_t *element, lxb_char_t *html, size_t size)
 {
   size_t tag_name_len;
+  lxb_selectors_index_invalidate(doc);
   lxb_html_document_t *html_doc = lxb_html_interface_document(doc);
   if (element == NULL) {
     const lxb_char_t *tag_name = lxb_tag_name_by_id(lxb_html_document_tags(html_doc), LXB_TAG__UNDEF, &tag_name_len);
@@ -1125,6 +1144,7 @@ nl_node_add_nodes(VALUE self, VALUE new, lxb_dom_node_add_nodes_to_f add_to, boo
 {
   lxb_dom_node_t *node = nl_rb_node_unwrap(self);
   lxb_dom_document_t *doc = node->owner_document;
+  lxb_selectors_index_invalidate(doc);
 
   if (TYPE(new) == T_STRING || rb_obj_is_kind_of(new, cNokolexborDocumentFragment)) {
     lxb_dom_node_t *frag_root = (TYPE(new) == T_STRING) ? nl_node_parse_fragment(doc, NULL, (lxb_char_t *)RSTRING_PTR(new), RSTRING_LEN(new))
@@ -1134,6 +1154,9 @@ nl_node_add_nodes(VALUE self, VALUE new, lxb_dom_node_add_nodes_to_f add_to, boo
     lxb_dom_node_t *last_node = node;
     while (frag_root->first_child != NULL) {
       lxb_dom_node_t *child = frag_root->first_child;
+      if (child->owner_document != doc) {
+        lxb_selectors_index_invalidate(child->owner_document);
+      }
       lxb_dom_node_remove(child);
       operate_on_new_node ? add_to(last_node, child) : add_to(node, child);
       last_node = child;
@@ -1150,6 +1173,9 @@ nl_node_add_nodes(VALUE self, VALUE new, lxb_dom_node_add_nodes_to_f add_to, boo
     lxb_dom_node_t *last_node = node;
     for (size_t i = 0; i < node_array->length; i++) {
       lxb_dom_node_t *child = (lxb_dom_node_t *)node_array->list[i];
+      if (child->owner_document != doc) {
+        lxb_selectors_index_invalidate(child->owner_document);
+      }
       lxb_dom_node_remove(child);
       operate_on_new_node ? add_to(last_node, child) : add_to(node, child);
       last_node = child;
@@ -1158,6 +1184,9 @@ nl_node_add_nodes(VALUE self, VALUE new, lxb_dom_node_add_nodes_to_f add_to, boo
 
   } else if (rb_obj_is_kind_of(new, cNokolexborNode)) {
     lxb_dom_node_t *node_new = nl_rb_node_unwrap(new);
+    if (node_new->owner_document != doc) {
+      lxb_selectors_index_invalidate(node_new->owner_document);
+    }
     lxb_dom_node_remove(node_new);
     add_to(node, node_new);
     return new;

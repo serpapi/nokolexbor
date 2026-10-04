@@ -13,6 +13,9 @@ pthread_key_t p_key_html_parser;
 static void
 free_nl_document(lxb_html_document_t *document)
 {
+  if (document != NULL) {
+    lxb_selectors_index_invalidate(&document->dom_document);
+  }
   lxb_html_document_destroy(document);
 }
 
@@ -115,7 +118,9 @@ nl_document_set_title(VALUE self, VALUE rb_title)
 {
   const char *c_title = StringValuePtr(rb_title);
   size_t len = RSTRING_LEN(rb_title);
-  lxb_html_document_title_set((lxb_html_document_t *)nl_rb_document_unwrap(self), (const lxb_char_t *)c_title, len);
+  lxb_dom_document_t *doc = nl_rb_document_unwrap(self);
+  lxb_selectors_index_invalidate(doc);
+  lxb_html_document_title_set((lxb_html_document_t *)doc, (const lxb_char_t *)c_title, len);
   return rb_title;
 }
 

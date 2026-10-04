@@ -52,6 +52,101 @@ describe "indexed CSS selectors" do
     _(@doc.css(@selector).length).must_equal 319
   end
 
+  it "reuses the document index until a mutation or NodeSet reparenting" do
+    previous_stats = ENV["NOKOLEXBOR_SELECTOR_INDEX_STATS"]
+    ENV["NOKOLEXBOR_SELECTOR_INDEX_STATS"] = "1"
+
+    compare_with_original(@doc, @selector)
+    _(@doc.instance_variable_get(:@selector_index_rebuilds)).must_equal 1
+    compare_with_original(@doc, ".target, #P42, [data-ix]")
+    _(@doc.instance_variable_get(:@selector_index_rebuilds)).must_equal 1
+
+    @doc.at_css("#P42")["class"] = "changed"
+    compare_with_original(@doc, ".target, #P42, [data-ix]")
+    _(@doc.instance_variable_get(:@selector_index_rebuilds)).must_equal 2
+
+    @doc.css("article").css(".child, .target, [data-ix]")
+    compare_with_original(@doc, @selector)
+    _(@doc.instance_variable_get(:@selector_index_rebuilds)).must_equal 3
+
+    @doc.css("article").at_css(".child, .target")
+    compare_with_original(@doc, @selector)
+    _(@doc.instance_variable_get(:@selector_index_rebuilds)).must_equal 4
+  ensure
+    previous_stats ? ENV["NOKOLEXBOR_SELECTOR_INDEX_STATS"] = previous_stats : ENV.delete("NOKOLEXBOR_SELECTOR_INDEX_STATS")
+  end
+
+  it "invalidates on attribute, content, fragment and structural edits" do
+    node = @doc.at_css("#P42")
+    attribute = node.attribute("data-ix")
+    attribute.value = "new"
+    compare_with_original(@doc, "[data-ix='new'], .target, #P42")
+
+    attribute.name = "data-ref"
+    compare_with_original(@doc, "[data-ref='new'], #P42, [data-ix='new']")
+
+    node.remove_attr("class")
+    node.at_css("span").content = "updated"
+    compare_with_original(@doc, ".target, #P42, [data-ref]")
+
+    node.inner_html = "<span class='fresh'>text</span>"
+    node.add_next_sibling("<div id='extra' class='fresh'></div>")
+    compare_with_original(@doc, ".fresh, #extra, [data-ref]")
+    _(@doc.css(".fresh, #extra, [data-ref]").length).must_equal 3
+
+    node.replace("<section id='replacement'></section>")
+    compare_with_original(@doc, "#replacement, #P42, .fresh")
+    _(@doc.at_css("#P42")).must_be_nil
+
+    @doc.title = "Indexed"
+    compare_with_original(@doc, "title, #replacement, .fresh")
+    _(@doc.at_css("title").content).must_equal "Indexed"
+  end
+
+  it "invalidates both documents when nodes move between them" do
+    other = Nokolexbor::HTML(@doc.to_html)
+    selector = ".target, #P42, [data-ix]"
+    @doc.css(selector)
+    other.css(selector)
+
+    @doc.at_css("main").add_child(other.at_css("#P42"))
+    compare_with_original(@doc, selector)
+    compare_with_original(other, selector)
+    _(@doc.css(selector).length).must_equal 161
+    _(other.css(selector).length).must_equal 159
+  end
+
+  it "invalidates for each native DOM writer" do
+    previous_stats = ENV["NOKOLEXBOR_SELECTOR_INDEX_STATS"]
+    ENV["NOKOLEXBOR_SELECTOR_INDEX_STATS"] = "1"
+    compare_with_original(@doc, @selector)
+    node = @doc.at_css("#P42")
+    attribute = node.attribute("data-ix")
+    victim = @doc.at_css("#P43")
+
+    writers = [
+      -> { attribute.value = "new" },
+      -> { attribute.name = "data-ref" },
+      -> { node["class"] = "changed" },
+      -> { node.remove_attr("class") },
+      -> { node.content = "text" },
+      -> { node.parse("<em>fragment</em>") },
+      -> { node.add_child("<em class='added'></em>") },
+      -> { node.add_next_sibling("<div id='extra'></div>") },
+      -> { victim.destroy },
+      -> { node.remove },
+      -> { @doc.title = "Indexed" },
+    ]
+    writers.each do |write|
+      builds = @doc.instance_variable_get(:@selector_index_rebuilds)
+      write.call
+      compare_with_original(@doc, ".target, #P42, [data-ix]")
+      _(@doc.instance_variable_get(:@selector_index_rebuilds)).must_equal builds + 1
+    end
+  ensure
+    previous_stats ? ENV["NOKOLEXBOR_SELECTOR_INDEX_STATS"] = previous_stats : ENV.delete("NOKOLEXBOR_SELECTOR_INDEX_STATS")
+  end
+
   it "matches case-sensitive multibyte and whitespace-separated classes" do
     @doc.at_css("#P42")["class"] = "  A\tcaf\u00e9  B "
     selector = ".caf\u00e9, .B, #P42, [data-ix='42']"
@@ -59,14 +154,5 @@ describe "indexed CSS selectors" do
     compare_with_original(@doc, selector)
     _(@doc.css(selector).length).must_equal 1
     compare_with_original(@doc, ".CAF\u00c9, .a, #p42, [data-ix='missing']")
-  end
-
-  it "preserves match order when the GVL is released" do
-    previous = Nokolexbor.release_gvl
-    Nokolexbor.release_gvl = true
-    compare_with_original(@doc, @selector)
-    compare_with_original(@doc.css("article"), @selector)
-  ensure
-    Nokolexbor.release_gvl = previous
   end
 end

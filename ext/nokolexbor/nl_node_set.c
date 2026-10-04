@@ -389,6 +389,9 @@ nl_node_set_find(VALUE self, VALUE selector, lxb_selectors_cb_f cb, void *ctx)
   if (frag == NULL) {
     rb_raise(rb_eRuntimeError, "Error creating document fragment");
   }
+  if (array->length > 0) {
+    lxb_selectors_index_invalidate(doc);
+  }
 
   lexbor_array_t *backup_array = lexbor_array_create();
   if (array->length > 0) {
@@ -400,6 +403,9 @@ nl_node_set_find(VALUE self, VALUE selector, lxb_selectors_cb_f cb, void *ctx)
   // Backup original node data and re-group them into a fragment
   for (size_t i = 0; i < array->length; i++) {
     lxb_dom_node_t *node = (lxb_dom_node_t *)array->list[i];
+    if (node->owner_document != doc) {
+      lxb_selectors_index_invalidate(node->owner_document);
+    }
     lxb_dom_node_t *backup_node = malloc(sizeof(lxb_dom_node_t));
     if (backup_node == NULL) {
       nl_raise_lexbor_error(LXB_STATUS_ERROR_MEMORY_ALLOCATION);
@@ -420,8 +426,14 @@ nl_node_set_find(VALUE self, VALUE selector, lxb_selectors_cb_f cb, void *ctx)
   for (size_t i = 0; i < array->length; i++) {
     memcpy(array->list[i], backup_array->list[i], sizeof(lxb_dom_node_t));
     free(backup_array->list[i]);
+    if (((lxb_dom_node_t *)array->list[i])->owner_document != doc) {
+      lxb_selectors_index_invalidate(((lxb_dom_node_t *)array->list[i])->owner_document);
+    }
   }
   lexbor_array_destroy(backup_array, true);
+  if (array->length > 0) {
+    lxb_selectors_index_invalidate(doc);
+  }
 
   return status;
 }

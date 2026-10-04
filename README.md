@@ -80,11 +80,12 @@ end
   * Only accepts CSS selectors, doesn't support mixed syntax like `div#abc /text()`.
   * To select text nodes, use pseudo element `::text`. e.g. `div#abc > ::text`.
   * Performance is much higher than libxml2 based methods.
-  * Large selector lists on large subtrees use a temporary index for tag, class,
-    ID and attribute candidates. It is freed after each call, so DOM changes
-    between calls need no cache invalidation. Set `NOKOLEXBOR_SELECTOR_INDEX=0`
-    for the original traversal, or `NOKOLEXBOR_SELECTOR_SHADOW=1` to compare
-    both match sequences and abort on a mismatch.
+  * Large documents build a tag, class, ID and attribute candidate index on
+    the first document-level search and reuse it until the DOM changes. Large
+    detached subtrees can still use a temporary per-call index. Set
+    `NOKOLEXBOR_SELECTOR_INDEX=0` for the original traversal, or
+    `NOKOLEXBOR_SELECTOR_SHADOW=1` to compare both match sequences and abort
+    on a mismatch.
 * `xpath` and `at_xpath`
   * Based on libxml2.
   * Only accepts XPath syntax.

@@ -83,6 +83,7 @@ nl_attribute_set_name(VALUE self, VALUE rb_name)
   const char *c_name = StringValuePtr(rb_name);
   size_t name_len = RSTRING_LEN(rb_name);
 
+  lxb_selectors_index_invalidate(node->owner_document);
   lxb_status_t status = lxb_dom_attr_set_name(attr, (const lxb_char_t *)c_name, name_len, false);
   if (status != LXB_STATUS_OK) {
     nl_raise_lexbor_error(status);
@@ -123,6 +124,7 @@ nl_attribute_set_value(VALUE self, VALUE rb_content)
   const char *c_content = StringValuePtr(rb_content);
   size_t content_len = RSTRING_LEN(rb_content);
 
+  lxb_selectors_index_invalidate(node->owner_document);
   lxb_status_t status = lxb_dom_attr_set_value(attr, (const lxb_char_t *)c_content, content_len);
   if (status != LXB_STATUS_OK) {
     nl_raise_lexbor_error(status);
