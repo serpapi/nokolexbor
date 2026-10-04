@@ -43,6 +43,13 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+#if defined(NOKOLEXBOR_ASAN) || defined(NOKOLEXBOR_DEBUG)
+#include <assert.h>
+#define NL_ASSERT(x) assert(x)
+#else
+#define NL_ASSERT(x) ((void)0)
+#endif
+
 static VALUE mNokolexborJSUtils;
 
 typedef struct {
@@ -77,6 +84,10 @@ nl_buf_reserve(nl_buf *buf, size_t extra)
 {
   size_t need = buf->len + extra;
   char *data;
+
+  /* The bound the comment above claims, checked on every write in a debug or
+   * ASAN build: no pass may ever produce more bytes than the argument had. */
+  NL_ASSERT(buf->hint == 0 || need <= buf->hint);
 
   if (need <= buf->cap) {
     return 1;
