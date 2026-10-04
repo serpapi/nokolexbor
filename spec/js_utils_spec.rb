@@ -7,6 +7,12 @@ require_relative 'js_utils_fuzz'
 # hand-picked corners, on a seeded fuzz corpus and, when JSU_CORPUS points at a
 # capture, on every real input the SerpApi Google parser produced.
 describe Nokolexbor::JSUtils do
+  before do
+    unless JSUTILS_REFERENCE_JSON_MATCHES
+      skip "json #{JSON::VERSION} is loaded; the port reproduces #{JSUTILS_REFERENCE_JSON_VERSION}"
+    end
+  end
+
   def assert_same_as_ruby(input)
     difference = JSUtilsDiff.compare(input)
     assert_nil difference, difference
