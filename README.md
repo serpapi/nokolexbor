@@ -110,6 +110,14 @@ end
 
   In Nokolexbor, `:not` does affect the place of the last `div` (same in browsers), the selector should be `div:not(.a):not(.b):nth-of-type(5)`, but this losts the purpose of filtering though.
 
+## Selector safety checks
+
+`SELECTOR_CORPUS=/path/to/selectors.json ruby -Ilib test/selector_index_mutation_fuzz.rb 100000 20261005`
+accepts a JSON array of real CSS selector strings. It compares indexed and
+original `css`/`at_css` results across random DOM edits, periodically enables
+`GC.stress`, and reports the operation count and seed. Run it with an ASAN
+runtime when checking native memory safety.
+
 ## Benchmarks
 
 Benchmarks of parsing Google search result page (367 KB) and finding nodes using CSS selectors and XPath.
