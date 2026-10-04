@@ -297,6 +297,18 @@ index c2124a7..afc3004 100644
          return false;
      }
      root_pos = lxb_selectors_index_position(index, root);
+@@ -602,6 +694,11 @@ lxb_selectors_index_descendant(lxb_selectors_t *selectors,
+     {
+         return false;
+     }
++
++    if (key == NULL) {
++        *result = NULL;
++        return true;
++    }
+     first = 0;
+     last = key->length;
+     size_t start = node_pos + (include_node ? 0 : 1);
 @@ -648,6 +740,8 @@ lxb_selectors_init(lxb_selectors_t *selectors)
      }
  

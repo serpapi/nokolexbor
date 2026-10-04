@@ -240,9 +240,22 @@ nl_node_content_set(VALUE self, VALUE content)
   const char *c_content = StringValuePtr(content);
   size_t content_len = RSTRING_LEN(content);
   lxb_selectors_index_invalidate(node->owner_document);
-  lxb_status_t status = lxb_dom_node_text_content_set(node, (const lxb_char_t *)c_content, content_len);
-  if (status != LXB_STATUS_OK) {
-    nl_raise_lexbor_error(status);
+  if (node->type == LXB_DOM_NODE_TYPE_DOCUMENT_FRAGMENT || node->type == LXB_DOM_NODE_TYPE_ELEMENT) {
+    lxb_dom_text_t *text = lxb_dom_document_create_text_node(node->owner_document, (const lxb_char_t *)c_content, content_len);
+    if (text == NULL) {
+      nl_raise_lexbor_error(LXB_STATUS_ERROR_MEMORY_ALLOCATION);
+    }
+
+    // Ruby wrappers may still reference replaced nodes, so detach rather than destroy them.
+    while (node->first_child != NULL) {
+      lxb_dom_node_remove(node->first_child);
+    }
+    lxb_dom_node_insert_child(node, lxb_dom_interface_node(text));
+  } else {
+    lxb_status_t status = lxb_dom_node_text_content_set(node, (const lxb_char_t *)c_content, content_len);
+    if (status != LXB_STATUS_OK) {
+      nl_raise_lexbor_error(status);
+    }
   }
   return content;
 }
@@ -712,11 +725,18 @@ static VALUE
 nl_node_inner_html(int argc, VALUE *argv, VALUE self)
 {
   lxb_dom_node_t *node = nl_rb_node_unwrap(self);
+  lxb_dom_node_t *serialization_root = node;
   lexbor_str_t str = {0};
   VALUE options;
   lxb_status_t status;
   size_t indent = 0;
   rb_scan_args(argc, argv, "01", &options);
+
+  if (node->type == LXB_DOM_NODE_TYPE_ELEMENT
+      && node->local_name == LXB_TAG_TEMPLATE
+      && node->ns == LXB_NS_HTML) {
+    serialization_root = &lxb_html_interface_template(node)->content->node;
+  }
 
   if (TYPE(options) == T_HASH) {
     VALUE rb_indent = rb_hash_aref(options, ID2SYM(rb_intern("indent")));
@@ -725,9 +745,9 @@ nl_node_inner_html(int argc, VALUE *argv, VALUE self)
     }
   }
   if (indent > 0) {
-    status = lxb_html_serialize_pretty_deep_str(node, 0, 0, &str);
+    status = lxb_html_serialize_pretty_deep_str(serialization_root, 0, 0, &str);
   } else {
-    status = lxb_html_serialize_deep_str(node, &str);
+    status = lxb_html_serialize_deep_str(serialization_root, &str);
   }
   if (status != LXB_STATUS_OK) {
     if (str.data != NULL) {
@@ -1039,8 +1059,9 @@ static VALUE
 nl_node_remove(VALUE self)
 {
   lxb_dom_node_t *node = nl_rb_node_unwrap(self);
-  lxb_selectors_index_invalidate(node->owner_document);
+  lxb_dom_document_t *doc = node->owner_document;
   lxb_dom_node_remove(node);
+  lxb_selectors_index_invalidate(doc);
   return self;
 }
 
@@ -1074,6 +1095,13 @@ nl_node_equals(VALUE self, VALUE other)
   return node1 == node2 ? Qtrue : Qfalse;
 }
 
+static VALUE
+nl_node_pointer_id(VALUE self)
+{
+  lxb_dom_node_t *node = nl_rb_node_unwrap(self);
+  return ULL2NUM((unsigned long long)(uintptr_t)node);
+}
+
 const lxb_char_t *
 lxb_dom_node_name_qualified(lxb_dom_node_t *node, size_t *len)
 {
@@ -1105,7 +1133,7 @@ nl_node_parse_fragment(lxb_dom_document_t *doc, lxb_dom_element_t *element, lxb_
   lxb_selectors_index_invalidate(doc);
   lxb_html_document_t *html_doc = lxb_html_interface_document(doc);
   if (element == NULL) {
-    const lxb_char_t *tag_name = lxb_tag_name_by_id(lxb_html_document_tags(html_doc), LXB_TAG__UNDEF, &tag_name_len);
+    const lxb_char_t *tag_name = lxb_tag_name_by_id(lxb_html_document_tags(html_doc), LXB_TAG_TEMPLATE, &tag_name_len);
     if (tag_name == NULL) {
       rb_raise(rb_eRuntimeError, "Error getting tag name");
     }
@@ -1405,6 +1433,7 @@ void Init_nl_node(void)
   rb_define_method(cNokolexborNode, "[]=", nl_node_set_attr, 2);
   rb_define_method(cNokolexborNode, "remove_attr", nl_node_remove_attr, 1);
   rb_define_method(cNokolexborNode, "==", nl_node_equals, 1);
+  rb_define_method(cNokolexborNode, "pointer_id", nl_node_pointer_id, 0);
   rb_define_method(cNokolexborNode, "css_impl", nl_node_css, 1);
   rb_define_method(cNokolexborNode, "at_css_impl", nl_node_at_css, 1);
   rb_define_method(cNokolexborNode, "inner_html", nl_node_inner_html, -1);
@@ -1453,4 +1482,6 @@ void Init_nl_node(void)
   rb_define_alias(cNokolexborNode, "unlink", "remove");
   rb_define_alias(cNokolexborNode, "type", "node_type");
   rb_define_alias(cNokolexborNode, "dup", "clone");
+  rb_define_alias(cNokolexborNode, "eql?", "==");
+  rb_define_alias(cNokolexborNode, "hash", "pointer_id");
 }
