@@ -1,0 +1,638 @@
+--- a/source/lexbor/selectors/selectors.h
++++ b/source/lexbor/selectors/selectors.h
+@@ -23,12 +23,15 @@
+ 
+ typedef struct lxb_selectors_entry lxb_selectors_entry_t;
+ typedef struct lxb_selectors_entry_child lxb_selectors_entry_child_t;
++typedef struct lxb_selectors_index lxb_selectors_index_t;
+ 
+ typedef struct {
+     lexbor_dobject_t *objs;
+     lexbor_dobject_t *chld;
++    lxb_selectors_index_t *index;
+ 
+     lxb_status_t     status;
++    bool             use_index;
+ }
+ lxb_selectors_t;
+ 
+--- a/source/lexbor/selectors/selectors.c
++++ b/source/lexbor/selectors/selectors.c
+@@ -7,6 +7,8 @@
+ #include "lexbor/selectors/selectors.h"
+ 
+ #include <math.h>
++#include <stdint.h>
++#include <stdlib.h>
+ 
+ 
+ static lxb_selectors_entry_t *
+@@ -87,7 +89,539 @@
+ lxb_selectors_first_match(lxb_dom_node_t *node,
+                           lxb_css_selector_specificity_t *spec, void *ctx);
+ 
++typedef struct {
++    lxb_dom_node_t *node;
++    size_t         end;
++}
++lxb_selectors_index_node_t;
+ 
++typedef struct {
++    uint64_t hash;
++    size_t   *positions;
++    size_t   length;
++    size_t   capacity;
++}
++lxb_selectors_index_key_t;
++
++struct lxb_selectors_index {
++    lxb_dom_document_t         *document;
++    lxb_selectors_index_node_t *nodes;
++    size_t                     nodes_length;
++    size_t                     nodes_capacity;
++    size_t                     *stack;
++    size_t                     stack_capacity;
++    size_t                     *node_slots;
++    size_t                     node_slots_size;
++    lxb_selectors_index_key_t  *keys;
++    size_t                     keys_length;
++    size_t                     keys_capacity;
++    size_t                     *key_slots;
++    size_t                     key_slots_size;
++    unsigned int               kinds;
++};
++
++static lxb_status_t
++lxb_selectors_index_grow(void **data, size_t *capacity, size_t length,
++                         size_t item_size)
++{
++    size_t size = *capacity != 0 ? *capacity : 16;
++
++    while (size < length) {
++        if (size > SIZE_MAX / 2) {
++            return LXB_STATUS_ERROR_MEMORY_ALLOCATION;
++        }
++        size *= 2;
++    }
++
++    if (size > SIZE_MAX / item_size) {
++        return LXB_STATUS_ERROR_MEMORY_ALLOCATION;
++    }
++
++    if (size != *capacity) {
++        void *new_data = realloc(*data, size * item_size);
++        if (new_data == NULL) {
++            return LXB_STATUS_ERROR_MEMORY_ALLOCATION;
++        }
++        *data = new_data;
++        *capacity = size;
++    }
++
++    return LXB_STATUS_OK;
++}
++
++static uint64_t
++lxb_selectors_index_hash_bytes(unsigned int kind, const lxb_char_t *data,
++                               size_t length)
++{
++    uint64_t hash = UINT64_C(14695981039346656037) ^ kind;
++
++    for (size_t i = 0; i < length; i++) {
++        hash = (hash ^ data[i]) * UINT64_C(1099511628211);
++    }
++
++    return hash;
++}
++
++static uint64_t
++lxb_selectors_index_hash_id(unsigned int kind, uintptr_t id)
++{
++    return lxb_selectors_index_hash_bytes(kind, (const lxb_char_t *) &id,
++                                          sizeof(id));
++}
++
++static bool
++lxb_selectors_index_selector_key(lxb_dom_document_t *document,
++                                 lxb_css_selector_t *selector, uint64_t *hash)
++{
++    const lxb_dom_attr_data_t *attr;
++    lxb_tag_id_t tag;
++
++    switch (selector->type) {
++        case LXB_CSS_SELECTOR_TYPE_ELEMENT:
++            tag = lxb_tag_id_by_name(document->tags, selector->name.data,
++                                     selector->name.length);
++            *hash = lxb_selectors_index_hash_id(selector->type, tag);
++            return true;
++
++        case LXB_CSS_SELECTOR_TYPE_ATTRIBUTE:
++            attr = lxb_dom_attr_data_by_local_name(document->attrs,
++                                                    selector->name.data,
++                                                    selector->name.length);
++            if (attr == NULL) {
++                return false;
++            }
++            *hash = lxb_selectors_index_hash_id(selector->type, attr->attr_id);
++            return true;
++
++        case LXB_CSS_SELECTOR_TYPE_CLASS:
++        case LXB_CSS_SELECTOR_TYPE_ID:
++            if (selector->name.length == 0) {
++                return false;
++            }
++            *hash = lxb_selectors_index_hash_bytes(selector->type,
++                                                    selector->name.data,
++                                                    selector->name.length);
++            return true;
++
++        default:
++            return false;
++    }
++}
++
++static void
++lxb_selectors_index_destroy(lxb_selectors_index_t *index)
++{
++    if (index == NULL) {
++        return;
++    }
++
++    for (size_t i = 0; i < index->keys_length; i++) {
++        free(index->keys[i].positions);
++    }
++
++    free(index->keys);
++    free(index->key_slots);
++    free(index->nodes);
++    free(index->stack);
++    free(index->node_slots);
++    free(index);
++}
++
++static bool
++lxb_selectors_index_large_tree(lxb_dom_node_t *root)
++{
++    lxb_dom_node_t *node = root;
++    size_t count = 0;
++
++    do {
++        if (++count >= 96) {
++            return true;
++        }
++
++        if (node->first_child != NULL) {
++            node = node->first_child;
++        }
++        else {
++            while (node != root && node->next == NULL) {
++                node = node->parent;
++            }
++            if (node == root) {
++                return false;
++            }
++            node = node->next;
++        }
++    }
++    while (true);
++}
++
++static lxb_status_t
++lxb_selectors_index_want(lxb_selectors_index_t *index, uint64_t hash,
++                         unsigned int kind)
++{
++    index->kinds |= 1u << kind;
++    for (size_t i = 0; i < index->keys_length; i++) {
++        if (index->keys[i].hash == hash) {
++            return LXB_STATUS_OK;
++        }
++    }
++
++    lxb_status_t status = lxb_selectors_index_grow((void **) &index->keys,
++        &index->keys_capacity, index->keys_length + 1, sizeof(*index->keys));
++    if (status != LXB_STATUS_OK) {
++        return status;
++    }
++    lxb_selectors_index_key_t *key = &index->keys[index->keys_length++];
++    *key = (lxb_selectors_index_key_t) {.hash = hash};
++    *key = (lxb_selectors_index_key_t) {.hash = hash};
++    return LXB_STATUS_OK;
++}
++
++static lxb_status_t
++lxb_selectors_index_slots(size_t **slots, size_t *capacity, size_t count)
++{
++    size_t size = 16;
++
++    if (count > SIZE_MAX / 2) {
++        return LXB_STATUS_ERROR_MEMORY_ALLOCATION;
++    }
++    while (size < count * 2) {
++        if (size > SIZE_MAX / 2) {
++            return LXB_STATUS_ERROR_MEMORY_ALLOCATION;
++        }
++        size *= 2;
++    }
++
++    *slots = calloc(size, sizeof(**slots));
++    if (*slots == NULL) {
++        return LXB_STATUS_ERROR_MEMORY_ALLOCATION;
++    }
++    *capacity = size;
++    return LXB_STATUS_OK;
++}
++
++static lxb_selectors_index_key_t *
++lxb_selectors_index_key(lxb_selectors_index_t *index, uint64_t hash)
++{
++    size_t slot = (size_t) hash & (index->key_slots_size - 1);
++
++    while (index->key_slots[slot] != 0) {
++        lxb_selectors_index_key_t *key =
++            &index->keys[index->key_slots[slot] - 1];
++        if (key->hash == hash) {
++            return key;
++        }
++        slot = (slot + 1) & (index->key_slots_size - 1);
++    }
++
++    return NULL;
++}
++
++static lxb_status_t
++lxb_selectors_index_append(lxb_selectors_index_t *index, uint64_t hash,
++                           size_t position)
++{
++    lxb_selectors_index_key_t *key = lxb_selectors_index_key(index, hash);
++    if (key == NULL || (key->length != 0
++                        && key->positions[key->length - 1] == position))
++    {
++        return LXB_STATUS_OK;
++    }
++
++    lxb_status_t status = lxb_selectors_index_grow((void **) &key->positions,
++        &key->capacity, key->length + 1, sizeof(*key->positions));
++    if (status != LXB_STATUS_OK) {
++        return status;
++    }
++    key->positions[key->length++] = position;
++    return LXB_STATUS_OK;
++}
++
++static lxb_status_t
++lxb_selectors_index_element(lxb_selectors_index_t *index,
++                            lxb_dom_node_t *node, size_t position)
++{
++    lxb_status_t status;
++    lxb_dom_element_t *element = lxb_dom_interface_element(node);
++    lxb_dom_attr_t *attr;
++    lexbor_str_t *value;
++    const lxb_char_t *start, *end;
++
++    if (index->kinds & (1u << LXB_CSS_SELECTOR_TYPE_ELEMENT)) {
++        status = lxb_selectors_index_append(index,
++            lxb_selectors_index_hash_id(LXB_CSS_SELECTOR_TYPE_ELEMENT,
++                                         node->local_name), position);
++        if (status != LXB_STATUS_OK) {
++            return status;
++        }
++    }
++
++    if (index->kinds & (1u << LXB_CSS_SELECTOR_TYPE_ATTRIBUTE)) {
++        for (attr = element->first_attr; attr != NULL; attr = attr->next) {
++            status = lxb_selectors_index_append(index,
++                lxb_selectors_index_hash_id(LXB_CSS_SELECTOR_TYPE_ATTRIBUTE,
++                                             attr->node.local_name), position);
++            if (status != LXB_STATUS_OK) {
++                return status;
++            }
++        }
++    }
++
++    if ((index->kinds & (1u << LXB_CSS_SELECTOR_TYPE_ID))
++        && element->attr_id != NULL && element->attr_id->value != NULL)
++    {
++        value = element->attr_id->value;
++        status = lxb_selectors_index_append(index,
++            lxb_selectors_index_hash_bytes(LXB_CSS_SELECTOR_TYPE_ID,
++                                            value->data, value->length),
++                                            position);
++        if (status != LXB_STATUS_OK) {
++            return status;
++        }
++    }
++
++    if ((index->kinds & (1u << LXB_CSS_SELECTOR_TYPE_CLASS))
++        && element->attr_class != NULL && element->attr_class->value != NULL
++        && element->attr_class->value->length != 0)
++    {
++        value = element->attr_class->value;
++        start = value->data;
++        end = start + value->length;
++        for (const lxb_char_t *cursor = start; cursor <= end; cursor++) {
++            if (cursor != end
++                && !lexbor_utils_whitespace(*cursor, ==, ||))
++            {
++                continue;
++            }
++            if (cursor != start) {
++                status = lxb_selectors_index_append(index,
++                    lxb_selectors_index_hash_bytes(LXB_CSS_SELECTOR_TYPE_CLASS,
++                                                    start, cursor - start),
++                                                    position);
++                if (status != LXB_STATUS_OK) {
++                    return status;
++                }
++            }
++            start = cursor + 1;
++        }
++    }
++
++    return LXB_STATUS_OK;
++}
++
++static size_t
++lxb_selectors_index_node_slot(lxb_dom_node_t *node, size_t size)
++{
++    uint64_t value = (uintptr_t) node >> 4;
++    value = (value ^ (value >> 33)) * UINT64_C(0xff51afd7ed558ccd);
++    return (size_t) value & (size - 1);
++}
++
++static size_t
++lxb_selectors_index_position(lxb_selectors_index_t *index,
++                             lxb_dom_node_t *node)
++{
++    size_t slot = lxb_selectors_index_node_slot(node, index->node_slots_size);
++
++    while (index->node_slots[slot] != 0) {
++        size_t position = index->node_slots[slot] - 1;
++        if (index->nodes[position].node == node) {
++            return position;
++        }
++        slot = (slot + 1) & (index->node_slots_size - 1);
++    }
++
++    return SIZE_MAX;
++}
++
++static lxb_status_t
++lxb_selectors_index_create(lxb_dom_node_t *root,
++                           lxb_css_selector_list_t *list,
++                           lxb_selectors_index_t **result)
++{
++    lxb_status_t status;
++    lxb_selectors_index_t *index;
++    lxb_dom_node_t *node;
++    size_t depth = 0, lists = 0;
++    uint64_t hash;
++
++    *result = NULL;
++    for (lxb_css_selector_list_t *item = list; item != NULL; item = item->next) {
++        lists++;
++    }
++    if (lists < 3 || root->owner_document == NULL
++        || !lxb_selectors_index_large_tree(root))
++    {
++        return LXB_STATUS_OK;
++    }
++
++    index = calloc(1, sizeof(*index));
++    if (index == NULL) {
++        return LXB_STATUS_ERROR_MEMORY_ALLOCATION;
++    }
++    index->document = root->owner_document;
++
++    for (lxb_css_selector_list_t *item = list; item != NULL; item = item->next) {
++        for (lxb_css_selector_t *sel = item->first; sel != NULL; sel = sel->next) {
++            if (sel->combinator != LXB_CSS_SELECTOR_COMBINATOR_DESCENDANT
++                || !lxb_selectors_index_selector_key(index->document, sel, &hash))
++            {
++                continue;
++            }
++
++            status = lxb_selectors_index_want(index, hash, sel->type);
++            if (status != LXB_STATUS_OK) {
++                goto failed;
++            }
++        }
++    }
++
++    if (index->keys_length < 2) {
++        lxb_selectors_index_destroy(index);
++        return LXB_STATUS_OK;
++    }
++
++    status = lxb_selectors_index_slots(&index->key_slots,
++                                        &index->key_slots_size,
++                                        index->keys_length);
++    if (status != LXB_STATUS_OK) {
++        goto failed;
++    }
++    for (size_t i = 0; i < index->keys_length; i++) {
++        size_t slot = (size_t) index->keys[i].hash
++            & (index->key_slots_size - 1);
++        while (index->key_slots[slot] != 0) {
++            slot = (slot + 1) & (index->key_slots_size - 1);
++        }
++        index->key_slots[slot] = i + 1;
++    }
++
++    node = root;
++    do {
++        if (node->owner_document != index->document) {
++            lxb_selectors_index_destroy(index);
++            return LXB_STATUS_OK;
++        }
++
++        status = lxb_selectors_index_grow((void **) &index->nodes,
++            &index->nodes_capacity, index->nodes_length + 1,
++            sizeof(*index->nodes));
++        if (status != LXB_STATUS_OK) {
++            goto failed;
++        }
++        status = lxb_selectors_index_grow((void **) &index->stack,
++            &index->stack_capacity, depth + 1, sizeof(*index->stack));
++        if (status != LXB_STATUS_OK) {
++            goto failed;
++        }
++
++        size_t position = index->nodes_length++;
++        index->nodes[position] = (lxb_selectors_index_node_t) {.node = node};
++        index->stack[depth++] = position;
++        if (node->type == LXB_DOM_NODE_TYPE_ELEMENT) {
++            status = lxb_selectors_index_element(index, node, position);
++            if (status != LXB_STATUS_OK) {
++                goto failed;
++            }
++        }
++
++        if (node->first_child != NULL) {
++            node = node->first_child;
++        }
++        else {
++            while (node != root && node->next == NULL) {
++                index->nodes[index->stack[--depth]].end = index->nodes_length;
++                node = node->parent;
++            }
++            index->nodes[index->stack[--depth]].end = index->nodes_length;
++            if (node == root) {
++                break;
++            }
++            node = node->next;
++        }
++    }
++    while (true);
++
++    status = lxb_selectors_index_slots(&index->node_slots,
++                                        &index->node_slots_size,
++                                        index->nodes_length);
++    if (status != LXB_STATUS_OK) {
++        goto failed;
++    }
++    for (size_t i = 0; i < index->nodes_length; i++) {
++        size_t slot = lxb_selectors_index_node_slot(index->nodes[i].node,
++                                                    index->node_slots_size);
++        while (index->node_slots[slot] != 0) {
++            slot = (slot + 1) & (index->node_slots_size - 1);
++        }
++        index->node_slots[slot] = i + 1;
++    }
++
++    *result = index;
++    return LXB_STATUS_OK;
++
++failed:
++    lxb_selectors_index_destroy(index);
++    return status;
++}
++
++static bool
++lxb_selectors_index_descendant(lxb_selectors_t *selectors,
++                               lxb_selectors_entry_t *entry,
++                               lxb_css_selector_t *selector,
++                               lxb_dom_node_t *root, lxb_dom_node_t *node,
++                               bool include_node, lxb_dom_node_t **result)
++{
++    lxb_selectors_index_t *index = selectors->index;
++    lxb_selectors_index_key_t *key;
++    size_t root_pos, node_pos, first, last, middle;
++    uint64_t hash;
++
++    if (index == NULL
++        || !lxb_selectors_index_selector_key(index->document, selector, &hash))
++    {
++        return false;
++    }
++    key = lxb_selectors_index_key(index, hash);
++    if (key == NULL) {
++        return false;
++    }
++
++    root_pos = lxb_selectors_index_position(index, root);
++    node_pos = lxb_selectors_index_position(index, node);
++    if (root_pos == SIZE_MAX || node_pos == SIZE_MAX
++        || node_pos < root_pos || node_pos >= index->nodes[root_pos].end)
++    {
++        return false;
++    }
++
++    first = 0;
++    last = key->length;
++    size_t start = node_pos + (include_node ? 0 : 1);
++    while (first < last) {
++        middle = first + (last - first) / 2;
++        if (key->positions[middle] < start) {
++            first = middle + 1;
++        }
++        else {
++            last = middle;
++        }
++    }
++
++    *result = NULL;
++    for (; first < key->length
++           && key->positions[first] < index->nodes[root_pos].end; first++)
++    {
++        lxb_dom_node_t *candidate = index->nodes[key->positions[first]].node;
++        if (lxb_selectors_match(selectors, entry, selector, candidate)) {
++            *result = candidate;
++            break;
++        }
++    }
++
++    return true;
++}
++
++
+ lxb_selectors_t *
+ lxb_selectors_create(void)
+ {
+@@ -103,6 +637,8 @@
+         return LXB_STATUS_ERROR_INCOMPLETE_OBJECT;
+     }
+ 
++    selectors->index = NULL;
++    selectors->use_index = false;
+     selectors->objs = lexbor_dobject_create();
+     status = lexbor_dobject_init(selectors->objs,
+                                  128, sizeof(lxb_selectors_entry_t));
+@@ -123,6 +659,8 @@
+ void
+ lxb_selectors_clean(lxb_selectors_t *selectors)
+ {
++    lxb_selectors_index_destroy(selectors->index);
++    selectors->index = NULL;
+     lexbor_dobject_clean(selectors->objs);
+     lexbor_dobject_clean(selectors->chld);
+ }
+@@ -134,6 +672,7 @@
+         return NULL;
+     }
+ 
++    lxb_selectors_index_destroy(selectors->index);
+     selectors->objs = lexbor_dobject_destroy(selectors->objs, true);
+     selectors->chld = lexbor_dobject_destroy(selectors->chld, true);
+ 
+@@ -150,6 +689,13 @@
+                          lxb_css_selector_t *selector, lxb_dom_node_t *root,
+                          lxb_dom_node_t *node)
+ {
++    lxb_dom_node_t *indexed;
++    if (lxb_selectors_index_descendant(selectors, entry, selector, root, node,
++                                       true, &indexed))
++    {
++        return indexed;
++    }
++
+     do {
+         if (node->type == LXB_DOM_NODE_TYPE_ELEMENT &&
+             lxb_selectors_match(selectors, entry, selector, node))
+@@ -186,6 +732,13 @@
+                               lxb_css_selector_t *selector, lxb_dom_node_t *root,
+                               lxb_dom_node_t *node)
+ {
++    lxb_dom_node_t *indexed;
++    if (lxb_selectors_index_descendant(selectors, entry, selector, root, node,
++                                       false, &indexed))
++    {
++        return indexed;
++    }
++
+     do {
+         if (node->first_child != NULL) {
+             node = node->first_child;
+@@ -352,6 +905,14 @@
+                    lxb_css_selector_list_t *list, lxb_selectors_cb_f cb, void *ctx)
+ {
+     lxb_selectors_entry_t *child;
++    lxb_status_t status;
++
++    if (selectors->use_index) {
++        status = lxb_selectors_index_create(root, list, &selectors->index);
++        if (status != LXB_STATUS_OK) {
++            return status;
++        }
++    }
+ 
+     while (list != NULL) {
+         child = lxb_selectors_next_by_selector(selectors, root, NULL,
