@@ -475,6 +475,15 @@ nl_node_find_native(void *data)
       status = LXB_STATUS_ERROR_MEMORY_ALLOCATION;
       goto cleanup;
     }
+    lexbor_array_t *existing = (lexbor_array_t *)args->ctx;
+    if (existing->length != 0) {
+      status = lexbor_array_init(shadow_baseline, existing->length);
+      if (status != LXB_STATUS_OK) {
+        goto cleanup;
+      }
+      memcpy(shadow_baseline->list, existing->list, sizeof(void *) * existing->length);
+      shadow_baseline->length = existing->length;
+    }
     shadow = (nl_selector_shadow_t) {
       .matches = shadow_matches, .baseline = shadow_baseline,
       .cb = args->cb, .ctx = args->ctx
@@ -505,7 +514,8 @@ nl_node_find_native(void *data)
     if (shadow.position != shadow_matches->length
         || actual->length != shadow_baseline->length)
     {
-      fprintf(stderr, "CSS selector result count differs\n");
+      fprintf(stderr, "CSS selector result count differs: raw %zu/%zu, unique %zu/%zu\n",
+              shadow_matches->length, shadow.position, shadow_baseline->length, actual->length);
       abort();
     }
     for (size_t i = 0; i < actual->length; i++) {

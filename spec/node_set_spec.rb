@@ -70,11 +70,20 @@ describe Nokolexbor::NodeSet do
       nodes = doc.css("section")
       hit = doc.at_css("#hit")
 
-      _(nodes.css("section span").to_a).must_equal [hit]
-      _(nodes.at_css("section span")).must_equal hit
-      _(nodes.css("> span").to_a).must_equal [hit]
+      previous_index = ENV["NOKOLEXBOR_SELECTOR_INDEX"]
+      previous_shadow = ENV["NOKOLEXBOR_SELECTOR_SHADOW"]
+      %w[0 1].each do |mode|
+        ENV["NOKOLEXBOR_SELECTOR_INDEX"] = mode
+        mode == "1" ? ENV["NOKOLEXBOR_SELECTOR_SHADOW"] = "1" : ENV.delete("NOKOLEXBOR_SELECTOR_SHADOW")
+        _(nodes.css("section span").to_a).must_equal [hit]
+        _(nodes.at_css("section span")).must_equal hit
+        _(nodes.css("> span").to_a).must_equal [hit]
+      end
       _(hit.parent).must_equal doc.at_css("#inner")
       _(doc.css("section").length).must_equal 2
+    ensure
+      previous_index ? ENV["NOKOLEXBOR_SELECTOR_INDEX"] = previous_index : ENV.delete("NOKOLEXBOR_SELECTOR_INDEX")
+      previous_shadow ? ENV["NOKOLEXBOR_SELECTOR_SHADOW"] = previous_shadow : ENV.delete("NOKOLEXBOR_SELECTOR_SHADOW")
     end
   end
 
