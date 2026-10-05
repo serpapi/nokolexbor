@@ -157,7 +157,7 @@ index c2124a7..afc3004 100644
      lxb_status_t status = lxb_selectors_index_grow((void **) &key->positions,
 -        &key->capacity, key->length + 1, sizeof(*key->positions));
 +        &key->capacity, key->length + 1, sizeof(*key->positions),
-+        index->all_keys ? 4 : 16);
++        index->all_keys ? 1 : 16);
      if (status != LXB_STATUS_OK) {
          return status;
      }
