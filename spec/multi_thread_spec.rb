@@ -69,4 +69,35 @@ describe "Multi threading" do
       _(result.text).must_equal 'text', "Iteration #{i}: expected 'text' after error with '#{sel}', got '#{result.text}'"
     end
   end
+
+  it 'keeps documents valid while parsers are released between threaded parses and GC' do
+    num_threads = 16
+    iterations = 100
+    errors = Queue.new
+    barrier = Queue.new
+
+    workers = num_threads.times.map do |i|
+      Thread.new do
+        barrier.pop
+        iterations.times do |j|
+          token = "thread-#{i}-parse-#{j}"
+          doc = Nokolexbor::HTML("<main><article><h1>#{token}</h1><p class='body'>#{token.reverse}</p></article></main>")
+          GC.start if (j % 10).zero?
+
+          title = doc.at_css('h1')
+          body = doc.at_css('p.body')
+          unless title && title.text == token && body && body.text == token.reverse
+            errors << "Thread #{i} iter #{j}: parsed #{title&.text.inspect} / #{body&.text.inspect}, expected #{token.inspect}"
+          end
+        end
+      end
+    end
+
+    num_threads.times { barrier << true }
+    workers.each(&:join)
+
+    collected = []
+    collected << errors.pop until errors.empty?
+    assert_equal 0, collected.size, collected.first(5).join("\n")
+  end
 end
