@@ -131,7 +131,7 @@ INSTALL_DIR = File.join(LEXBOR_DIR, 'dist')
 
 Dir.chdir(LEXBOR_DIR) do
   # Patch lexbor
-  Dir['../../patches/*-lexbor-*.patch'].each do |patch_file|
+  Dir['../../patches/*-lexbor-*.patch'].sort.each do |patch_file|
     apply_patch(patch_file, '.')
   end
 
