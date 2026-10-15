@@ -6,8 +6,8 @@
  */
 #include "nokolexbor.h"
 #include <ruby/encoding.h>
-#include <string.h>
 #include <stdint.h>
+#include <string.h>
 
 static VALUE mNokolexborJSUtils;
 
@@ -82,57 +82,71 @@ nl_unescape_one(const unsigned char *p, const unsigned char *end, unsigned char 
   long value;
 
   switch (c) {
-    case 'b': *(*out)++ = '\b'; return p + 1;
-    case 'f': *(*out)++ = '\f'; return p + 1;
-    case 'n': *(*out)++ = '\n'; return p + 1;
-    case 'r': *(*out)++ = '\r'; return p + 1;
-    case 't': *(*out)++ = '\t'; return p + 1;
-    case 'v': *(*out)++ = '\v'; return p + 1;
-    case '\n': return p + 1;
-    case '\r': return (p + 1 < end && p[1] == '\n') ? p + 2 : p + 1;
-    case 'x':
-      value = nl_hex_value(p + 1, end, 2);
-      if (value < 0) {
-        return NULL;
-      }
-      *out = nl_put_utf8(*out, (uint32_t)value);
-      return p + 3;
-    case 'u':
-      if (p + 1 < end && p[1] == '{') {
-        const unsigned char *q = p + 2;
-        uint32_t cp = 0;
-        while (q < end && nl_hex_digit(*q) >= 0) {
-          cp = (cp << 4) | (uint32_t)nl_hex_digit(*q);
-          if (cp > 0x10FFFF) {
-            return NULL;
-          }
-          q++;
-        }
-        if (q == p + 2 || q >= end || *q != '}') {
+  case 'b':
+    *(*out)++ = '\b';
+    return p + 1;
+  case 'f':
+    *(*out)++ = '\f';
+    return p + 1;
+  case 'n':
+    *(*out)++ = '\n';
+    return p + 1;
+  case 'r':
+    *(*out)++ = '\r';
+    return p + 1;
+  case 't':
+    *(*out)++ = '\t';
+    return p + 1;
+  case 'v':
+    *(*out)++ = '\v';
+    return p + 1;
+  case '\n':
+    return p + 1;
+  case '\r':
+    return (p + 1 < end && p[1] == '\n') ? p + 2 : p + 1;
+  case 'x':
+    value = nl_hex_value(p + 1, end, 2);
+    if (value < 0) {
+      return NULL;
+    }
+    *out = nl_put_utf8(*out, (uint32_t)value);
+    return p + 3;
+  case 'u':
+    if (p + 1 < end && p[1] == '{') {
+      const unsigned char *q = p + 2;
+      uint32_t cp = 0;
+      while (q < end && nl_hex_digit(*q) >= 0) {
+        cp = (cp << 4) | (uint32_t)nl_hex_digit(*q);
+        if (cp > 0x10FFFF) {
           return NULL;
         }
-        *out = nl_put_utf8(*out, cp);
-        return q + 1;
+        q++;
       }
-      value = nl_hex_value(p + 1, end, 4);
-      if (value < 0) {
+      if (q == p + 2 || q >= end || *q != '}') {
         return NULL;
       }
-      if (value >= 0xD800 && value <= 0xDBFF && end - p >= 11 && p[5] == '\\' && p[6] == 'u') {
-        long low = nl_hex_value(p + 7, end, 4);
-        if (low >= 0xDC00 && low <= 0xDFFF) {
-          *out = nl_put_utf8(*out, (uint32_t)(0x10000 + ((value - 0xD800) << 10) + (low - 0xDC00)));
-          return p + 11;
-        }
+      *out = nl_put_utf8(*out, cp);
+      return q + 1;
+    }
+    value = nl_hex_value(p + 1, end, 4);
+    if (value < 0) {
+      return NULL;
+    }
+    if (value >= 0xD800 && value <= 0xDBFF && end - p >= 11 && p[5] == '\\' && p[6] == 'u') {
+      long low = nl_hex_value(p + 7, end, 4);
+      if (low >= 0xDC00 && low <= 0xDFFF) {
+        *out = nl_put_utf8(*out, (uint32_t)(0x10000 + ((value - 0xD800) << 10) + (low - 0xDC00)));
+        return p + 11;
       }
-      *out = nl_put_utf8(*out, (uint32_t)value);
-      return p + 5;
-    case '8':
-    case '9':
-      *(*out)++ = c;
-      return p + 1;
-    default:
-      break;
+    }
+    *out = nl_put_utf8(*out, (uint32_t)value);
+    return p + 5;
+  case '8':
+  case '9':
+    *(*out)++ = c;
+    return p + 1;
+  default:
+    break;
   }
 
   if (c >= '0' && c <= '7') {
