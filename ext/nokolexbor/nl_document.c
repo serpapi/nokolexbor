@@ -145,6 +145,14 @@ free_html_parser(void *data)
   }
 }
 
+#ifdef NOKOLEXBOR_SELECTOR_CHECK
+static VALUE
+nl_document_selector_index_builds(VALUE self)
+{
+  return ULL2NUM((unsigned long long)nl_rb_document_unwrap(self)->selector_index_builds);
+}
+#endif
+
 void Init_nl_document(void)
 {
 #ifdef HAVE_PTHREAD_H
@@ -157,4 +165,8 @@ void Init_nl_document(void)
   rb_define_method(cNokolexborDocument, "title", nl_document_get_title, 0);
   rb_define_method(cNokolexborDocument, "title=", nl_document_set_title, 1);
   rb_define_method(cNokolexborDocument, "root", nl_document_root, 0);
+#ifdef NOKOLEXBOR_SELECTOR_CHECK
+  rb_define_const(mNokolexbor, "SELECTOR_CHECK", Qtrue);
+  rb_define_method(cNokolexborDocument, "selector_index_builds", nl_document_selector_index_builds, 0);
+#endif
 }

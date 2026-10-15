@@ -1,6 +1,8 @@
 require "json"
 require "nokolexbor"
 
+abort "build Nokolexbor with NOKOLEXBOR_SELECTOR_CHECK=1 (see README); it checks every search against the plain traversal" unless defined?(Nokolexbor::SELECTOR_CHECK)
+
 selector_path = ENV.fetch("SELECTOR_CORPUS")
 selectors = JSON.parse(File.read(selector_path))
 abort "selector corpus must contain CSS strings" unless selectors.is_a?(Array) && !selectors.empty? && selectors.all? { |s| s.is_a?(String) }
@@ -30,8 +32,6 @@ def new_document(random, classes)
 end
 
 def mutate(document, random, classes, serial)
-  ENV["NOKOLEXBOR_SELECTOR_INDEX"] = "1"
-  ENV.delete("NOKOLEXBOR_SELECTOR_SHADOW")
   root = document.at_css("#fuzz-mutable")
   raise "lost the mutable root" unless root
 
@@ -83,19 +83,11 @@ def mutate(document, random, classes, serial)
   end
 end
 
-def result_for(scope, selector, method, indexed)
-  ENV["NOKOLEXBOR_SELECTOR_INDEX"] = indexed ? "1" : "0"
-  if indexed
-    ENV["NOKOLEXBOR_SELECTOR_SHADOW"] = "1"
-  else
-    ENV.delete("NOKOLEXBOR_SELECTOR_SHADOW")
-  end
-
-  result = scope.public_send(method, selector)
-  nodes = result.nil? ? [] : (result.is_a?(Nokolexbor::NodeSet) ? result.to_a : [result])
-  [nil, nodes]
+def result_for(scope, selector, method)
+  scope.public_send(method, selector)
+  nil
 rescue Nokolexbor::Lexbor::UnexpectedDataError => error
-  [error.class, []]
+  error.class
 end
 
 def query_scope(document, random)
@@ -136,21 +128,14 @@ begin
       mutations[kind] += 1
       operations += 1
     else
-      ENV["NOKOLEXBOR_SELECTOR_INDEX"] = "1"
-      ENV.delete("NOKOLEXBOR_SELECTOR_SHADOW")
       scope = query_scope(document, random)
       selector_index = random.rand(selectors.length)
       sampled_selectors[selector_index] = true
       nodeset_comparisons += 1 if scope.is_a?(Nokolexbor::NodeSet)
       overlap_comparisons += 1 if scope.is_a?(Nokolexbor::NodeSet) && scope.length == 2
       method = random.rand(2).zero? ? :css : :at_css
-      original = result_for(scope, selectors[selector_index], method, false)
-      indexed = result_for(scope, selectors[selector_index], method, true)
-      unless original[0] == indexed[0] && original[1].length == indexed[1].length &&
-             original[1].zip(indexed[1]).all? { |before, after| before == after }
-        raise "mismatch seed=#{seed} operation=#{operations} selector_index=#{selector_index} method=#{method} scope=#{scope.class}"
-      end
-      invalid += 1 if original[0]
+      # The check build aborts inside the call if the index and the plain traversal disagree.
+      invalid += 1 if result_for(scope, selectors[selector_index], method)
       comparisons += 1
       operations += 2
     end
@@ -158,8 +143,6 @@ begin
     if operations >= (resets + 1) * 5000
       document = nil
       scope = nil
-      original = nil
-      indexed = nil
       GC.stress = false
       GC.start
       document = new_document(random, classes)
@@ -172,8 +155,6 @@ begin
   end
 ensure
   GC.stress = false
-  ENV.delete("NOKOLEXBOR_SELECTOR_SHADOW")
-  ENV.delete("NOKOLEXBOR_SELECTOR_INDEX")
 end
 
 puts JSON.generate(seed: seed, operations: operations, comparisons: comparisons,

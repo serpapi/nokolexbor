@@ -1,8 +1,10 @@
 #include "nokolexbor.h"
 #include "config.h"
 #include "libxml/tree.h"
+#ifdef NOKOLEXBOR_SELECTOR_CHECK
 #include <stdio.h>
 #include <stdlib.h>
+#endif
 
 #ifdef HAVE_PTHREAD_H
 #include <pthread.h>
@@ -394,11 +396,12 @@ typedef struct {
   lxb_selectors_cb_f cb;
   void *ctx;
   lxb_status_t status;
-  bool use_index;
-  bool shadow;
   lxb_dom_document_t *document;
 } nl_node_find_args_t;
 
+#ifdef NOKOLEXBOR_SELECTOR_CHECK
+// Test builds only: every search also runs Lexbor's plain traversal and
+// aborts if the indexed match sequence differs from it.
 typedef struct {
   lexbor_array_t *matches;
   lexbor_array_t *baseline;
@@ -431,6 +434,7 @@ nl_selector_shadow_compare(lxb_dom_node_t *node, lxb_css_selector_specificity_t 
   shadow->position++;
   return shadow->cb(node, spec, shadow->ctx);
 }
+#endif
 
 static void *
 nl_node_find_native(void *data)
@@ -445,7 +449,9 @@ nl_node_find_native(void *data)
   lxb_selectors_t *selectors = NULL;
 #endif
   lxb_css_selector_list_t *list = NULL;
+#ifdef NOKOLEXBOR_SELECTOR_CHECK
   lexbor_array_t *shadow_matches = NULL, *shadow_baseline = NULL;
+#endif
 
   /* CSS parser. */
   if (css_parser == NULL) {
@@ -480,8 +486,9 @@ nl_node_find_native(void *data)
   }
 
   /* Find HTML nodes by CSS Selectors. */
+#ifdef NOKOLEXBOR_SELECTOR_CHECK
   nl_selector_shadow_t shadow = {0};
-  if (args->shadow) {
+  {
     shadow_matches = lexbor_array_create();
     shadow_baseline = lexbor_array_create();
     if (shadow_matches == NULL || shadow_baseline == NULL) {
@@ -510,19 +517,13 @@ nl_node_find_native(void *data)
     }
   }
 
-  selectors->use_index = args->use_index || args->shadow;
-  status = lxb_selectors_find(selectors, args->node, list,
-                              args->shadow ? nl_selector_shadow_compare : args->cb,
-                              args->shadow ? (void *)&shadow : args->ctx);
+  selectors->use_index = true;
+  status = lxb_selectors_find(selectors, args->node, list, nl_selector_shadow_compare, &shadow);
   if (status != LXB_STATUS_OK) {
-    if (args->shadow) {
-      fprintf(stderr, "CSS selector status differs in shadow mode (%d)\n", status);
-      abort();
-    }
-    // An error returned from a callback leaves the matcher's entries behind.
-    lxb_selectors_clean(selectors);
+    fprintf(stderr, "CSS selector status differs between indexed and plain matching (%d)\n", status);
+    abort();
   }
-  if (args->shadow && status == LXB_STATUS_OK) {
+  {
     lexbor_array_t *actual = (lexbor_array_t *)args->ctx;
     if (shadow.position != shadow_matches->length
         || actual->length != shadow_baseline->length)
@@ -538,14 +539,24 @@ nl_node_find_native(void *data)
       }
     }
   }
+#else
+  selectors->use_index = true;
+  status = lxb_selectors_find(selectors, args->node, list, args->cb, args->ctx);
+  if (status != LXB_STATUS_OK) {
+    // An error returned from a callback leaves the matcher's entries behind.
+    lxb_selectors_clean(selectors);
+  }
+#endif
 
 cleanup:
+#ifdef NOKOLEXBOR_SELECTOR_CHECK
   if (shadow_matches != NULL) {
     lexbor_array_destroy(shadow_matches, true);
   }
   if (shadow_baseline != NULL) {
     lexbor_array_destroy(shadow_baseline, true);
   }
+#endif
 #ifndef HAVE_PTHREAD_H
   /* Destroy Selectors object. */
   (void)lxb_selectors_destroy(selectors, true);
@@ -584,9 +595,6 @@ nl_node_find(VALUE self, VALUE selector, lxb_selectors_cb_f cb, void *ctx)
   StringValue(selector);
   VALUE rb_document = nl_rb_document_get(self);
   lxb_dom_document_t *document = nl_rb_document_unwrap(rb_document);
-  size_t builds_before = document->selector_index_builds;
-  const char *index_env = getenv("NOKOLEXBOR_SELECTOR_INDEX");
-  const char *shadow_env = getenv("NOKOLEXBOR_SELECTOR_SHADOW");
 
   // Matching keeps the GVL: a page makes ~2,000 calls of ~20 us each, and
   // handing the GVL over per call cost more CPU than it freed.
@@ -597,19 +605,11 @@ nl_node_find(VALUE self, VALUE selector, lxb_selectors_cb_f cb, void *ctx)
   args.cb = cb;
   args.ctx = ctx;
   args.status = LXB_STATUS_OK;
-  args.use_index = index_env == NULL || strcmp(index_env, "0") != 0;
-  args.shadow = shadow_env != NULL && strcmp(shadow_env, "1") == 0;
   args.document = document;
   nl_node_find_native(&args);
 
   RB_GC_GUARD(self);
   RB_GC_GUARD(selector);
-  if (document->selector_index_builds != builds_before
-      && getenv("NOKOLEXBOR_SELECTOR_INDEX_STATS") != NULL)
-  {
-    rb_iv_set(rb_document, "@selector_index_rebuilds",
-              ULL2NUM((unsigned long long)document->selector_index_builds));
-  }
   RB_GC_GUARD(rb_document);
   return args.status;
 }

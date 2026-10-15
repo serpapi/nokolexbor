@@ -74,6 +74,11 @@ if ENV['NOKOLEXBOR_ASAN']
   lexbor_cmake_flags << "-DLEXBOR_BUILD_WITH_ASAN=ON"
 end
 
+# Test builds: every CSS search also runs the plain traversal and aborts on any difference.
+if ENV['NOKOLEXBOR_SELECTOR_CHECK'] || ENV['NOKOLEXBOR_ASAN']
+  $CFLAGS << " -DNOKOLEXBOR_SELECTOR_CHECK"
+end
+
 append_cflags("-DLEXBOR_STATIC")
 append_cflags("-DLIBXML_STATIC")
 

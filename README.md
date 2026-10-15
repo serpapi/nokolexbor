@@ -82,10 +82,7 @@ end
   * Performance is much higher than libxml2 based methods.
   * Large documents build a tag, class, ID and attribute candidate index on
     the first document-level search and reuse it until the DOM changes. Large
-    detached subtrees can still use a temporary per-call index. Set
-    `NOKOLEXBOR_SELECTOR_INDEX=0` for the original traversal, or
-    `NOKOLEXBOR_SELECTOR_SHADOW=1` to compare both match sequences and abort
-    on a mismatch.
+    detached subtrees can still use a temporary per-call index.
 * `xpath` and `at_xpath`
   * Based on libxml2.
   * Only accepts XPath syntax.
@@ -112,11 +109,21 @@ end
 
 ## Selector safety checks
 
-`SELECTOR_CORPUS=/path/to/selectors.json ruby -Ilib test/selector_index_mutation_fuzz.rb 100000 20261005`
-accepts a JSON array of real CSS selector strings. It compares indexed and
-original `css`/`at_css` results across random DOM edits, periodically enables
-`GC.stress`, and reports the operation count and seed. Run it with an ASAN
-runtime when checking native memory safety.
+A build with `NOKOLEXBOR_SELECTOR_CHECK=1` (or `NOKOLEXBOR_ASAN=1`) set at
+compile time runs Lexbor's plain traversal next to the index on every `css` and
+`at_css` call and aborts on any difference in matched nodes or their order.
+Release builds don't contain this check.
+
+```sh
+NOKOLEXBOR_SELECTOR_CHECK=1 bundle exec rake clean compile
+bundle exec rake test
+SELECTOR_CORPUS=/path/to/selectors.json bundle exec ruby -Ilib test/selector_index_mutation_fuzz.rb 100000 20261005
+```
+
+The fuzzer takes a JSON array of real CSS selector strings, runs `css` and
+`at_css` across random DOM edits, periodically enables `GC.stress`, and
+reports the operation count and seed. Run it with an ASAN runtime when checking
+native memory safety.
 
 ## Benchmarks
 
