@@ -28,17 +28,13 @@ nl_document_parse_native(VALUE self, VALUE rb_html)
   const char *html_c = StringValuePtr(rb_html);
   size_t html_len = RSTRING_LEN(rb_html);
 
-  lxb_html_parser_t *html_parser = NULL;
-  if (html_parser == NULL) {
-    html_parser = lxb_html_parser_create();
-    lxb_status_t status = lxb_html_parser_init(html_parser);
-    if (status != LXB_STATUS_OK) {
-      lxb_html_parser_destroy(html_parser);
-      html_parser = NULL;
-      nl_raise_lexbor_error(status);
-    }
-    html_parser->tree->scripting = true;
+  lxb_html_parser_t *html_parser = lxb_html_parser_create();
+  lxb_status_t status = lxb_html_parser_init(html_parser);
+  if (status != LXB_STATUS_OK) {
+    lxb_html_parser_destroy(html_parser);
+    nl_raise_lexbor_error(status);
   }
+  html_parser->tree->scripting = true;
 
   lxb_html_document_t *document = lxb_html_parse(html_parser, (const lxb_char_t *)html_c, html_len);
 
