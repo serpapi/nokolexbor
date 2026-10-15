@@ -358,6 +358,33 @@ nl_node_set_difference(VALUE self, VALUE other)
   return nl_rb_node_set_create_with_data(new_array, nl_rb_document_get(self));
 }
 
+// The temporary fragment in nl_node_set_find would reparent a member out of
+// another member that contains it.
+static bool
+nl_node_set_has_nested_members(lexbor_array_t *array)
+{
+  if (array->length < 2) {
+    return false;
+  }
+
+  bool nested = false;
+  st_table *members = st_init_numtable_with_size(array->length);
+  for (size_t i = 0; i < array->length; i++) {
+    st_insert(members, (st_data_t)array->list[i], 0);
+  }
+  for (size_t i = 0; i < array->length && !nested; i++) {
+    lxb_dom_node_t *node = (lxb_dom_node_t *)array->list[i];
+    for (lxb_dom_node_t *parent = node->parent; parent != NULL; parent = parent->parent) {
+      if (st_lookup(members, (st_data_t)parent, NULL)) {
+        nested = true;
+        break;
+      }
+    }
+  }
+  st_free_table(members);
+  return nested;
+}
+
 static lxb_status_t
 nl_node_set_find(VALUE self, VALUE selector, lxb_selectors_cb_f cb, void *ctx)
 {
@@ -365,12 +392,23 @@ nl_node_set_find(VALUE self, VALUE selector, lxb_selectors_cb_f cb, void *ctx)
   if (doc == NULL) {
     rb_raise(rb_eRuntimeError, "Error getting document");
   }
+  lexbor_array_t *array = nl_rb_node_set_unwrap(self);
+  if (nl_node_set_has_nested_members(array)) {
+    for (size_t i = 0; i < array->length; i++) {
+      VALUE member = nl_rb_node_create((lxb_dom_node_t *)array->list[i], nl_rb_document_get(self));
+      lxb_status_t status = nl_node_find(member, selector, cb, ctx);
+      if (status != LXB_STATUS_OK) {
+        return status;
+      }
+    }
+    return LXB_STATUS_OK;
+  }
+
   // Wrap direct children with a temporary fragment so that they can be searched
   lxb_dom_document_fragment_t *frag = lxb_dom_document_fragment_interface_create(doc);
   if (frag == NULL) {
     rb_raise(rb_eRuntimeError, "Error creating document fragment");
   }
-  lexbor_array_t *array = nl_rb_node_set_unwrap(self);
 
   lexbor_array_t *backup_array = lexbor_array_create();
   if (array->length > 0) {
