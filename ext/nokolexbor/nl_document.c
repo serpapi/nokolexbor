@@ -13,6 +13,9 @@ pthread_key_t p_key_html_parser;
 static void
 free_nl_document(lxb_html_document_t *document)
 {
+  if (document != NULL) {
+    lxb_selectors_index_invalidate(&document->dom_document);
+  }
   lxb_html_document_destroy(document);
 }
 
@@ -115,7 +118,9 @@ nl_document_set_title(VALUE self, VALUE rb_title)
 {
   const char *c_title = StringValuePtr(rb_title);
   size_t len = RSTRING_LEN(rb_title);
-  lxb_html_document_title_set((lxb_html_document_t *)nl_rb_document_unwrap(self), (const lxb_char_t *)c_title, len);
+  lxb_dom_document_t *doc = nl_rb_document_unwrap(self);
+  lxb_selectors_index_invalidate(doc);
+  lxb_html_document_title_set((lxb_html_document_t *)doc, (const lxb_char_t *)c_title, len);
   return rb_title;
 }
 
@@ -140,6 +145,14 @@ free_html_parser(void *data)
   }
 }
 
+#ifdef NOKOLEXBOR_SELECTOR_CHECK
+static VALUE
+nl_document_selector_index_builds(VALUE self)
+{
+  return ULL2NUM((unsigned long long)nl_rb_document_unwrap(self)->selector_index_builds);
+}
+#endif
+
 void Init_nl_document(void)
 {
 #ifdef HAVE_PTHREAD_H
@@ -152,4 +165,8 @@ void Init_nl_document(void)
   rb_define_method(cNokolexborDocument, "title", nl_document_get_title, 0);
   rb_define_method(cNokolexborDocument, "title=", nl_document_set_title, 1);
   rb_define_method(cNokolexborDocument, "root", nl_document_root, 0);
+#ifdef NOKOLEXBOR_SELECTOR_CHECK
+  rb_define_const(mNokolexbor, "SELECTOR_CHECK", Qtrue);
+  rb_define_method(cNokolexborDocument, "selector_index_builds", nl_document_selector_index_builds, 0);
+#endif
 }

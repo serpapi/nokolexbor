@@ -63,6 +63,19 @@ describe Nokolexbor::NodeSet do
       _(nodes[1].name).must_equal 'h1'
       _(nodes[2].name).must_equal 'a'
     end
+
+    it "searches ancestor and descendant members without corrupting the document" do
+      padding = 120.times.map { |i| "<div id='pad-#{i}'></div>" }.join
+      doc = Nokolexbor::HTML("<main>#{padding}<section id='outer'><section id='inner'><span id='hit'></span></section></section></main>")
+      nodes = doc.css("section")
+      hit = doc.at_css("#hit")
+
+      _(nodes.css("section span").to_a).must_equal [hit]
+      _(nodes.at_css("section span")).must_equal hit
+      _(nodes.css("> span").to_a).must_equal [hit]
+      _(hit.parent).must_equal doc.at_css("#inner")
+      _(doc.css("section").length).must_equal 2
+    end
   end
 
   describe 'at_css' do

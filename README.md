@@ -80,6 +80,9 @@ end
   * Only accepts CSS selectors, doesn't support mixed syntax like `div#abc /text()`.
   * To select text nodes, use pseudo element `::text`. e.g. `div#abc > ::text`.
   * Performance is much higher than libxml2 based methods.
+  * Large documents build a tag, class, ID and attribute candidate index on
+    the first document-level search and reuse it until the DOM changes. Large
+    detached subtrees can still use a temporary per-call index.
 * `xpath` and `at_xpath`
   * Based on libxml2.
   * Only accepts XPath syntax.
@@ -103,6 +106,24 @@ end
   In Nokogiri, the selector should be `div:not(.a):not(.b):nth-of-type(3)`
 
   In Nokolexbor, `:not` does affect the place of the last `div` (same in browsers), the selector should be `div:not(.a):not(.b):nth-of-type(5)`, but this losts the purpose of filtering though.
+
+## Selector safety checks
+
+A build with `NOKOLEXBOR_SELECTOR_CHECK=1` (or `NOKOLEXBOR_ASAN=1`) set at
+compile time runs Lexbor's plain traversal next to the index on every `css` and
+`at_css` call and aborts on any difference in matched nodes or their order.
+Release builds don't contain this check.
+
+```sh
+NOKOLEXBOR_SELECTOR_CHECK=1 bundle exec rake clean compile
+bundle exec rake test
+SELECTOR_CORPUS=/path/to/selectors.json bundle exec ruby -Ilib test/selector_index_mutation_fuzz.rb 100000 20261005
+```
+
+The fuzzer takes a JSON array of real CSS selector strings, runs `css` and
+`at_css` across random DOM edits, periodically enables `GC.stress`, and
+reports the operation count and seed. Run it with an ASAN runtime when checking
+native memory safety.
 
 ## Benchmarks
 
