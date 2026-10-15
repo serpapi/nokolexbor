@@ -434,7 +434,6 @@ nl_node_find(VALUE self, VALUE selector, lxb_selectors_cb_f cb, void *ctx)
   /* Find HTML nodes by CSS Selectors. */
   status = lxb_selectors_find(selectors, node, list, cb, ctx);
 
-
 cleanup:
 #ifndef HAVE_PTHREAD_H
   /* Destroy Selectors object. */
