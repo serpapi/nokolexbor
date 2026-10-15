@@ -425,9 +425,7 @@ static lxb_status_t
 nl_selector_shadow_compare(lxb_dom_node_t *node, lxb_css_selector_specificity_t *spec, void *ctx)
 {
   nl_selector_shadow_t *shadow = (nl_selector_shadow_t *)ctx;
-  if (shadow->position >= shadow->matches->length
-      || shadow->matches->list[shadow->position] != node)
-  {
+  if (shadow->position >= shadow->matches->length || shadow->matches->list[shadow->position] != node) {
     fprintf(stderr, "CSS selector match sequence differs at node %zu\n", shadow->position);
     abort();
   }
@@ -504,10 +502,8 @@ nl_node_find_native(void *data)
       memcpy(shadow_baseline->list, existing->list, sizeof(void *) * existing->length);
       shadow_baseline->length = existing->length;
     }
-    shadow = (nl_selector_shadow_t) {
-      .matches = shadow_matches, .baseline = shadow_baseline,
-      .cb = args->cb, .ctx = args->ctx
-    };
+    shadow = (nl_selector_shadow_t){
+        .matches = shadow_matches, .baseline = shadow_baseline, .cb = args->cb, .ctx = args->ctx};
     selectors->use_index = false;
     status = lxb_selectors_find(selectors, args->node, list,
                                 nl_selector_shadow_record, &shadow);
@@ -525,9 +521,7 @@ nl_node_find_native(void *data)
   }
   {
     lexbor_array_t *actual = (lexbor_array_t *)args->ctx;
-    if (shadow.position != shadow_matches->length
-        || actual->length != shadow_baseline->length)
-    {
+    if (shadow.position != shadow_matches->length || actual->length != shadow_baseline->length) {
       fprintf(stderr, "CSS selector result count differs: raw %zu/%zu, unique %zu/%zu\n",
               shadow_matches->length, shadow.position, shadow_baseline->length, actual->length);
       abort();
