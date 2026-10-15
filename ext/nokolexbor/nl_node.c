@@ -539,7 +539,6 @@ nl_node_find_native(void *data)
     }
   }
 
-
 cleanup:
   if (shadow_matches != NULL) {
     lexbor_array_destroy(shadow_matches, true);
