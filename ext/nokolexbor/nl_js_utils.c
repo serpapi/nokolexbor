@@ -57,6 +57,7 @@ typedef struct {
   size_t len;
   size_t cap;
   size_t hint; /* the argument's length: enough for any pass, see below */
+  int failed;  /* an allocation failed; the passes skip writes, the caller raises */
 } nl_buf;
 
 typedef struct {
@@ -97,6 +98,7 @@ nl_buf_reserve(nl_buf *buf, size_t extra)
   }
   data = (char *)realloc(buf->data, need);
   if (data == NULL) {
+    buf->failed = 1;
     return 0;
   }
   buf->data = data;
@@ -805,6 +807,10 @@ nl_js_utils_unescape_js(VALUE self, VALUE rb_str)
     st->buf[1].len = 0;
     st->ubuf.len = 0;
     st->stage3.len = 0;
+    st->buf[0].failed = 0;
+    st->buf[1].failed = 0;
+    st->ubuf.failed = 0;
+    st->stage3.failed = 0;
     st->cur.data = NULL;
     st->cur.len = 0;
     st->stage3_slice.data = NULL;
@@ -824,6 +830,11 @@ nl_js_utils_unescape_js(VALUE self, VALUE rb_str)
   st->stage3.hint = src_len;
 
   nl_unescape_js_run(st, src, src_len);
+
+  if (st->buf[0].failed || st->buf[1].failed || st->ubuf.failed || st->stage3.failed) {
+    nl_js_state_release(st);
+    rb_memerror();
+  }
 
   if (st->broken) {
     if (st->stage3_slice.data != src) {
