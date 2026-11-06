@@ -371,12 +371,81 @@ nl_node_at_css_callback(lxb_dom_node_t *node, lxb_css_selector_specificity_t *sp
   return LXB_STATUS_STOP;
 }
 
+#define NL_CSS_MATCHES_LINEAR_MAX 16
+
+static size_t
+nl_css_matches_slot(void *node, size_t size)
+{
+  return (size_t)(((uint64_t)(uintptr_t)node * 0x9E3779B97F4A7C15ULL) >> 32) & (size - 1);
+}
+
+static void
+nl_css_matches_insert(void **seen, size_t size, void *node)
+{
+  size_t slot = nl_css_matches_slot(node, size);
+  while (seen[slot] != NULL) {
+    slot = (slot + 1) & (size - 1);
+  }
+  seen[slot] = node;
+}
+
+static bool
+nl_css_matches_contains(nl_css_matches_t *matches, void *node)
+{
+  if (matches->seen == NULL) {
+    for (size_t i = 0; i < matches->array->length; i++) {
+      if (matches->array->list[i] == node) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  size_t slot = nl_css_matches_slot(node, matches->seen_size);
+  while (matches->seen[slot] != NULL) {
+    if (matches->seen[slot] == node) {
+      return true;
+    }
+    slot = (slot + 1) & (matches->seen_size - 1);
+  }
+  return false;
+}
+
+static lxb_status_t
+nl_css_matches_rebuild(nl_css_matches_t *matches, size_t size)
+{
+  void **seen = calloc(size, sizeof(void *));
+  if (seen == NULL) {
+    return LXB_STATUS_ERROR_MEMORY_ALLOCATION;
+  }
+  for (size_t i = 0; i < matches->array->length; i++) {
+    nl_css_matches_insert(seen, size, matches->array->list[i]);
+  }
+  free(matches->seen);
+  matches->seen = seen;
+  matches->seen_size = size;
+  return LXB_STATUS_OK;
+}
+
 lxb_status_t
 nl_node_css_callback(lxb_dom_node_t *node, lxb_css_selector_specificity_t *spec, void *ctx)
 {
-  lexbor_array_t *array = (lexbor_array_t *)ctx;
-  lxb_status_t status = lexbor_array_push_unique(array, node);
-  if (status != LXB_STATUS_OK && status != LXB_STATUS_STOPPED) {
+  nl_css_matches_t *matches = (nl_css_matches_t *)ctx;
+  if (nl_css_matches_contains(matches, node)) {
+    return LXB_STATUS_OK;
+  }
+
+  lxb_status_t status = lexbor_array_push(matches->array, node);
+  if (status == LXB_STATUS_OK && matches->array->length > NL_CSS_MATCHES_LINEAR_MAX) {
+    if (matches->array->length * 2 > matches->seen_size) {
+      status = nl_css_matches_rebuild(matches, matches->seen_size ? matches->seen_size * 2 : 64);
+    } else {
+      nl_css_matches_insert(matches->seen, matches->seen_size, node);
+    }
+  }
+  if (status != LXB_STATUS_OK) {
+    free(matches->seen);
+    matches->seen = NULL;
     nl_raise_lexbor_error(status);
   }
   return LXB_STATUS_OK;
@@ -554,8 +623,10 @@ nl_node_css(VALUE self, VALUE selector)
 {
   lxb_dom_node_t *node = nl_rb_node_unwrap(self);
   lexbor_array_t *array = lexbor_array_create();
+  nl_css_matches_t matches = {array, NULL, 0};
 
-  lxb_status_t status = nl_node_find(self, selector, nl_node_css_callback, array);
+  lxb_status_t status = nl_node_find(self, selector, nl_node_css_callback, &matches);
+  free(matches.seen);
   if (status != LXB_STATUS_OK) {
     lexbor_array_destroy(array, true);
     nl_raise_lexbor_error(status);

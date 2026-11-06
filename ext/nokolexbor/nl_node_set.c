@@ -446,8 +446,10 @@ nl_node_set_css(VALUE self, VALUE selector)
 {
   lexbor_array_t *array = lexbor_array_create();
   lxb_dom_document_t *doc = nl_rb_document_unwrap(nl_rb_document_get(self));
+  nl_css_matches_t matches = {array, NULL, 0};
 
-  lxb_status_t status = nl_node_set_find(self, selector, nl_node_css_callback, array);
+  lxb_status_t status = nl_node_set_find(self, selector, nl_node_css_callback, &matches);
+  free(matches.seen);
   if (status != LXB_STATUS_OK) {
     lexbor_array_destroy(array, true);
     nl_raise_lexbor_error(status);
