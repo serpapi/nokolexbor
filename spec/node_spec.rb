@@ -191,6 +191,46 @@ describe Nokolexbor::Node do
     it 'raises if selector is invalid' do
       _{ @root.css('::text1') }.must_raise Nokolexbor::Lexbor::UnexpectedDataError
     end
+
+    it 'returns identical results across repeated cached selector calls' do
+      10.times do
+        nodes = @root.css('div, h1, a')
+        _(nodes.size).must_equal 4
+        _(nodes.map(&:name)).must_equal ['h1', 'a', 'h1', 'div']
+      end
+    end
+
+    it 'evicts oldest entries cleanly when exceeding per-thread LRU cache capacity' do
+      600.times do |i|
+        nodes = @root.css("div.nonexistent_#{i}, h1.top")
+        _(nodes.size).must_equal 1
+        _(nodes[0]['class']).must_equal 'top'
+      end
+    end
+
+    it 'does not cache invalid selectors across subsequent calls' do
+      2.times do
+        _{ @root.css('::invalid_pseudo_element') }.must_raise Nokolexbor::Lexbor::UnexpectedDataError
+      end
+      _(@root.css('h1.top').size).must_equal 1
+    end
+
+    it 'supports pre-compiled Nokolexbor::Selector objects' do
+      sel = Nokolexbor::Selector.compile('div, h1, a')
+      _(sel).must_be_instance_of Nokolexbor::Selector
+      _(sel.source).must_equal 'div, h1, a'
+      _(sel.to_s).must_equal 'div, h1, a'
+
+      nodes = @root.css(sel)
+      _(nodes.size).must_equal 4
+      _(nodes.map(&:name)).must_equal ['h1', 'a', 'h1', 'div']
+
+      node_set = @doc.css('div')
+      _(node_set.css(Nokolexbor::Selector.compile('h1.inner')).size).must_equal 1
+
+      _{ Nokolexbor::Selector.compile('::text1') }.must_raise Nokolexbor::Lexbor::UnexpectedDataError
+      _{ Nokolexbor::Selector.new }.must_raise TypeError
+    end
   end
 
   describe 'at_css' do
@@ -218,6 +258,16 @@ describe Nokolexbor::Node do
     it 'returns nil if not found' do
       node = @root.at_css('section')
       _(node).must_be_nil
+    end
+
+    it 'supports pre-compiled Nokolexbor::Selector objects' do
+      sel = Nokolexbor::Selector.compile('div, h1, a')
+      node = @root.at_css(sel)
+      _(node.name).must_equal 'h1'
+      _(node['class']).must_equal 'top'
+
+      none_sel = Nokolexbor::Selector.compile('section')
+      _(@root.at_css(none_sel)).must_be_nil
     end
   end
 

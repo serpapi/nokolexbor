@@ -6,7 +6,9 @@
 #include <pthread.h>
 pthread_key_t p_key_css_parser;
 pthread_key_t p_key_selectors;
+pthread_key_t p_key_selector_cache;
 #endif
+#include <stdint.h>
 
 #define SORT_NAME nl_css_result
 #define SORT_TYPE lxb_dom_node_t *
@@ -26,6 +28,7 @@ extern VALUE eLexborError;
 VALUE cNokolexborNode;
 VALUE cNokolexborElement;
 VALUE cNokolexborCharacterData;
+VALUE cNokolexborSelector;
 
 extern rb_data_type_t nl_document_type;
 
@@ -382,85 +385,369 @@ nl_node_css_callback(lxb_dom_node_t *node, lxb_css_selector_specificity_t *spec,
   return LXB_STATUS_OK;
 }
 
-lxb_status_t
-nl_node_find(VALUE self, VALUE selector, lxb_selectors_cb_f cb, void *ctx)
+#define NL_SELECTOR_CACHE_CAP 512
+#define NL_SELECTOR_CACHE_BUCKETS 1024
+
+typedef struct nl_selector_cache_entry {
+  char *key;
+  size_t len;
+  uint64_t hash;
+  bool has_comma;
+  lxb_css_selector_list_t *list;
+  struct nl_selector_cache_entry *hash_next;
+  struct nl_selector_cache_entry *lru_prev;
+  struct nl_selector_cache_entry *lru_next;
+} nl_selector_cache_entry_t;
+
+typedef struct {
+  nl_selector_cache_entry_t *buckets[NL_SELECTOR_CACHE_BUCKETS];
+  nl_selector_cache_entry_t *lru_head;
+  nl_selector_cache_entry_t *lru_tail;
+  size_t count;
+} nl_selector_cache_t;
+
+typedef struct {
+  lxb_css_selector_list_t *list;
+  VALUE source;
+  bool has_comma;
+} nl_compiled_selector_t;
+
+static void
+nl_compiled_selector_mark(void *ptr)
 {
-  const char *selector_c = StringValuePtr(selector);
-  size_t selector_len = RSTRING_LEN(selector);
+  nl_compiled_selector_t *compiled = (nl_compiled_selector_t *)ptr;
+  if (compiled != NULL) {
+    rb_gc_mark(compiled->source);
+  }
+}
 
-  lxb_dom_node_t *node = nl_rb_node_unwrap(self);
+static void
+nl_compiled_selector_free(void *ptr)
+{
+  nl_compiled_selector_t *compiled = (nl_compiled_selector_t *)ptr;
+  if (compiled != NULL) {
+    if (compiled->list != NULL) {
+      lxb_css_selector_list_destroy_memory(compiled->list);
+    }
+    xfree(compiled);
+  }
+}
 
-  lxb_status_t status;
+static size_t
+nl_compiled_selector_memsize(const void *ptr)
+{
+  return sizeof(nl_compiled_selector_t);
+}
+
+static const rb_data_type_t nl_compiled_selector_type = {
+    "Nokolexbor::Selector",
+    {
+        nl_compiled_selector_mark,
+        nl_compiled_selector_free,
+        nl_compiled_selector_memsize,
+    },
+    0,
+    0,
+    RUBY_TYPED_FREE_IMMEDIATELY,
+};
+
+static inline uint64_t
+nl_fnv1a_hash(const char *data, size_t len)
+{
+  uint64_t h = 14695981039346656037ULL;
+  for (size_t i = 0; i < len; i++) {
+    h ^= (uint8_t)data[i];
+    h *= 1099511628211ULL;
+  }
+  return h;
+}
+
+#ifdef HAVE_PTHREAD_H
+static void
+nl_selector_cache_touch(nl_selector_cache_t *cache, nl_selector_cache_entry_t *entry)
+{
+  if (cache->lru_head == entry) {
+    return;
+  }
+  if (entry->lru_prev != NULL) {
+    entry->lru_prev->lru_next = entry->lru_next;
+  }
+  if (entry->lru_next != NULL) {
+    entry->lru_next->lru_prev = entry->lru_prev;
+  }
+  if (cache->lru_tail == entry) {
+    cache->lru_tail = entry->lru_prev;
+  }
+  entry->lru_prev = NULL;
+  entry->lru_next = cache->lru_head;
+  if (cache->lru_head != NULL) {
+    cache->lru_head->lru_prev = entry;
+  }
+  cache->lru_head = entry;
+  if (cache->lru_tail == NULL) {
+    cache->lru_tail = entry;
+  }
+}
+
+static nl_selector_cache_entry_t *
+nl_selector_cache_lookup(nl_selector_cache_t *cache, const char *key, size_t len, uint64_t hash)
+{
+  size_t bucket = (size_t)(hash & (NL_SELECTOR_CACHE_BUCKETS - 1));
+  nl_selector_cache_entry_t *entry = cache->buckets[bucket];
+  while (entry != NULL) {
+    if (entry->hash == hash && entry->len == len && memcmp(entry->key, key, len) == 0) {
+      nl_selector_cache_touch(cache, entry);
+      return entry;
+    }
+    entry = entry->hash_next;
+  }
+  return NULL;
+}
+
+static void
+nl_selector_cache_evict_tail(nl_selector_cache_t *cache)
+{
+  nl_selector_cache_entry_t *victim = cache->lru_tail;
+  if (victim == NULL) {
+    return;
+  }
+  if (victim->lru_prev != NULL) {
+    victim->lru_prev->lru_next = NULL;
+  } else {
+    cache->lru_head = NULL;
+  }
+  cache->lru_tail = victim->lru_prev;
+
+  size_t bucket = (size_t)(victim->hash & (NL_SELECTOR_CACHE_BUCKETS - 1));
+  nl_selector_cache_entry_t **pp = &cache->buckets[bucket];
+  while (*pp != NULL) {
+    if (*pp == victim) {
+      *pp = victim->hash_next;
+      break;
+    }
+    pp = &(*pp)->hash_next;
+  }
+
+  lxb_css_selector_list_destroy_memory(victim->list);
+  free(victim->key);
+  free(victim);
+  cache->count--;
+}
+
+static bool
+nl_selector_cache_insert(nl_selector_cache_t *cache, const char *key, size_t len, uint64_t hash, lxb_css_selector_list_t *list)
+{
+  if (cache->count >= NL_SELECTOR_CACHE_CAP) {
+    nl_selector_cache_evict_tail(cache);
+  }
+  nl_selector_cache_entry_t *entry = (nl_selector_cache_entry_t *)calloc(1, sizeof(nl_selector_cache_entry_t));
+  if (entry == NULL) {
+    return false;
+  }
+  entry->key = (char *)malloc(len + 1);
+  if (entry->key == NULL) {
+    free(entry);
+    return false;
+  }
+  memcpy(entry->key, key, len);
+  entry->key[len] = '\0';
+  entry->len = len;
+  entry->hash = hash;
+  entry->has_comma = (memchr(key, ',', len) != NULL);
+  entry->list = list;
+
+  size_t bucket = (size_t)(hash & (NL_SELECTOR_CACHE_BUCKETS - 1));
+  entry->hash_next = cache->buckets[bucket];
+  cache->buckets[bucket] = entry;
+
+  entry->lru_prev = NULL;
+  entry->lru_next = cache->lru_head;
+  if (cache->lru_head != NULL) {
+    cache->lru_head->lru_prev = entry;
+  }
+  cache->lru_head = entry;
+  if (cache->lru_tail == NULL) {
+    cache->lru_tail = entry;
+  }
+  cache->count++;
+  return true;
+}
+
+static void
+free_selector_cache(void *data)
+{
+  nl_selector_cache_t *cache = (nl_selector_cache_t *)data;
+  if (cache == NULL) {
+    return;
+  }
+  nl_selector_cache_entry_t *cur = cache->lru_head;
+  while (cur != NULL) {
+    nl_selector_cache_entry_t *next = cur->lru_next;
+    lxb_css_selector_list_destroy_memory(cur->list);
+    free(cur->key);
+    free(cur);
+    cur = next;
+  }
+  free(cache);
+}
+#endif
+
+static lxb_css_parser_t *
+nl_get_thread_css_parser(lxb_status_t *status_out)
+{
 #ifdef HAVE_PTHREAD_H
   lxb_css_parser_t *css_parser = (lxb_css_parser_t *)pthread_getspecific(p_key_css_parser);
-  lxb_selectors_t *selectors = (lxb_selectors_t *)pthread_getspecific(p_key_selectors);
 #else
   lxb_css_parser_t *css_parser = NULL;
-  lxb_selectors_t *selectors = NULL;
 #endif
-  lxb_css_selector_list_t *list = NULL;
-
-  /* CSS parser. */
   if (css_parser == NULL) {
     css_parser = lxb_css_parser_create();
-    status = lxb_css_parser_init(css_parser, NULL, NULL);
+    lxb_status_t status = lxb_css_parser_init(css_parser, NULL, NULL);
     if (status != LXB_STATUS_OK) {
-      goto init_error;
+      lxb_css_parser_destroy(css_parser, true);
+      if (status_out != NULL) {
+        *status_out = status;
+      }
+      return NULL;
     }
 #ifdef HAVE_PTHREAD_H
     pthread_setspecific(p_key_css_parser, css_parser);
 #endif
   }
+  if (status_out != NULL) {
+    *status_out = LXB_STATUS_OK;
+  }
+  return css_parser;
+}
 
-  /* Selectors. */
+static VALUE
+nl_selector_compile(VALUE klass, VALUE rb_selector)
+{
+  const char *selector_c = StringValuePtr(rb_selector);
+  size_t selector_len = RSTRING_LEN(rb_selector);
+
+  lxb_status_t status = LXB_STATUS_OK;
+  lxb_css_parser_t *css_parser = nl_get_thread_css_parser(&status);
+  if (css_parser == NULL) {
+    nl_raise_lexbor_error(status);
+  }
+
+  lxb_css_selector_list_t *list = lxb_css_selectors_parse_relative_list(css_parser, (const lxb_char_t *)selector_c, selector_len);
+  status = css_parser->status;
+#ifndef HAVE_PTHREAD_H
+  lxb_css_parser_destroy(css_parser, true);
+#endif
+  if (status != LXB_STATUS_OK) {
+    lxb_css_selector_list_destroy_memory(list);
+    nl_raise_lexbor_error(status);
+  }
+
+  nl_compiled_selector_t *compiled = ALLOC(nl_compiled_selector_t);
+  compiled->list = list;
+  compiled->source = rb_str_new_frozen(rb_selector);
+  compiled->has_comma = (memchr(selector_c, ',', selector_len) != NULL);
+
+  return TypedData_Wrap_Struct(klass, &nl_compiled_selector_type, compiled);
+}
+
+static VALUE
+nl_selector_source(VALUE self)
+{
+  nl_compiled_selector_t *compiled;
+  TypedData_Get_Struct(self, nl_compiled_selector_t, &nl_compiled_selector_type, compiled);
+  return compiled->source;
+}
+
+lxb_status_t
+nl_node_find(VALUE self, VALUE selector, lxb_selectors_cb_f cb, void *ctx)
+{
+  lxb_dom_node_t *node = nl_rb_node_unwrap(self);
+  lxb_status_t status;
+  lxb_css_selector_list_t *list = NULL;
+  bool destroy_list = false;
+
+#ifdef HAVE_PTHREAD_H
+  lxb_selectors_t *selectors = (lxb_selectors_t *)pthread_getspecific(p_key_selectors);
+#else
+  lxb_selectors_t *selectors = NULL;
+#endif
+
+  /* Selectors matcher. */
   if (selectors == NULL) {
     selectors = lxb_selectors_create();
     status = lxb_selectors_init(selectors);
     if (status != LXB_STATUS_OK) {
-      goto init_error;
+      lxb_selectors_destroy(selectors, true);
+      return status;
     }
 #ifdef HAVE_PTHREAD_H
     pthread_setspecific(p_key_selectors, selectors);
 #endif
   }
 
-  /* Parse and get the log. */
-  list = lxb_css_selectors_parse_relative_list(css_parser, (const lxb_char_t *)selector_c, selector_len);
-  if (css_parser->status != LXB_STATUS_OK) {
+  if (rb_typeddata_is_kind_of(selector, &nl_compiled_selector_type)) {
+    nl_compiled_selector_t *compiled;
+    TypedData_Get_Struct(selector, nl_compiled_selector_t, &nl_compiled_selector_type, compiled);
+    list = compiled->list;
+  } else {
+    const char *selector_c = StringValuePtr(selector);
+    size_t selector_len = RSTRING_LEN(selector);
+
+#ifdef HAVE_PTHREAD_H
+    nl_selector_cache_t *cache = (nl_selector_cache_t *)pthread_getspecific(p_key_selector_cache);
+    if (cache == NULL) {
+      cache = (nl_selector_cache_t *)calloc(1, sizeof(nl_selector_cache_t));
+      if (cache != NULL) {
+        pthread_setspecific(p_key_selector_cache, cache);
+      }
+    }
+    uint64_t hash = nl_fnv1a_hash(selector_c, selector_len);
+    nl_selector_cache_entry_t *cached = (cache != NULL) ? nl_selector_cache_lookup(cache, selector_c, selector_len, hash) : NULL;
+    if (cached != NULL) {
+      list = cached->list;
+    } else {
+      lxb_css_parser_t *css_parser = nl_get_thread_css_parser(&status);
+      if (css_parser == NULL) {
+        return status;
+      }
+      list = lxb_css_selectors_parse_relative_list(css_parser, (const lxb_char_t *)selector_c, selector_len);
+      if (css_parser->status != LXB_STATUS_OK) {
+        status = css_parser->status;
+        lxb_css_selector_list_destroy_memory(list);
+        return status;
+      }
+      if (cache == NULL || !nl_selector_cache_insert(cache, selector_c, selector_len, hash, list)) {
+        destroy_list = true;
+      }
+    }
+#else
+    lxb_css_parser_t *css_parser = nl_get_thread_css_parser(&status);
+    if (css_parser == NULL) {
+      lxb_selectors_destroy(selectors, true);
+      return status;
+    }
+    list = lxb_css_selectors_parse_relative_list(css_parser, (const lxb_char_t *)selector_c, selector_len);
     status = css_parser->status;
-    goto cleanup;
+    lxb_css_parser_destroy(css_parser, true);
+    if (status != LXB_STATUS_OK) {
+      lxb_css_selector_list_destroy_memory(list);
+      lxb_selectors_destroy(selectors, true);
+      return status;
+    }
+    destroy_list = true;
+#endif
   }
 
   /* Find HTML nodes by CSS Selectors. */
   status = lxb_selectors_find(selectors, node, list, cb, ctx);
 
-cleanup:
 #ifndef HAVE_PTHREAD_H
-  /* Destroy Selectors object. */
   (void)lxb_selectors_destroy(selectors, true);
-
-  /* Destroy resources for CSS Parser. */
-  (void)lxb_css_parser_destroy(css_parser, true);
 #endif
 
-  /* Destroy all object for all CSS Selector List. */
-  lxb_css_selector_list_destroy_memory(list);
-
-  return status;
-
-init_error:
-  /* Destroy Selectors object. */
-  lxb_selectors_destroy(selectors, true);
-  selectors = NULL;
-
-  /* Destroy resources for CSS Parser. */
-  lxb_css_parser_destroy(css_parser, true);
-  css_parser = NULL;
-
-#ifdef HAVE_PTHREAD_H
-  pthread_setspecific(p_key_css_parser, NULL);
-  pthread_setspecific(p_key_selectors, NULL);
-#endif
+  if (destroy_list) {
+    lxb_css_selector_list_destroy_memory(list);
+  }
 
   return status;
 }
@@ -494,8 +781,16 @@ mark_node_orders(lxb_dom_node_t *root)
 // Sort nodes in document traversal order (the same as Nokorigi)
 void nl_sort_nodes_if_necessary(VALUE selector, lxb_dom_document_t *doc, lexbor_array_t *array)
 {
+  bool has_comma = false;
+  if (rb_typeddata_is_kind_of(selector, &nl_compiled_selector_type)) {
+    nl_compiled_selector_t *compiled;
+    TypedData_Get_Struct(selector, nl_compiled_selector_t, &nl_compiled_selector_type, compiled);
+    has_comma = compiled->has_comma;
+  } else {
+    has_comma = (memchr(RSTRING_PTR(selector), ',', RSTRING_LEN(selector)) != NULL);
+  }
   // No need to sort if there's only one selector, the results are natually in document traversal order
-  if (strchr(RSTRING_PTR(selector), ',') != NULL) {
+  if (has_comma) {
     int need_order = 0;
     // Check if we have already markded orders, note that
     // we need to order again if new nodes are added to the document
@@ -1253,12 +1548,19 @@ void Init_nl_node(void)
 #ifdef HAVE_PTHREAD_H
   pthread_key_create(&p_key_css_parser, free_css_parser);
   pthread_key_create(&p_key_selectors, free_selectors);
+  pthread_key_create(&p_key_selector_cache, free_selector_cache);
 #endif
   cNokolexborNode = rb_define_class_under(mNokolexbor, "Node", rb_cObject);
   rb_undef_alloc_func(cNokolexborNode);
 
   cNokolexborElement = rb_define_class_under(mNokolexbor, "Element", cNokolexborNode);
   cNokolexborCharacterData = rb_define_class_under(mNokolexbor, "CharacterData", cNokolexborNode);
+
+  cNokolexborSelector = rb_define_class_under(mNokolexbor, "Selector", rb_cObject);
+  rb_undef_alloc_func(cNokolexborSelector);
+  rb_define_singleton_method(cNokolexborSelector, "compile", nl_selector_compile, 1);
+  rb_define_method(cNokolexborSelector, "source", nl_selector_source, 0);
+  rb_define_alias(cNokolexborSelector, "to_s", "source");
 
   rb_define_singleton_method(cNokolexborNode, "new", nl_node_new, -1);
   rb_define_method(cNokolexborNode, "attribute", nl_node_attribute, 1);
