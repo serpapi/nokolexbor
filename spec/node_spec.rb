@@ -188,6 +188,12 @@ describe Nokolexbor::Node do
       _(nodes[1]['class']).must_equal 'inner'
     end
 
+    it 'nodes in results are unique when nested ancestors match' do
+      doc = Nokolexbor::HTML('<div id="outer"><div id="inner"><p id="first"></p></div><p id="second"></p></div>')
+      _(doc.css('div p').map { |node| node['id'] }).must_equal ['first', 'second']
+      _(doc.css('div div, div p').map { |node| node['id'] }).must_equal ['inner', 'first', 'second']
+    end
+
     it 'raises if selector is invalid' do
       _{ @root.css('::text1') }.must_raise Nokolexbor::Lexbor::UnexpectedDataError
     end
