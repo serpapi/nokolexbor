@@ -25,9 +25,43 @@
 /* Thread-local keys — mirrors nl_node.c and nl_document.c             */
 /* ------------------------------------------------------------------ */
 
+#include <stdint.h>
+
 static pthread_key_t p_key_css_parser;
 static pthread_key_t p_key_selectors;
+static pthread_key_t p_key_selector_cache;
 static pthread_key_t p_key_html_parser;
+
+#define NL_SELECTOR_CACHE_CAP 512
+#define NL_SELECTOR_HASH_BUCKETS 1024
+
+typedef struct nl_selector_cache_entry {
+  char *str;
+  size_t len;
+  uint64_t hash;
+  lxb_css_selector_list_t *list;
+  struct nl_selector_cache_entry *prev;
+  struct nl_selector_cache_entry *next;
+  struct nl_selector_cache_entry *hash_next;
+} nl_selector_cache_entry_t;
+
+typedef struct {
+  nl_selector_cache_entry_t *head;
+  nl_selector_cache_entry_t *tail;
+  size_t count;
+  nl_selector_cache_entry_t *buckets[NL_SELECTOR_HASH_BUCKETS];
+} nl_selector_cache_t;
+
+static inline uint64_t
+nl_fnv1a_hash(const char *str, size_t len)
+{
+  uint64_t hash = 14695981039346656037ULL;
+  for (size_t i = 0; i < len; i++) {
+    hash ^= (uint8_t)str[i];
+    hash *= 1099511628211ULL;
+  }
+  return hash;
+}
 
 static void
 free_css_parser(void *data)
@@ -44,16 +78,134 @@ free_selectors(void *data)
 }
 
 static void
+free_selector_cache(void *data)
+{
+  if (data != NULL) {
+    nl_selector_cache_t *cache = (nl_selector_cache_t *)data;
+    nl_selector_cache_entry_t *entry = cache->head;
+    while (entry != NULL) {
+      nl_selector_cache_entry_t *next = entry->next;
+      if (entry->list != NULL) {
+        lxb_css_selector_list_destroy_memory(entry->list);
+      }
+      free(entry->str);
+      free(entry);
+      entry = next;
+    }
+    free(cache);
+  }
+}
+
+static void
 free_html_parser(void *data)
 {
   if (data != NULL)
     lxb_html_parser_destroy((lxb_html_parser_t *)data);
 }
 
+static void
+nl_cache_detach_lru(nl_selector_cache_t *cache, nl_selector_cache_entry_t *entry)
+{
+  if (entry->prev != NULL) {
+    entry->prev->next = entry->next;
+  } else {
+    cache->head = entry->next;
+  }
+  if (entry->next != NULL) {
+    entry->next->prev = entry->prev;
+  } else {
+    cache->tail = entry->prev;
+  }
+  entry->prev = NULL;
+  entry->next = NULL;
+}
+
+static void
+nl_cache_attach_front(nl_selector_cache_t *cache, nl_selector_cache_entry_t *entry)
+{
+  entry->prev = NULL;
+  entry->next = cache->head;
+  if (cache->head != NULL) {
+    cache->head->prev = entry;
+  } else {
+    cache->tail = entry;
+  }
+  cache->head = entry;
+}
+
+static lxb_css_selector_list_t *
+nl_cache_get(nl_selector_cache_t *cache, const char *str, size_t len, uint64_t hash)
+{
+  size_t bucket = (size_t)(hash & (NL_SELECTOR_HASH_BUCKETS - 1));
+  nl_selector_cache_entry_t *entry = cache->buckets[bucket];
+  while (entry != NULL) {
+    if (entry->hash == hash && entry->len == len && memcmp(entry->str, str, len) == 0) {
+      if (cache->head != entry) {
+        nl_cache_detach_lru(cache, entry);
+        nl_cache_attach_front(cache, entry);
+      }
+      return entry->list;
+    }
+    entry = entry->hash_next;
+  }
+  return NULL;
+}
+
+static bool
+nl_cache_put(nl_selector_cache_t *cache, const char *str, size_t len, uint64_t hash, lxb_css_selector_list_t *list)
+{
+  if (cache->count >= NL_SELECTOR_CACHE_CAP && cache->tail != NULL) {
+    nl_selector_cache_entry_t *victim = cache->tail;
+    nl_cache_detach_lru(cache, victim);
+
+    size_t v_bucket = (size_t)(victim->hash & (NL_SELECTOR_HASH_BUCKETS - 1));
+    nl_selector_cache_entry_t **pp = &cache->buckets[v_bucket];
+    while (*pp != NULL) {
+      if (*pp == victim) {
+        *pp = victim->hash_next;
+        break;
+      }
+      pp = &((*pp)->hash_next);
+    }
+
+    if (victim->list != NULL) {
+      lxb_css_selector_list_destroy_memory(victim->list);
+    }
+    free(victim->str);
+    free(victim);
+    cache->count--;
+  }
+
+  nl_selector_cache_entry_t *entry = (nl_selector_cache_entry_t *)malloc(sizeof(nl_selector_cache_entry_t));
+  if (entry == NULL) return false;
+
+  entry->str = (char *)malloc(len + 1);
+  if (entry->str == NULL) {
+    free(entry);
+    return false;
+  }
+  memcpy(entry->str, str, len);
+  entry->str[len] = '\0';
+  entry->len = len;
+  entry->hash = hash;
+  entry->list = list;
+  entry->prev = NULL;
+  entry->next = NULL;
+
+  size_t bucket = (size_t)(hash & (NL_SELECTOR_HASH_BUCKETS - 1));
+  entry->hash_next = cache->buckets[bucket];
+  cache->buckets[bucket] = entry;
+
+  nl_cache_attach_front(cache, entry);
+  cache->count++;
+  return true;
+}
+
 /* Dummy callback for lxb_selectors_find */
 static lxb_status_t
 selector_cb(lxb_dom_node_t *node, lxb_css_selector_specificity_t *spec, void *ctx)
 {
+  (void)node;
   (void)spec;
   (*(int *)ctx)++;
   return LXB_STATUS_OK;
@@ -61,6 +213,7 @@ selector_cb(lxb_dom_node_t *node, lxb_css_selector_specificity_t *spec, void *ct
 
 /* ------------------------------------------------------------------ */
 /* Mirrors nl_node_find() — thread-local cached css_parser/selectors   */
+/* and thread-local LRU selector cache                                 */
 /* ------------------------------------------------------------------ */
 
 static lxb_status_t
@@ -69,15 +222,9 @@ nl_node_find(lxb_dom_node_t *node, const char *selector_str, size_t selector_len
   lxb_status_t status;
   lxb_css_parser_t *css_parser = (lxb_css_parser_t *)pthread_getspecific(p_key_css_parser);
   lxb_selectors_t *selectors = (lxb_selectors_t *)pthread_getspecific(p_key_selectors);
+  nl_selector_cache_t *cache = (nl_selector_cache_t *)pthread_getspecific(p_key_selector_cache);
   lxb_css_selector_list_t *list = NULL;
-
-  if (css_parser == NULL) {
-    css_parser = lxb_css_parser_create();
-    status = lxb_css_parser_init(css_parser, NULL, NULL);
-    if (status != LXB_STATUS_OK)
-      goto init_error;
-    pthread_setspecific(p_key_css_parser, css_parser);
-  }
+  bool destroy_list_on_exit = false;
 
   if (selectors == NULL) {
     selectors = lxb_selectors_create();
@@ -87,18 +234,47 @@ nl_node_find(lxb_dom_node_t *node, const char *selector_str, size_t selector_len
     pthread_setspecific(p_key_selectors, selectors);
   }
 
-  list = lxb_css_selectors_parse_relative_list(css_parser,
-             (const lxb_char_t *)selector_str, selector_len);
-  if (css_parser->status != LXB_STATUS_OK) {
-    status = css_parser->status;
-    goto cleanup;
+  if (cache == NULL) {
+    cache = (nl_selector_cache_t *)calloc(1, sizeof(nl_selector_cache_t));
+    if (cache != NULL) {
+      pthread_setspecific(p_key_selector_cache, cache);
+    }
+  }
+
+  uint64_t hash = nl_fnv1a_hash(selector_str, selector_len);
+  if (cache != NULL) {
+    list = nl_cache_get(cache, selector_str, selector_len, hash);
+  }
+
+  if (list == NULL) {
+    if (css_parser == NULL) {
+      css_parser = lxb_css_parser_create();
+      status = lxb_css_parser_init(css_parser, NULL, NULL);
+      if (status != LXB_STATUS_OK)
+        goto init_error;
+      pthread_setspecific(p_key_css_parser, css_parser);
+    }
+
+    list = lxb_css_selectors_parse_relative_list(css_parser,
+               (const lxb_char_t *)selector_str, selector_len);
+    if (css_parser->status != LXB_STATUS_OK) {
+      status = css_parser->status;
+      destroy_list_on_exit = true;
+      goto cleanup;
+    }
+
+    if (cache == NULL || !nl_cache_put(cache, selector_str, selector_len, hash, list)) {
+      destroy_list_on_exit = true;
+    }
   }
 
   *match_count = 0;
   status = lxb_selectors_find(selectors, node, list, selector_cb, match_count);
 
 cleanup:
-  lxb_css_selector_list_destroy_memory(list);
+  if (destroy_list_on_exit && list != NULL) {
+    lxb_css_selector_list_destroy_memory(list);
+  }
   return status;
 
 init_error:
@@ -215,6 +391,7 @@ main(void)
 {
   pthread_key_create(&p_key_css_parser, free_css_parser);
   pthread_key_create(&p_key_selectors, free_selectors);
+  pthread_key_create(&p_key_selector_cache, free_selector_cache);
   pthread_key_create(&p_key_html_parser, free_html_parser);
 
   printf("TSan thread-local cache test: %d threads x %d iterations\n",
@@ -238,6 +415,7 @@ main(void)
   /* Keys are destroyed here; destructors clean up per-thread caches */
   pthread_key_delete(p_key_css_parser);
   pthread_key_delete(p_key_selectors);
+  pthread_key_delete(p_key_selector_cache);
   pthread_key_delete(p_key_html_parser);
 
   if (total_errors > 0) {

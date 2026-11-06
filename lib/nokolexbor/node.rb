@@ -358,7 +358,7 @@ module Nokolexbor
     # @see #xpath
     # @see #nokogiri_css
     def css(*args)
-      css_impl(args.join(', '))
+      css_impl(args.length == 1 ? args[0] : args.join(', '))
     end
 
     # Like {#css}, but returns the first match.
@@ -370,7 +370,7 @@ module Nokolexbor
     # @see #css
     # @see #nokogiri_at_css
     def at_css(*args)
-      at_css_impl(args.join(', '))
+      at_css_impl(args.length == 1 ? args[0] : args.join(', '))
     end
 
     # Search this object for CSS +rules+. +rules+ must be one or more CSS
