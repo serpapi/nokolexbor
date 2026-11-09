@@ -376,7 +376,13 @@ nl_node_at_css_callback(lxb_dom_node_t *node, lxb_css_selector_specificity_t *sp
 static size_t
 nl_css_matches_slot(void *node, size_t size)
 {
-  return (size_t)(((uint64_t)(uintptr_t)node * 0x9E3779B97F4A7C15ULL) >> 32) & (size - 1);
+  uint64_t hash = (uint64_t)(uintptr_t)node;
+  hash ^= hash >> 33;
+  hash *= 0xff51afd7ed558ccdULL;
+  hash ^= hash >> 33;
+  hash *= 0xc4ceb9fe1a85ec53ULL;
+  hash ^= hash >> 33;
+  return (size_t)hash & (size - 1);
 }
 
 static void
