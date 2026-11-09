@@ -43,10 +43,13 @@ lxb_dom_node_name_qualified(lxb_dom_node_t *node, size_t *len);
 lxb_status_t
 lexbor_array_push_unique(lexbor_array_t *array, void *value);
 
+#define NL_CSS_MATCHES_INLINE_SIZE 128
+
 typedef struct {
   lexbor_array_t *array;
   void **seen;
   size_t seen_size;
+  void *inline_seen[NL_CSS_MATCHES_INLINE_SIZE];
 } nl_css_matches_t;
 
 #endif
