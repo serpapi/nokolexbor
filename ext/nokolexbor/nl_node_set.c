@@ -450,10 +450,12 @@ nl_node_set_css(VALUE self, VALUE selector)
   matches.array = array;
   matches.seen = NULL;
   matches.seen_size = 0;
+  matches.seen_owner = Qnil;
 
   lxb_status_t status = nl_node_set_find(self, selector, nl_node_css_callback, &matches);
-  if (matches.seen != NULL && matches.seen != matches.inline_seen) {
-    lexbor_free(matches.seen);
+  if (matches.seen_owner != Qnil) {
+    lexbor_free(RTYPEDDATA_DATA(matches.seen_owner));
+    RTYPEDDATA_DATA(matches.seen_owner) = NULL;
   }
   if (status != LXB_STATUS_OK) {
     lexbor_array_destroy(array, true);

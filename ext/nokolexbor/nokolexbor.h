@@ -49,6 +49,7 @@ typedef struct {
   lexbor_array_t *array;
   void **seen;
   size_t seen_size;
+  VALUE seen_owner;
   void *inline_seen[NL_CSS_MATCHES_INLINE_SIZE];
 } nl_css_matches_t;
 
