@@ -194,6 +194,14 @@ describe Nokolexbor::Node do
       _(doc.css('div div, div p').map { |node| node['id'] }).must_equal ['inner', 'first', 'second']
     end
 
+    it 'nodes in results are unique and in document order past 32 matches' do
+      paragraphs = (1..100).map { |i| "<p id='p#{i}'></p>" }.join
+      doc = Nokolexbor::HTML("<div><div><div>#{paragraphs}</div></div></div>")
+      ids = (1..100).map { |i| "p#{i}" }
+      _(doc.css('div p').map { |node| node['id'] }).must_equal ids
+      _(doc.css('p, div p, div > p').map { |node| node['id'] }).must_equal ids
+    end
+
     it 'raises if selector is invalid' do
       _{ @root.css('::text1') }.must_raise Nokolexbor::Lexbor::UnexpectedDataError
     end
