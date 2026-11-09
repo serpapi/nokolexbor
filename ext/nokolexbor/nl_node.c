@@ -371,11 +371,127 @@ nl_node_at_css_callback(lxb_dom_node_t *node, lxb_css_selector_specificity_t *sp
   return LXB_STATUS_STOP;
 }
 
+#define NL_CSS_MATCHES_LINEAR_MAX 32
+
+#if defined(__GNUC__) || defined(__clang__)
+#define NL_NOINLINE __attribute__((noinline))
+#else
+#define NL_NOINLINE
+#endif
+
+static size_t
+nl_css_matches_slot(void *node, size_t size)
+{
+  uint64_t hash = (uint64_t)(uintptr_t)node;
+  hash ^= hash >> 33;
+  hash *= 0xff51afd7ed558ccdULL;
+  hash ^= hash >> 33;
+  hash *= 0xc4ceb9fe1a85ec53ULL;
+  hash ^= hash >> 33;
+  return (size_t)hash & (size - 1);
+}
+
+static void
+nl_css_matches_free_seen(void *seen)
+{
+  lexbor_free(seen);
+}
+
+static const rb_data_type_t nl_css_matches_seen_type = {
+    "nokolexbor_css_matches",
+    {
+        0,
+        nl_css_matches_free_seen,
+    },
+    0,
+    0,
+    RUBY_TYPED_FREE_IMMEDIATELY,
+};
+
+static lxb_status_t
+nl_css_matches_rebuild(nl_css_matches_t *matches)
+{
+  size_t size = 64;
+  while (size <= matches->array->length * 2) {
+    size <<= 1;
+  }
+  void **seen;
+  if (size <= NL_CSS_MATCHES_INLINE_SIZE) {
+    seen = matches->inline_seen;
+    memset(seen, 0, size * sizeof(void *));
+  } else {
+    if (matches->seen_owner == Qnil) {
+      matches->seen_owner = TypedData_Wrap_Struct(0, &nl_css_matches_seen_type, NULL);
+    }
+    seen = lexbor_calloc(size, sizeof(void *));
+    if (seen == NULL) {
+      return LXB_STATUS_ERROR_MEMORY_ALLOCATION;
+    }
+  }
+  for (size_t i = 0; i < matches->array->length; i++) {
+    size_t slot = nl_css_matches_slot(matches->array->list[i], size);
+    while (seen[slot] != NULL) {
+      slot = (slot + 1) & (size - 1);
+    }
+    seen[slot] = matches->array->list[i];
+  }
+  if (matches->seen != matches->inline_seen) {
+    lexbor_free(matches->seen);
+  }
+  if (seen != matches->inline_seen) {
+    RTYPEDDATA_DATA(matches->seen_owner) = seen;
+  }
+  matches->seen = seen;
+  matches->seen_size = size;
+  return LXB_STATUS_OK;
+}
+
+static lxb_status_t
+nl_css_matches_add(nl_css_matches_t *matches, void *node)
+{
+  size_t slot = nl_css_matches_slot(node, matches->seen_size);
+  while (matches->seen[slot] != NULL) {
+    if (matches->seen[slot] == node) {
+      return LXB_STATUS_OK;
+    }
+    slot = (slot + 1) & (matches->seen_size - 1);
+  }
+
+  lxb_status_t status = lexbor_array_push(matches->array, node);
+  if (status != LXB_STATUS_OK) {
+    return status;
+  }
+  if (matches->array->length * 2 > matches->seen_size) {
+    return nl_css_matches_rebuild(matches);
+  }
+  matches->seen[slot] = node;
+  return LXB_STATUS_OK;
+}
+
+static NL_NOINLINE lxb_status_t
+nl_css_matches_push(nl_css_matches_t *matches, void *node)
+{
+  lxb_status_t status = LXB_STATUS_OK;
+  if (matches->seen == NULL) {
+    status = nl_css_matches_rebuild(matches);
+  }
+  if (status == LXB_STATUS_OK) {
+    status = nl_css_matches_add(matches, node);
+  }
+  if (status != LXB_STATUS_OK) {
+    nl_raise_lexbor_error(status);
+  }
+  return LXB_STATUS_OK;
+}
+
 lxb_status_t
 nl_node_css_callback(lxb_dom_node_t *node, lxb_css_selector_specificity_t *spec, void *ctx)
 {
-  lexbor_array_t *array = (lexbor_array_t *)ctx;
-  lxb_status_t status = lexbor_array_push_unique(array, node);
+  nl_css_matches_t *matches = (nl_css_matches_t *)ctx;
+  if (matches->array->length > NL_CSS_MATCHES_LINEAR_MAX) {
+    return nl_css_matches_push(matches, node);
+  }
+  lxb_status_t status = lexbor_array_push_unique(matches->array, node);
   if (status != LXB_STATUS_OK && status != LXB_STATUS_STOPPED) {
     nl_raise_lexbor_error(status);
   }
@@ -554,8 +670,17 @@ nl_node_css(VALUE self, VALUE selector)
 {
   lxb_dom_node_t *node = nl_rb_node_unwrap(self);
   lexbor_array_t *array = lexbor_array_create();
+  nl_css_matches_t matches;
+  matches.array = array;
+  matches.seen = NULL;
+  matches.seen_size = 0;
+  matches.seen_owner = Qnil;
 
-  lxb_status_t status = nl_node_find(self, selector, nl_node_css_callback, array);
+  lxb_status_t status = nl_node_find(self, selector, nl_node_css_callback, &matches);
+  if (matches.seen_owner != Qnil) {
+    lexbor_free(RTYPEDDATA_DATA(matches.seen_owner));
+    RTYPEDDATA_DATA(matches.seen_owner) = NULL;
+  }
   if (status != LXB_STATUS_OK) {
     lexbor_array_destroy(array, true);
     nl_raise_lexbor_error(status);

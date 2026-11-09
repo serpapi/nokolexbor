@@ -63,6 +63,17 @@ describe Nokolexbor::NodeSet do
       _(nodes[1].name).must_equal 'h1'
       _(nodes[2].name).must_equal 'a'
     end
+
+    it 'nodes in results are unique when nested ancestors match' do
+      doc = Nokolexbor::HTML('<section><div id="outer"><div id="inner"><p id="first"></p></div><p id="second"></p></div></section>')
+      _(doc.css('section').css('div p').map { |node| node['id'] }).must_equal ['first', 'second']
+    end
+
+    it 'nodes in results are unique and in document order past 32 matches' do
+      paragraphs = (1..100).map { |i| "<p id='p#{i}'></p>" }.join
+      doc = Nokolexbor::HTML("<section><div><div>#{paragraphs}</div></div></section>")
+      _(doc.css('section').css('div p').map { |node| node['id'] }).must_equal (1..100).map { |i| "p#{i}" }
+    end
   end
 
   describe 'at_css' do
