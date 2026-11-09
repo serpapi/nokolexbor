@@ -371,7 +371,13 @@ nl_node_at_css_callback(lxb_dom_node_t *node, lxb_css_selector_specificity_t *sp
   return LXB_STATUS_STOP;
 }
 
-#define NL_CSS_MATCHES_LINEAR_MAX 16
+#define NL_CSS_MATCHES_LINEAR_MAX 32
+
+#if defined(__GNUC__) || defined(__clang__)
+#define NL_NOINLINE __attribute__((noinline))
+#else
+#define NL_NOINLINE
+#endif
 
 static size_t
 nl_css_matches_slot(void *node, size_t size)
@@ -385,47 +391,23 @@ nl_css_matches_slot(void *node, size_t size)
   return (size_t)hash & (size - 1);
 }
 
-static void
-nl_css_matches_insert(void **seen, size_t size, void *node)
-{
-  size_t slot = nl_css_matches_slot(node, size);
-  while (seen[slot] != NULL) {
-    slot = (slot + 1) & (size - 1);
-  }
-  seen[slot] = node;
-}
-
-static bool
-nl_css_matches_contains(nl_css_matches_t *matches, void *node)
-{
-  if (matches->seen == NULL) {
-    for (size_t i = 0; i < matches->array->length; i++) {
-      if (matches->array->list[i] == node) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  size_t slot = nl_css_matches_slot(node, matches->seen_size);
-  while (matches->seen[slot] != NULL) {
-    if (matches->seen[slot] == node) {
-      return true;
-    }
-    slot = (slot + 1) & (matches->seen_size - 1);
-  }
-  return false;
-}
-
 static lxb_status_t
-nl_css_matches_rebuild(nl_css_matches_t *matches, size_t size)
+nl_css_matches_rebuild(nl_css_matches_t *matches)
 {
+  size_t size = 64;
+  while (size <= matches->array->length * 2) {
+    size <<= 1;
+  }
   void **seen = lexbor_calloc(size, sizeof(void *));
   if (seen == NULL) {
     return LXB_STATUS_ERROR_MEMORY_ALLOCATION;
   }
   for (size_t i = 0; i < matches->array->length; i++) {
-    nl_css_matches_insert(seen, size, matches->array->list[i]);
+    size_t slot = nl_css_matches_slot(matches->array->list[i], size);
+    while (seen[slot] != NULL) {
+      slot = (slot + 1) & (size - 1);
+    }
+    seen[slot] = matches->array->list[i];
   }
   lexbor_free(matches->seen);
   matches->seen = seen;
@@ -433,25 +415,55 @@ nl_css_matches_rebuild(nl_css_matches_t *matches, size_t size)
   return LXB_STATUS_OK;
 }
 
-lxb_status_t
-nl_node_css_callback(lxb_dom_node_t *node, lxb_css_selector_specificity_t *spec, void *ctx)
+static lxb_status_t
+nl_css_matches_add(nl_css_matches_t *matches, void *node)
 {
-  nl_css_matches_t *matches = (nl_css_matches_t *)ctx;
-  if (nl_css_matches_contains(matches, node)) {
-    return LXB_STATUS_OK;
+  size_t slot = nl_css_matches_slot(node, matches->seen_size);
+  while (matches->seen[slot] != NULL) {
+    if (matches->seen[slot] == node) {
+      return LXB_STATUS_OK;
+    }
+    slot = (slot + 1) & (matches->seen_size - 1);
   }
 
   lxb_status_t status = lexbor_array_push(matches->array, node);
-  if (status == LXB_STATUS_OK && matches->array->length > NL_CSS_MATCHES_LINEAR_MAX) {
-    if (matches->array->length * 2 > matches->seen_size) {
-      status = nl_css_matches_rebuild(matches, matches->seen_size ? matches->seen_size * 2 : 64);
-    } else {
-      nl_css_matches_insert(matches->seen, matches->seen_size, node);
-    }
+  if (status != LXB_STATUS_OK) {
+    return status;
+  }
+  if (matches->array->length * 2 > matches->seen_size) {
+    return nl_css_matches_rebuild(matches);
+  }
+  matches->seen[slot] = node;
+  return LXB_STATUS_OK;
+}
+
+static NL_NOINLINE lxb_status_t
+nl_css_matches_push(nl_css_matches_t *matches, void *node)
+{
+  lxb_status_t status = LXB_STATUS_OK;
+  if (matches->seen == NULL) {
+    status = nl_css_matches_rebuild(matches);
+  }
+  if (status == LXB_STATUS_OK) {
+    status = nl_css_matches_add(matches, node);
   }
   if (status != LXB_STATUS_OK) {
     lexbor_free(matches->seen);
     matches->seen = NULL;
+    nl_raise_lexbor_error(status);
+  }
+  return LXB_STATUS_OK;
+}
+
+lxb_status_t
+nl_node_css_callback(lxb_dom_node_t *node, lxb_css_selector_specificity_t *spec, void *ctx)
+{
+  nl_css_matches_t *matches = (nl_css_matches_t *)ctx;
+  if (matches->array->length > NL_CSS_MATCHES_LINEAR_MAX) {
+    return nl_css_matches_push(matches, node);
+  }
+  lxb_status_t status = lexbor_array_push_unique(matches->array, node);
+  if (status != LXB_STATUS_OK && status != LXB_STATUS_STOPPED) {
     nl_raise_lexbor_error(status);
   }
   return LXB_STATUS_OK;
